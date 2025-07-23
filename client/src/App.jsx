@@ -17,6 +17,7 @@ import ClearDoubts from './components/User/ClearDoubts.jsx';
 import ProjectNotifications from './components/User/ProjectNotifications.jsx';
 import Profile from './components/User/Profile.jsx';
 import Dashboard from './components/User/Dashboard.jsx';
+import GroupChat from './components/User/GroupChat.jsx';
 import ApplyJobs from './components/User/ApplyJobs.jsx';
 import JobApplications from './components/User/JobApplications.jsx';
 import JobNotifications from './components/User/JobNotifications.jsx';
@@ -74,6 +75,7 @@ function App() {
 
       {/* Dashboard Route */}
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/messages" element={<GroupChat />} />
       
       {/* TOPIC ROUTES */}
       <Route path="/web-dev" element={<TopicProjects />} />
