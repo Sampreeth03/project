@@ -89,7 +89,7 @@ const navData = {
 
 
 
-// Define MONGODB_URI here (Fix for the error)
+// Define MONGODB_URI here 
 const MONGODB_URI = 'mongodb://localhost:27017/page-check';
 async function setupDefaultProjects() {
     try {
