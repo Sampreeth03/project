@@ -1,0 +1,924 @@
+<!-- views/project.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RELABTeams - <%= project.title %></title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background-color: #111111;
+      color: white;
+      padding-top: 10vh;
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background-color: black;
+      padding: 15px 5%;
+      display: flex;
+      z-index: 1000;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 30px;
+      color: #0068FF;
+      font-weight: bold;
+      margin-right: 30px;
+    }
+
+    #logo-link {
+      text-decoration: none;
+      color: #0068FF;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 38px;
+      position: relative;
+    }
+
+    .nav-links li {
+      position: relative;
+    }
+
+    .nav-links li a {
+      color: white;
+      text-decoration: none;
+      font-size: 20px;
+      transition: color 0.3s ease;
+      padding: 10px;
+      display: block;
+    }
+
+    .nav-links li a:hover {
+      color: #0068FF;
+    }
+
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: black;
+      min-width: max-content;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .dropdown li {
+      width: 100%;
+    }
+
+    .dropdown li a {
+      padding: 12px;
+      font-size: 18px;
+      display: block;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .dropdown li a:hover {
+      background-color: #333;
+      color: #0068FF;
+    }
+
+    .nav-links li:hover .dropdown {
+      display: block;
+    }
+
+    .search-box {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      width: 205px;
+      background-color: #222;
+      color: white;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .project-header {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .project-title {
+      font-size: 28px;
+      color: white;
+    }
+
+    .project-nav {
+      position: relative;
+      display: inline-block;
+    }
+
+    .project-dropdown-btn {
+      background-color: #333333;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .project-dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: #222222;
+      min-width: 200px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+      z-index: 1;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .project-dropdown-content a {
+      color: white;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background-color 0.2s;
+    }
+
+    .project-dropdown-content a:hover {
+      background-color: #333333;
+    }
+
+    .project-nav:hover .project-dropdown-content {
+      display: block;
+    }
+
+    .tasks-container {
+      background-color: #222222;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .tasks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .new-task-btn {
+      background-color: #0068FF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .task-card {
+      border: 1px solid #333333;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background-color: #1A1A1A;
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .task-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .task-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      color: #BBBBBB;
+      font-size: 14px;
+    }
+
+    .task-description {
+      margin-bottom: 16px;
+      line-height: 1.5;
+      color: #DDDDDD;
+    }
+
+    .task-link {
+      margin-bottom: 16px;
+      display: block;
+      color: #0068FF;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .task-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .status-label {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .completed {
+      background-color: #143C21;
+      color: #66BB6A;
+    }
+
+    .in-progress {
+      background-color: #3D3000;
+      color: #FFC107;
+    }
+
+    .review {
+      background-color: #202639;
+      color: #90CAF9;
+    }
+
+    .assigned {
+      background-color: #002447;
+      color: #0068FF;
+    }
+
+    .check-status-btn {
+      background-color: #333333;
+      color: white;
+      border: 1px solid #444444;
+    }
+
+    .approve-btn {
+      background-color: #004D40;
+      color: white;
+    }
+
+    .reject-btn {
+      background-color: #B71C1C;
+      color: white;
+    }
+
+    .feedback-btn {
+      background-color: #0068FF;
+      color: white;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-content {
+      background-color: #222222;
+      margin: 10% auto;
+      padding: 24px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 600px;
+      color: white;
+    }
+
+    .close {
+      color: #888888;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: white;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #DDDDDD;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      background-color: #333333;
+      border: 1px solid #444444;
+      border-radius: 4px;
+      font-size: 14px;
+      color: white;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .team-members {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .member {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #222222;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .member-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      background-color: #0068FF;
+    }
+
+    .member-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .member-name {
+      font-weight: 500;
+      color: white;
+    }
+
+    .member-role {
+      font-size: 12px;
+      color: #BBBBBB;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      background-color: #0068FF;
+      color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 100;
+      animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+      opacity: 0;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    @keyframes fadeOut {
+      from {opacity: 1;}
+      to {opacity: 0;}
+    }
+
+    .hidden-actions {
+      display: none;
+    }
+
+    .feedback-form {
+      margin-top: 12px;
+      display: none;
+    }
+
+    .finish-project-btn {
+      background-color: #388E3C;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 16px;
+    }
+
+    .finish-project-btn:hover {
+      background-color: #2E7D32;
+    }
+
+    .project-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .project-status {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .project-active {
+      background-color: #0068FF;
+      color: white;
+    }
+
+    .project-completed {
+      background-color: #388E3C;
+      color: white;
+    }
+
+    #finishProjectModal .modal-content {
+      max-width: 500px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .cancel-btn {
+      background-color: #555555;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    .confirm-btn {
+      background-color: #388E3C;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    .extend-deadline-btn {
+      background-color: #FFB300;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .remove-member-btn {
+      background-color: #D81B60;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .extend-deadline-btn:hover {
+      background-color: #FFA000;
+    }
+
+    .remove-member-btn:hover {
+      background-color: #C2185B;
+    }
+
+    #statusModal .modal-content {
+      max-width: 500px;
+    }
+
+    #statusModal .task-link {
+      margin: 8px 0;
+      color: #0068FF;
+      text-decoration: none;
+    }
+
+    #statusModal .task-link:hover {
+      text-decoration: underline;
+    }
+
+    .no-projects {
+      text-align: center;
+      color: #BBBBBB;
+      font-size: 18px;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <header>
+      <div class="navbar">
+          <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+          <ul class="nav-links">
+              <% navLinks.forEach(link => { %>
+                  <li>
+                      <a href="<%= link.href %>"><%= link.name %></a>
+                      <% if (link.submenu) { %>
+                          <ul class="dropdown">
+                              <% link.submenu.forEach(sublink => { %>
+                                  <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                              <% }) %>
+                          </ul>
+                      <% } %>
+                  </li>
+              <% }) %>
+          </ul>
+          <input type="text" placeholder="Search" class="search-box">
+      </div>
+  </header>
+  
+  <div class="container">
+      <div class="project-header">
+          <div>
+              <h1 class="project-title"><%= project.title %></h1>
+              <span class="project-status <%= project.status === 'active' ? 'project-active' : 'finished' %>" id="projectStatus">
+                  <%= project.status === 'active' ? 'Active' : 'Finished' %>
+              </span>
+          </div>
+          <div class="project-actions">
+              <div class="project-nav">
+                  <button class="project-dropdown-btn">
+                      Switch Project
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                  </button>
+                  <div class="project-dropdown-content">
+                      <% if (projects && projects.length > 0) { %>
+                          <% projects.forEach(project => { %>
+                              <a href="/project/<%= project._id %>"><%= project.title %></a>
+                          <% }) %>
+                      <% } else { %>
+                          <p>No other projects available</p>
+                      <% } %>
+                  </div>
+              </div>
+              <button class="finish-project-btn" onclick="finishProject('<%= project._id %>')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  Finish Project
+              </button>
+          </div>
+      </div>
+  
+      <div class="tasks-container">
+          <div class="tasks-header">
+              <h2>Tasks</h2>
+              <button class="new-task-btn" onclick="openModal()">+ New Task</button>
+          </div>
+          <div id="tasks-list">
+              <% if (tasks && tasks.length > 0) { %>
+                  <% tasks.forEach(task => { %>
+                      <div class="task-card">
+                          <div class="task-header">
+                              <h3 class="task-title"><%= task.title %></h3>
+                              <span class="status-label <%= task.status.toLowerCase().replace(' ', '-') %>"><%= task.status %></span>
+                          </div>
+                          <div class="task-meta">
+                              <div>Assigned to: <%= task.assigned_to?.name || 'Unassigned' %></div>
+                              <div>Due: <%= task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No due date' %></div>
+                          </div>
+                          <p class="task-description"><%= task.description || 'No description' %></p>
+                          <% if (task.github_link) { %>
+                              <a href="<%= task.github_link %>" class="task-link" target="_blank"><%= task.github_link %></a>
+                          <% } %>
+                          <div class="task-actions">
+                              <button class="task-btn check-status-btn" onclick="openStatusModal('<%= task.github_link || '#' %>')">Check Status</button>
+                              <button class="task-btn extend-deadline-btn" onclick="extendDeadline('<%= task.title %>', '<%= project._id %>')">Extend Deadline</button>
+                          </div>
+                      </div>
+                  <% }) %>
+              <% } else { %>
+                  <div class="no-projects">No tasks available for this project.</div>
+              <% } %>
+          </div>
+      </div>
+  
+      <!-- Members section -->
+      <div class="team-members">
+        <% if (projectMembers && projectMembers.length > 0 && user && user.id) { %>
+          <% projectMembers.forEach(member => { %>
+                  <% if (member.user_id) { %>
+                      <div class="member">
+                          <div class="member-avatar"><%= member.user_id.name ? member.user_id.name.charAt(0).toUpperCase() : '?' %></div>
+                          <div class="member-info">
+                              <div class="member-name"><%= member.user_id.name || 'Unknown User' %></div>
+                              <div class="member-role"><%= member.user_id.email || 'No Email' %></div>
+                          </div>
+                          <% if (member.user_id._id && user && user.id && member.user_id._id.toString() !== user.id.toString()) { %>
+                              <button class="remove-member-btn" onclick="removeMember('<%= member.user_id.name || 'Unknown' %>', '<%= member.user_id._id %>', '<%= project._id %>')">Remove</button>
+                          <% } %>
+                      </div>
+                  <% } %>
+              <% }) %>
+          <% } else { %>
+              <p>No members in this project.</p>
+          <% } %>
+      </div>
+  
+      <!-- New Task Modal -->
+      <div id="taskModal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h2>Create New Task</h2>
+                  <span class="close" onclick="closeModal()">×</span>
+              </div>
+              <div class="form-group">
+                  <label for="taskTitle">Task Title</label>
+                  <input type="text" id="taskTitle" placeholder="Enter task title">
+              </div>
+              <div class="form-group">
+                  <label for="taskDescription">Description</label>
+                  <textarea id="taskDescription" placeholder="Describe the task"></textarea>
+              </div>
+              <div class="form-group">
+                  <label for="assignTo">Assign To</label>
+                  <select id="assignTo">
+                      <option value="" selected disabled>Select team member</option>
+                      <% if (projectMembers && projectMembers.length > 0 && user && user.id) { %>
+                          <% projectMembers.forEach(member => { %>
+                              <% if (member.user_id && member.user_id._id && member.user_id._id.toString() !== user.id.toString()) { %>
+                                  <option value="<%= member.user_id._id %>"><%= member.user_id.name || 'Unknown' %></option>
+                              <% } %>
+                          <% }) %>
+                      <% } %>
+                  </select>
+              </div>
+              <div class="form-group">
+                  <label for="dueDate">Due Date</label>
+                  <input type="date" id="dueDate">
+              </div>
+              <button class="new-task-btn" style="width: 100%;" onclick="createNewTask('<%= project._id %>')">Create Task</button>
+          </div>
+      </div>
+  
+      <!-- Finish Project Modal -->
+      <div id="finishProjectModal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h2>Finish Project</h2>
+                  <span class="close" onclick="closeFinishProjectModal()">×</span>
+              </div>
+              <p>Are you sure you want to mark this project as completed?</p>
+              <div id="pendingTasksWarning" style="color: #FFC107; margin-top: 12px; display: none;">
+                  <strong>Warning:</strong> There are still pending tasks in this project. Finishing the project will automatically mark all tasks as completed.
+              </div>
+              <div class="modal-buttons">
+                  <button class="cancel-btn" onclick="closeFinishProjectModal()">Cancel</button>
+                  <button class="confirm-btn" onclick="confirmFinishProject('<%= project._id %>')">Confirm</button>
+              </div>
+          </div>
+      </div>
+  
+      <!-- Task Status Modal -->
+      <div id="statusModal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h2>Task Status</h2>
+                  <span class="close" onclick="closeStatusModal()">×</span>
+              </div>
+              <div class="form-group">
+                  <label>GitHub Repository:</label>
+                  <a id="githubLink" href="#" target="_blank" class="task-link"></a>
+              </div>
+              <div class="modal-buttons">
+                  <button class="cancel-btn" onclick="closeStatusModal()">Close</button>
+              </div>
+          </div>
+      </div>
+  
+      <div id="notification" class="notification"></div>
+  
+      <script>
+          function openModal() {
+              document.getElementById('taskModal').style.display = 'block';
+          }
+  
+          function closeModal() {
+              document.getElementById('taskModal').style.display = 'none';
+          }
+  
+          function createNewTask(projectId) {
+              const title = document.getElementById('taskTitle').value;
+              const description = document.getElementById('taskDescription').value;
+              const assignedTo = document.getElementById('assignTo').value;
+              const dueDate = document.getElementById('dueDate').value;
+  
+              if (!title || !description || !assignedTo || !dueDate) {
+                  showNotification('Please fill in all fields', 'error');
+                  return;
+              }
+  
+              fetch('/task/create', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                      projectId,
+                      title,
+                      description,
+                      assignedTo,
+                      dueDate
+                  })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      showNotification('Task created successfully!');
+                      setTimeout(() => window.location.reload(), 1000);
+                  } else {
+                      showNotification(data.message || 'Failed to create task', 'error');
+                  }
+              })
+              .catch(error => {
+                  console.error('Error creating task:', error);
+                  showNotification('Error creating task', 'error');
+              });
+          }
+  
+          function finishProject(projectId) {
+              fetch(`/project/${projectId}/pending-tasks`)
+                  .then(response => response.json())
+                  .then(data => {
+                      const pendingTasksWarning = document.getElementById('pendingTasksWarning');
+                      if (data.pendingTasks > 0) {
+                          pendingTasksWarning.style.display = 'block';
+                      } else {
+                          pendingTasksWarning.style.display = 'none';
+                      }
+                      document.getElementById('finishProjectModal').style.display = 'block';
+                  })
+                  .catch(error => {
+                      console.error('Error checking pending tasks:', error);
+                      showNotification('Error checking pending tasks', 'error');
+                  });
+          }
+  
+          function closeFinishProjectModal() {
+              document.getElementById('finishProjectModal').style.display = 'none';
+          }
+  
+          function confirmFinishProject(projectId) {
+              fetch(`/project/${projectId}/finish`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      showNotification('Project marked as completed!');
+                      document.getElementById('projectStatus').textContent = 'Finished';
+                      document.getElementById('projectStatus').className = 'project-status finished';
+                      closeFinishProjectModal();
+                  } else {
+                      showNotification(data.message || 'Failed to finish project', 'error');
+                  }
+              })
+              .catch(error => {
+                  console.error('Error finishing project:', error);
+                  showNotification('Error finishing project', 'error');
+              });
+          }
+  
+          function openStatusModal(githubLink) {
+              const modal = document.getElementById('statusModal');
+              const githubLinkElement = document.getElementById('githubLink');
+              githubLinkElement.href = githubLink;
+              githubLinkElement.textContent = githubLink;
+              modal.style.display = 'block';
+          }
+  
+          function closeStatusModal() {
+              document.getElementById('statusModal').style.display = 'none';
+          }
+  
+          function removeMember(memberName, memberId, projectId) {
+              if (!confirm(`Are you sure you want to remove ${memberName} from the project?`)) return;
+  
+              fetch(`/project/${projectId}/remove-member`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ memberId })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      showNotification(`${memberName} has been removed from the project!`);
+                      setTimeout(() => window.location.reload(), 1000);
+                  } else {
+                      showNotification(data.message || 'Failed to remove member', 'error');
+                  }
+              })
+              .catch(error => {
+                  console.error('Error removing member:', error);
+                  showNotification('Error removing member', 'error');
+              });
+          }
+  
+          function extendDeadline(taskTitle, projectId) {
+              const newDueDate = prompt('Enter new due date (YYYY-MM-DD):');
+              if (!newDueDate) return;
+  
+              fetch('/task/extend-deadline', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ taskTitle, projectId, newDueDate })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      showNotification('Deadline extended successfully!');
+                      setTimeout(() => window.location.reload(), 1000);
+                  } else {
+                      showNotification(data.message || 'Failed to extend deadline', 'error');
+                  }
+              })
+              .catch(error => {
+                  console.error('Error extending deadline:', error);
+                  showNotification('Error extending deadline', 'error');
+              });
+          }
+  
+          function showNotification(message, type = 'success') {
+              const notification = document.getElementById('notification');
+              notification.textContent = message;
+              notification.style.backgroundColor = type === 'success' ? '#0068FF' : '#B71C1C';
+              notification.style.display = 'block';
+              setTimeout(() => {
+                  notification.style.display = 'none';
+              }, 3000);
+          }
+      </script>
+  </div>
+</body>
+</html>

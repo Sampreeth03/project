@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RELABteams</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #0068ff;
+        --dark-bg: #121212;
+        --sidebar-bg: #1e1e1e;
+        --channel-hover: #2a2a2a;
+        --text: #ffffff;
+        --text-muted: #8e9297;
+        --border: #2d2d2d;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      body {
+        background-color: var(--dark-bg);
+        color: var(--text);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
+        .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
+        #logo-link { text-decoration: none; color: #0068FF; }
+        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+        .nav-links li { position: relative; }
+        .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
+        .nav-links li a:hover { color: #0068FF; }
+        .dropdown { display: none; position: absolute; top: 100%; left: 0; background-color: black; min-width: max-content; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .dropdown li { width: 100%; }
+        .dropdown li a { padding: 12px; font-size: 18px; display: block; color: white; white-space: nowrap; }
+        .dropdown li a:hover { background-color: #333; color: #0068FF; }
+        .nav-links li:hover .dropdown { display: block; }
+        .search-box { padding: 8px; border-radius: 5px; border: none; outline: none; width: 205px; background-color: #222; color: white; }
+
+
+      /* Chat Area */
+      .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 56px);
+      }
+
+      .chat-header {
+        height: 60px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+      }
+
+      .chat-header-icon {
+        margin-right: 8px;
+        color: var(--text-muted);
+      }
+
+      .messages-container {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .message {
+        display: flex;
+        margin-bottom: 16px;
+      }
+
+      .message.reply {
+        margin-left: 40px; /* Indent replies */
+        opacity: 0.8; /* Make replies slightly faded */
+      }
+
+      .message.reply .message-avatar {
+        background-color: #555; /* Different color for replies */
+      }
+
+      .message.reply .message-author {
+        font-weight: normal; /* Less emphasis on reply authors */
+      }
+
+      .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--primary);
+        margin-right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      .message-content {
+        flex: 1;
+      }
+
+      .message-header {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 4px;
+      }
+
+      .message-author {
+        font-weight: bold;
+        margin-right: 8px;
+      }
+
+      .message-time {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .message-text {
+        line-height: 1.4;
+      }
+
+      .message-input-container {
+        padding: 16px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .message-input-form {
+        display: flex;
+        align-items: center;
+      }
+
+      .file-label {
+        cursor: pointer;
+        background-color: var(--primary);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-right: 8px;
+        font-size: 14px;
+      }
+
+      .file-label:hover {
+        background-color: #0056b3;
+      }
+
+      .message-input {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        background-color: #303030;
+        color: var(--text);
+        font-size: 16px;
+      }
+
+      .message-input:focus {
+        outline: none;
+      }
+
+      .send-button {
+        margin-left: 8px;
+        padding: 0 16px;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        transition: background-color 0.2s;
+      }
+
+      .send-button:hover {
+        background-color: #0056b3;
+      }
+
+      .send-button i {
+        font-size: 18px;
+      }
+
+      /* Image Container Styles */
+      .image-container {
+        position: relative;
+      }
+
+      .view-image {
+        background: white;
+        color: #0068ff;
+        padding: 5px;
+        border-radius: 5px;
+        display: none; /* Initially hidden */
+        margin-top: 5px; /* Space between image and link */
+        margin-right: 93%;
+      }
+
+      .image-container:hover .view-image {
+        display: table; /* Show on hover */
+      }
+
+      /* Add this to your CSS file */
+      .vote-container {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .thumbs-up-button,
+      .thumbs-down-button {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 24px;
+        margin-right: 10px;
+        transition: color 0.2s;
+      }
+
+      .thumbs-up-button:hover,
+      .thumbs-up-button:focus {
+        color: green; /* Change to green on hover */
+      }
+
+      .thumbs-up-button:active {
+        color: darkgreen; /* Darker green on click */
+      }
+
+      .thumbs-down-button:hover,
+      .thumbs-down-button:focus {
+        color: red; /* Change to red on hover */
+      }
+
+      .thumbs-down-button:active {
+        color: darkred; /* Darker red on click */
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <div class="navbar">
+      <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+      <ul class="nav-links">
+          <% navLinks.forEach(link => { %>
+              <li>
+                  <a href="<%= link.href %>"><%= link.name %></a>
+                  <% if (link.submenu) { %>
+                      <ul class="dropdown">
+                          <% link.submenu.forEach(sublink => { %>
+                              <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                          <% }) %>
+                      </ul>
+                  <% } %>
+              </li>
+          <% }) %>
+      </ul>
+      <input type="text" placeholder="Search" class="search-box">
+  </div>
+
+    <!-- Chat Area -->
+    <div class="chat-area">
+      <div class="chat-header">
+        <span class="chat-header-icon">#</span>
+        <span id="current-channel">Doubts</span>
+      </div>
+
+      <div class="messages-container" id="messages">
+        <!-- Messages will be loaded dynamically -->
+      </div>
+
+      <div class="message-input-container">
+        <form class="message-input-form" id="message-form">
+          <input
+            type="file"
+            class="file-input"
+            id="file-input"
+            accept="*/*"
+            style="display: none"
+          />
+          <label for="file-input" class="file-label">
+            <i class="fas fa-paperclip"></i>
+          </label>
+          <input
+            type="text"
+            class="message-input"
+            id="message-input"
+            placeholder="Ask your doubt..."
+            required
+            autocomplete="off"
+          />
+          <button type="submit" class="send-button">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Mock Data for Doubts and Replies
+      const doubts = [
+        {
+          id: "1",
+          author: "You",
+          text: "What is web development?",
+          time: "2:30 PM",
+          replies: [
+            {
+              id: "1-1",
+              author: "Eswar",
+              text: "Web development is the work involved in developing a website for the Internet.",
+              time: "2:32 PM",
+              votes: { up: 0, down: 0 },
+            },
+            {
+              id: "1-2",
+              author: "Shiva",
+              text: "It includes web design, web content development, and client-side/server-side scripting.",
+              time: "2:35 PM",
+              image: "./image.jpg",
+              votes: { up: 0, down: 0 },
+            },
+            {
+              id: "1-3",
+              author: "Surya",
+              text: "It also involves database management and web server configuration.",
+              time: "2:40 PM",
+              votes: { up: 0, down: 0 },
+            },
+          ],
+        },
+        {
+          id: "2",
+          author: "You",
+          text: "Can someone explain React hooks?",
+          time: "3:00 PM",
+          replies: [
+            {
+              id: "2-1",
+              author: "Sampreeth",
+              text: "Hooks are functions that let you use state and other React features.",
+              time: "3:05 PM",
+              votes: { up: 0, down: 0 },
+            },
+          ],
+        },
+      ];
+
+      // Current user info
+      const currentUser = {
+        id: "3",
+        username: "You",
+      };
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const messageForm = document.getElementById("message-form");
+        const messageInput = document.getElementById("message-input");
+        const fileInput = document.getElementById("file-input");
+        const messagesContainer = document.getElementById("messages");
+
+        // Load initial doubts
+        loadDoubts();
+
+        // Form Submission
+        messageForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const message = messageInput.value.trim();
+          const file = fileInput.files[0]; // Get the selected file
+
+          if (!message && !file) return; // Ensure at least one input is provided
+
+          // Add new doubt
+          const newDoubt = {
+            id: String(doubts.length + 1),
+            author: currentUser.username,
+            text: message,
+            time: new Date().toLocaleTimeString(),
+            replies: [],
+          };
+
+          doubts.push(newDoubt);
+
+          // Log the file name if a file is selected
+          if (file) {
+            console.log(`File selected: ${file.name}`);
+          }
+
+          // Reload doubts
+          loadDoubts();
+
+          // Clear input
+          messageInput.value = "";
+          fileInput.value = ""; // Clear the file input
+        });
+
+        // Load Doubts
+        function loadDoubts() {
+          messagesContainer.innerHTML = "";
+          const userDoubts = doubts.filter(
+            (doubt) => doubt.author === currentUser.username
+          );
+          userDoubts.forEach((doubt) => {
+            addMessageToUI(doubt);
+            doubt.replies.forEach((reply) => {
+              addMessageToUI(reply, true);
+            });
+          });
+          messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to bottom
+        }
+
+        // Add Message to UI
+        function addMessageToUI(message, isReply = false) {
+          const messageElement = document.createElement("div");
+          messageElement.className = `message ${isReply ? "reply" : ""}`;
+          messageElement.innerHTML = `
+          <div class="message-avatar">${message.author.charAt(0)}</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-author">${message.author}</span>
+              <span class="message-time">${message.time}</span>
+            </div>
+            <div class="message-text">${message.text}</div>
+            ${
+              message.image
+                ? `
+              <div class="image-container">
+                <img src="${message.image}" alt="Reply Image" style="max-width: 100%; margin-top: 8px; cursor: pointer;">
+                <a href="${message.image}" target="_blank" class="view-image" style="margin-right: 0;">View Image</a>
+              </div>
+            `
+                : ""
+            }
+            ${
+              isReply
+                ? `
+              <div class="vote-container">
+                <button class="thumbs-up-button" onclick="handleVote('up', '${message.id}')">
+                  <i class="fas fa-thumbs-up"></i>
+                </button>
+                <button class="thumbs-down-button" onclick="handleVote('down', '${message.id}')">
+                  <i class="fas fa-thumbs-down"></i>
+                </button>
+              </div>
+            `
+                : ""
+            }
+          </div>
+        `;
+          messagesContainer.appendChild(messageElement);
+        }
+
+        window.handleVote = function (direction, replyId) {
+          const doubt = doubts.find((doubt) =>
+            doubt.replies.some((reply) => reply.id === replyId)
+          );
+          const reply = doubt.replies.find((reply) => reply.id === replyId);
+
+          if (direction === "up") {
+            reply.votes.up += 1; // Increment upvote count
+            console.log(`Upvoted: ${reply.text}`);
+          } else {
+            reply.votes.down += 1; // Increment downvote count
+            console.log(`Downvoted: ${reply.text}`);
+          }
+
+          // Reload doubts to update the UI
+          loadDoubts();
+        };
+      });
+    </script>
+  </body>
+</html>

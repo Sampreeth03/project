@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RELABteams</title>
+  <style>
+    :root {
+      --primary: #0068FF;
+      --dark-bg: #121212;
+      --sidebar-bg: #1E1E1E;
+      --channel-hover: #2a2a2a;
+      --text: #FFFFFF;
+      --text-muted: #8e9297;
+      --border: #2D2D2D;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    body {
+      background-color: var(--dark-bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      padding-top: 7vh;
+    }
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
+    .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
+    #logo-link { text-decoration: none; color: #0068FF; }
+    .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+    .nav-links li { position: relative; }
+    .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
+    .nav-links li a:hover { color: #0068FF; }
+    .dropdown { display: none; position: absolute; top: 100%; left: 0; background-color: black; min-width: max-content; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); z-index: 1000; }
+    .dropdown li { width: 100%; }
+    .dropdown li a { padding: 12px; font-size: 18px; display: block; color: white; white-space: nowrap; }
+    .dropdown li a:hover { background-color: #333; color: #0068FF; }
+    .nav-links li:hover .dropdown { display: block; }
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 56px);
+    }
+    .chat-header {
+      height: 60px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+    .chat-header-icon {
+      margin-right: 8px;
+      color: var(--text-muted);
+    }
+    .messages-container {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .message {
+      display: flex;
+      margin-bottom: 16px;
+    }
+    .message.reply {
+      margin-left: 40px;
+      opacity: 0.8;
+    }
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      margin-right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .message-content {
+      flex: 1;
+    }
+    .message-header {
+      display: flex;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+    .message-author {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .message-time {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .message-text {
+      line-height: 1.4;
+    }
+    .message-input-container {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .message-input-form {
+      display: flex;
+      align-items: center;
+    }
+    .file-label {
+      cursor: pointer;
+      background-color: var(--primary);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-right: 8px;
+      font-size: 14px;
+    }
+    .file-label:hover {
+      background-color: #0056b3;
+    }
+    .message-input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background-color: #303030;
+      color: var(--text);
+      font-size: 16px;
+    }
+    .message-input:focus {
+      outline: none;
+    }
+    .send-button {
+      margin-left: 8px;
+      padding: 0 16px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      transition: background-color 0.2s;
+    }
+    .send-button:hover {
+      background-color: #0056b3;
+    }
+    .send-button i {
+      font-size: 18px;
+    }
+    .image-container {
+      position: relative;
+    }
+    .view-image {
+      background: white;
+      color: #0068FF;
+      padding: 5px;
+      border-radius: 5px;
+      display: none;
+      margin-top: 5px;
+      margin-right: 93%;
+    }
+    .image-container:hover .view-image {
+      display: table;
+    }
+    .no-doubts {
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    /* New styles for reply messages */
+    .reply-message {
+      display: flex;
+      margin-top: 8px;
+      margin-left: 20px;
+    }
+    .reply-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+    .reply-content {
+      flex: 1;
+    }
+    .reply-header {
+      display: flex;
+      align-items: baseline;
+      margin-bottom: 2px;
+    }
+    .reply-author {
+      font-weight: bold;
+      font-size: 0.9em;
+      margin-right: 6px;
+    }
+    .reply-time {
+      font-size: 0.8em;
+      color: var(--text-muted);
+    }
+    .reply-text {
+      font-size: 0.9em;
+      line-height: 1.3;
+    }
+    /* Hidden input for current doubt ID */
+    #current-doubt-id {
+      display: none;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+      <ul class="nav-links">
+        <% navLinks.forEach(link => { %>
+          <li>
+            <a href="<%= link.href %>"><%= link.name %></a>
+            <% if (link.submenu) { %>
+              <ul class="dropdown">
+                <% link.submenu.forEach(sublink => { %>
+                  <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </header>
+  <div class="chat-area">
+    <div class="chat-header">
+      <span class="chat-header-icon">#</span>
+      <span id="current-channel">Doubts</span>
+    </div>
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="padding: 10px; background-color: #4caf50; color: white; text-align: center;">
+          <%= success %>
+      </div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div style="padding: 10px; background-color: #f44336; color: white; text-align: center;">
+          <%= error %>
+      </div>
+    <% } %>
+    <div class="messages-container" id="messages">
+      <% if ((doubts || []).length > 0) { %>
+          <% doubts.forEach(doubt => { %>
+              <div class="message" data-doubt-id="<%= doubt._id %>">
+                  <div class="message-avatar"><%= (doubt.author || "Anonymous").charAt(0) %></div>
+                  <div class="message-content">
+                      <div class="message-header">
+                          <span class="message-author"><%= doubt.author || "Anonymous" %></span>
+                          <span class="message-time"><%= doubt.timestamp %></span>
+                      </div>
+                      <div class="message-text"><%= doubt.text %></div>
+                      <% if (doubt.file_path) { %>
+                          <div class="image-container">
+                              <a href="/<%= doubt.file_path %>" target="_blank" class="view-image">View File</a>
+                          </div>
+                      <% } %>
+                      <% if (doubt.replies && doubt.replies.length > 0) { %>
+                          <div class="replies-section">
+                              <% doubt.replies.forEach(reply => { %>
+                                  <div class="reply-message">
+                                      <div class="reply-avatar"><%= (reply.author || "Unknown").charAt(0) %></div>
+                                      <div class="reply-content">
+                                          <div class="reply-header">
+                                              <span class="reply-author"><%= reply.author || "Unknown" %></span>
+                                              <span class="message-time"><%= reply.timestamp %></span>
+                                          </div>
+                                          <div class="reply-text"><%= reply.text %></div>
+                                      </div>
+                                  </div>
+                              <% }) %>
+                          </div>
+                      <% } %>
+                  </div>
+              </div>
+          <% }) %>
+      <% } else { %>
+          <div class="no-doubts">No doubts posted yet. Be the first to ask!</div>
+      <% } %>
+    </div>
+    <div class="message-input-container">
+      <form class="message-input-form" id="main-reply-form">
+          <input type="hidden" id="current-doubt-id" name="doubtId" value="">
+          <label class="file-label" for="file-input">
+              <i class="fas fa-paperclip"></i> Attach File
+          </label>
+          <input type="file" id="file-input" name="file-input" style="display: none;">
+          <input type="text" class="message-input" name="message" placeholder="Ask your doubt here..." required>
+          <button type="submit" class="send-button">
+              <i class="fas fa-paper-plane"></i>
+          </button>
+      </form>
+    </div>
+  </div>
+
+<script>
+// Set up click handlers for messages to select which doubt to reply to
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('.message');
+    const doubtIdInput = document.getElementById('current-doubt-id');
+    const messageInput = document.querySelector('.message-input');
+    
+    messages.forEach(message => {
+        message.addEventListener('click', function() {
+            const doubtId = this.getAttribute('data-doubt-id');
+            doubtIdInput.value = doubtId;
+            messageInput.placeholder = `Replying to doubt ${doubtId.substring(0, 6)}...`;
+            messageInput.focus();
+        });
+    });
+    
+    // Handle form submission
+    const form = document.getElementById('main-reply-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const doubtId = doubtIdInput.value;
+        const message = messageInput.value;
+        const fileInput = document.getElementById('file-input');
+        const formData = new FormData();
+
+        if (!doubtId) {
+            // If no doubt selected, post as new doubt
+            formData.append('message', message);
+            if (fileInput.files.length > 0) {
+                formData.append('file-input', fileInput.files[0]);
+            }
+            fetch('/ask', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/doubt'; // Redirect to refresh doubts
+                } else {
+                    alert(data.message || 'Failed to post doubt');
+                }
+            })
+            .catch(error => {
+                console.error('Error posting doubt:', error);
+                alert('An error occurred while posting your doubt');
+            });
+            return;
+        }
+        
+        // If doubt selected, post as reply
+        fetch('/reply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                doubtId: doubtId,
+                text: message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Failed to post reply');
+            }
+        })
+        .catch(error => {
+            console.error('Error posting reply:', error);
+            alert('An error occurred while posting your reply');
+        });
+    });
+    
+    // Handle file input for new doubts
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', function() {
+        doubtIdInput.value = '';
+        messageInput.placeholder = 'Ask your doubt here...';
+    });
+});
+</script>
+</body>
+</html>

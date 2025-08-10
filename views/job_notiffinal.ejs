@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobs Notification Dashboard</title>
+  <style>
+    :root {
+      --primary-color: #6200ee;
+      --primary-light: #b180ff;
+      --secondary-color: #03dac6;
+      --danger-color: #cf6679;
+      --background: #121212;
+      --surface: #1e1e1e;
+      --surface-variant: #2d2d2d;
+      --on-surface: #e0e0e0;
+      --on-surface-medium: #a0a0a0;
+      --on-surface-disabled: #6c6c6c;
+      --border: #3d3d3d;
+      --elevation-1: 0 1px 3px rgba(0,0,0,0.24);
+      --elevation-2: 0 3px 6px rgba(0,0,0,0.26);
+      --border-radius: 12px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
+        .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px;background: transparent !important; }
+        #logo-link { text-decoration: none; color: #0068FF; }
+        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+        .nav-links li { position: relative; }
+        .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
+        .nav-links li a:hover { color: #0068FF; }
+        .dropdown { display: none; position: absolute; top: 100%; left: 0; background-color: black; min-width: max-content; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .dropdown li { width: 100%; }
+        .dropdown li a { padding: 12px; font-size: 18px; display: block; color: white; white-space: nowrap; }
+        .dropdown li a:hover { background-color: #333; color: #0068FF; }
+        .nav-links li:hover .dropdown { display: block; }
+        .search-box { padding: 8px; border-radius: 5px; border: none; outline: none; width: 205px; background-color: #222; color: white; }
+
+
+    body {
+      font-family: 'Roboto', 'Segoe UI', sans-serif;
+      background-color: var(--background);
+      color: var(--on-surface);
+      line-height: 1.6;
+      
+    }
+
+    header {
+      padding: 1.5rem 2rem;
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: var(--elevation-1);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--on-surface);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--surface-variant);
+      border-radius: 50px;
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .user-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .header-content h2 {
+      font-size: 1.5rem;
+      font-weight: normal;
+      color: var(--on-surface);
+    }
+
+    .jobs-count {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--surface-variant);
+      border-radius: 50px;
+      color: var(--primary-color);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .jobs-count-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .job-card {
+      background-color: var(--surface);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--elevation-1);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .job-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--elevation-2);
+      border-color: var(--primary-color);
+    }
+
+    .job-card.expanded {
+      border-color: var(--primary-color);
+      box-shadow: var(--elevation-2);
+    }
+
+    .job-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .job-card-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--on-surface);
+    }
+
+    .job-card-date {
+      font-size: 0.8rem;
+      color: var(--on-surface-medium);
+      background-color: var(--surface-variant);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .job-card-company {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .company-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--on-surface);
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .company-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--on-surface);
+    }
+
+    .job-card-content {
+      margin-bottom: 1rem;
+    }
+
+    .job-card-content p {
+      color: var(--on-surface-medium);
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .job-description {
+      background-color: var(--surface-variant);
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 0.75rem 0;
+      color: var(--on-surface-medium);
+      font-size: 0.9rem;
+    }
+
+    .job-pay {
+      background-color: rgba(98, 0, 238, 0.1);
+      color: var(--primary-color);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    .resume-link {
+      color: var(--secondary-color);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: block;
+      margin-top: 0.5rem;
+    }
+
+    .resume-link:hover {
+      text-decoration: underline;
+    }
+
+    .job-card-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-light);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--on-surface);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-variant);
+    }
+
+    .btn-danger {
+      background-color: transparent;
+      color: var(--danger-color);
+      border: 1px solid var(--danger-color);
+    }
+
+    .btn-danger:hover {
+      background-color: rgba(207, 102, 121, 0.1);
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--on-surface-disabled);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 500;
+      box-shadow: var(--elevation-2);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error {
+      background-color: var(--danger-color);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .job-card {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .job-type {
+      display: inline-block;
+      padding: 0.3rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-right: 0.5rem;
+    }
+
+    .job-type-applied {
+      background-color: rgba(3, 218, 198, 0.1);
+      color: var(--secondary-color);
+    }
+
+    .job-type-shortlisted {
+      background-color: rgba(98, 0, 238, 0.1);
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="navbar">
+        <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+        <ul class="nav-links">
+            <% navLinks.forEach(link => { %>
+                <li>
+                    <a href="<%= link.href %>"><%= link.name %></a>
+                    <% if (link.submenu) { %>
+                        <ul class="dropdown">
+                            <% link.submenu.forEach(sublink => { %>
+                                <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                            <% }) %>
+                        </ul>
+                    <% } %>
+                </li>
+            <% }) %>
+        </ul>
+        <input type="text" placeholder="Search" class="search-box">
+    </div>
+</header>
+
+  <main class="container">
+    <div class="header-content">
+      <h2>Your Job Applications</h2>
+      <div class="jobs-count">
+        <span>Total Jobs</span>
+        <span class="jobs-count-number" id="jobs-badge"></span>
+      </div>
+    </div>
+
+    <div id="jobs-notifications"></div>
+  </main>
+
+  <script>
+    const jobData = {
+      jobsNotifications: [
+        {
+          id: 1,
+          title: "Software Engineer",
+          content: "You applied for the job Software Engineer. Below is its job description.",
+          description: "Develop and maintain web applications using React and Node.js. Collaborate with cross-functional teams to design and implement new features.",
+          pay: "₹8,00,000 per annum",
+          date: "2025-03-18",
+          company: "TechCorp",
+          type: "applied"
+        },
+        {
+          id: 2,
+          title: "Data Analyst",
+          content: "You applied for the job Data Analyst. Below is its job description.",
+          description: "Analyze large datasets to provide actionable insights. Create reports and dashboards using Tableau and SQL.",
+          pay: "₹6,50,000 per annum",
+          date: "2025-03-19",
+          company: "DataWorks",
+          type: "applied"
+        },
+        {
+          id: 3,
+          title: "Product Manager",
+          content: "You applied for the job Product Manager. Below is its job description.",
+          description: "Define product vision and strategy. Work with engineering and design teams to deliver high-quality products.",
+          pay: "₹12,00,000 per annum",
+          date: "2025-03-17",
+          company: "InnovateLabs",
+          type: "applied"
+        },
+        {
+          id: 101,
+          title: "Frontend Developer",
+          content: "You have been shortlisted for this Frontend Developer. Below is its job description.",
+          description: "Build responsive and user-friendly interfaces using HTML, CSS, and JavaScript. Optimize applications for performance.",
+          pay: "₹9,00,000 per annum",
+          date: "2025-03-18",
+          company: "WebSolutions",
+          type: "shortlisted",
+          status: "pending",
+          resumeLink: "https://websolutions.com/submit-resume"
+        },
+        {
+          id: 102,
+          title: "Backend Developer",
+          content: "You have been shortlisted for this Backend Developer. Below is its job description.",
+          description: "Design and implement RESTful APIs using Python and Django. Ensure scalability and security of backend systems.",
+          pay: "₹10,00,000 per annum",
+          date: "2025-03-17",
+          company: "ServerTech",
+          type: "shortlisted",
+          status: "pending",
+          resumeLink: "https://servertech.com/submit-resume"
+        },
+        {
+          id: 103,
+          title: "UI/UX Designer",
+          content: "You have been shortlisted for this UI/UX Designer. Below is its job description.",
+          description: "Create wireframes, prototypes, and high-fidelity designs using Figma. Conduct user research to improve design decisions.",
+          pay: "₹7,50,000 per annum",
+          date: "2025-03-19",
+          company: "DesignPro",
+          type: "shortlisted",
+          status: "pending",
+          resumeLink: "https://designpro.com/submit-resume"
+        }
+      ]
+    };
+  
+    document.addEventListener('DOMContentLoaded', function () {
+      function formatDate(date) {
+        return new Date(date).toLocaleDateString('en-US', { month: 'short', day: "numeric", year: "numeric" });
+      }
+  
+      function getCompanyInitials(companyName) {
+        return companyName.split(' ').map(word => word[0]).join('').toUpperCase();
+      }
+  
+      function renderNotifications() {
+        const container = document.getElementById('jobs-notifications');
+        const notifications = jobData.jobsNotifications;
+        container.innerHTML = notifications.length ? '' : `<div class="empty-state">No job applications found</div>`;
+        document.getElementById('jobs-badge').textContent = notifications.length;
+  
+        notifications.forEach((notification) => {
+          const jobCard = document.createElement('div');
+          jobCard.className = 'job-card';
+          jobCard.dataset.id = notification.id;
+          jobCard.dataset.type = notification.type;
+  
+          const jobTypeClass = notification.type === 'applied' ? 'job-type-applied' : 'job-type-shortlisted';
+          const jobTypeLabel = notification.type === 'applied' ? 'Applied' : 
+                              (notification.status === 'approved' ? 'Approved' : 'Shortlisted');
+  
+          jobCard.innerHTML = `
+            <div class="job-card-header">
+              <div>
+                <h3 class="job-card-title">${notification.title}</h3>
+                <span class="job-type ${jobTypeClass}">${jobTypeLabel}</span>
+              </div>
+              <span class="job-card-date">${formatDate(notification.date)}</span>
+            </div>
+            <div class="job-card-company">
+              <div class="company-logo">${getCompanyInitials(notification.company)}</div>
+              <span class="company-name">${notification.company}</span>
+            </div>
+            <div class="job-card-content">
+              <p>${notification.content}</p>
+              <div class="job-description">${notification.description}</div>
+              <div class="job-pay">${notification.pay}</div>
+            </div>
+            <div class="job-card-footer">
+              ${notification.type === 'shortlisted' && notification.status === 'pending' ? `
+                <button class="btn btn-primary" onclick="approveJob(${notification.id})">
+                  <span>Approve</span>
+                </button>
+                <button class="btn btn-danger" onclick="rejectJob(${notification.id})">
+                  <span>Reject</span>
+                </button>
+              ` : ''}
+              ${notification.status !== 'approved' ? `
+                <button class="btn btn-icon btn-secondary" onclick="deleteNotification(${notification.id})">
+                  <span>✕</span>
+                </button>
+              ` : ''}
+            </div>
+          `;
+  
+          container.appendChild(jobCard);
+  
+          jobCard.addEventListener('click', (e) => {
+            if (!e.target.closest('.btn')) {
+              jobCard.classList.toggle('expanded');
+            }
+          });
+        });
+      }
+  
+      function deleteNotification(notificationId) {
+        const notifications = jobData.jobsNotifications;
+        const index = notifications.findIndex(n => n.id === notificationId);
+  
+        if (index > -1) {
+          notifications.splice(index, 1);
+          showToast('Notification deleted successfully');
+          renderNotifications();
+        } else {
+          showToast('Error: Notification not found', 'error');
+        }
+      }
+  
+      function approveJob(notificationId) {
+        const notification = jobData.jobsNotifications.find(n => n.id === notificationId);
+        if (notification) {
+          notification.status = 'approved';
+          showToast('Job application approved!');
+          renderNotifications();
+        } else {
+          showToast('Error: Notification not found', 'error');
+        }
+      }
+  
+      function rejectJob(notificationId) {
+        const notifications = jobData.jobsNotifications;
+        const index = notifications.findIndex(n => n.id === notificationId);
+  
+        if (index > -1) {
+          notifications.splice(index, 1);
+          showToast('Job application rejected and removed from your list.');
+          renderNotifications();
+        } else {
+          showToast('Error: Notification not found', 'error');
+        }
+      }
+  
+      function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => document.body.removeChild(toast), 300);
+        }, 3000);
+      }
+  
+      renderNotifications();
+  
+      window.deleteNotification = deleteNotification;
+      window.approveJob = approveJob;
+      window.rejectJob = rejectJob;
+    });
+  </script>
+</body>
+</html>

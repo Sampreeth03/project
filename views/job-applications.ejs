@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Job Applications</title>
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --primary-blue: #0068ff;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
+        .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
+        #logo-link { text-decoration: none; color: #0068FF; }
+        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+        .nav-links li { position: relative; }
+        .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
+        .nav-links li a:hover { color: #0068FF; }
+        .dropdown { display: none; position: absolute; top: 100%; left: 0; background-color: black; min-width: max-content; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .dropdown li { width: 100%; }
+        .dropdown li a { padding: 12px; font-size: 18px; display: block; color: white; white-space: nowrap; }
+        .dropdown li a:hover { background-color: #333; color: #0068FF; }
+        .nav-links li:hover .dropdown { display: block; }
+        .search-box { padding: 8px; border-radius: 5px; border: none; outline: none; width: 205px; background-color: #222; color: white; }
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-blue);
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+        }
+        
+        .applications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .job-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .job-header {
+            margin-bottom: 15px;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+        }
+        
+        .job-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+        }
+        
+        .salary {
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .job-description {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .skill-tag {
+            background-color: rgba(0, 104, 255, 0.2);
+            color: var(--primary-blue);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .job-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+        
+        .date-applied {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .status-badge {
+            background-color: rgba(0, 104, 255, 0.15);
+            color: var(--primary-blue);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 600px) {
+            .job-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+      <header>
+        <div class="navbar">
+          <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+          <ul class="nav-links">
+            <% navLinks.forEach(link => { %>
+              <li>
+                <a href="<%= link.href %>"><%= link.name %></a>
+                <% if (link.submenu) { %>
+                  <ul class="dropdown">
+                    <% link.submenu.forEach(sublink => { %>
+                      <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                    <% }) %>
+                  </ul>
+                <% } %>
+              </li>
+            <% }) %>
+          </ul>
+          <input type="text" placeholder="Search" class="search-box">
+        </div>
+        <h1>My Pending Applications</h1>
+        <div class="subtitle">Jobs you've applied to and are waiting for a response</div>
+      </header>
+      
+      <div class="applications-list">
+        <% if (applications.length === 0) { %>
+          <p>No applications submitted yet.</p>
+        <% } else { %>
+          <% applications.forEach(application => { %>
+            <div class="job-card">
+              <div class="job-header">
+                <div class="company-name"><%= application.company_name %></div>
+                <div class="job-title"><%= application.job_title %></div>
+                <div class="salary"><%= application.salary_range %></div>
+              </div>
+              <div class="job-description">
+                <%= application.description %>
+              </div>
+              <div class="skills-container">
+                <% application.skills.split(',').forEach(skill => { %>
+                  <span class="skill-tag"><%= skill.trim() %></span>
+                <% }) %>
+              </div>
+              <div class="job-footer">
+                <div class="date-applied">Applied: <%= new Date(application.date_applied).toLocaleDateString() %></div>
+                <div class="status-badge"><%= application.status %></div>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+  </body>
+</html>
+

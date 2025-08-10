@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+      body {
+        background-color: #121212;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .login-container {
+        background-color: #1e1e1e;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        width: 400px;
+        transition: 0.3s;
+      }
+
+      .login-form h2 {
+        margin-bottom: 10px;
+        text-align: center;
+        font-size: 24px;
+      }
+
+      .error {
+        color: #ff4d4d;
+        text-align: center;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+      .input-group {
+        position: relative;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-group input {
+        width: 100%;
+        padding: 15px;
+        padding-right: 50px; 
+        border: 1px solid #1079e9;
+        border-radius: 5px;
+        background-color: transparent;
+        color: #ffffff;
+        outline: none;
+      }
+      .login-btn {
+        width: 100%;
+        background-color: #0068ff;
+        color: #ffffff;
+        border: none;
+        padding: 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: 0.3s;
+        margin-top: 10px;
+      }
+
+      .login-btn:hover {
+        background-color: #144289;
+      }
+
+      .signup-text {
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      .signup-text a {
+        color: #0068ff;
+        text-decoration: underline;
+      }
+
+      .toggle-password {
+        position: absolute;
+        top: 25px;
+        right: 15px;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: bold;
+        background: none;
+        border: none;
+      }
+
+      .toggle-password:hover {
+        color: #0068ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <form class="login-form" action="/login" method="POST">
+        <h2>Login</h2>
+
+        <% if (error) { %>
+        <p class="error"><%= error %></p>
+        <% } %>
+
+        <div class="input-group">
+          <input type="email" name="email" placeholder="Email" required />
+        </div>
+        <div class="input-group">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <span
+            class="toggle-password"
+            onclick="togglePassword('password', this)"
+            >Show</span
+          >
+        </div>
+
+        <button type="submit" class="login-btn">Login</button>
+
+        <p class="signup-text">
+          Don't have an account? <a href="/signup">Sign Up</a>
+        </p>
+      </form>
+    </div>
+    <script>
+      function togglePassword(id, element) {
+        var input = document.getElementById(id);
+        if (input.type === "password") {
+          input.type = "text";
+          element.textContent = "Hide";
+        } else {
+          input.type = "password";
+          element.textContent = "Show";
+        }
+      }
+    </script>
+  </body>
+</html>

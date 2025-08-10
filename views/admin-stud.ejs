@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELABTeams Admin - Students Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0068FF;
+            --secondary: #0056d6;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light-text: #ffffff;
+            --gray-text: #a0a0a0;
+            --gray-dark: #2a2a2a;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light-text);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--darker);
+            color: var(--light-text);
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 100;
+            display: block;
+        }
+
+        .sidebar-collapsed {
+            width: 80px;
+        }
+
+        .sidebar-collapsed .logo-text,
+        .sidebar-collapsed .menu-label,
+        .sidebar-collapsed .menu-item span {
+            display: none;
+        }
+
+        .sidebar-collapsed .menu-item {
+            justify-content: center;
+        }
+
+        .sidebar-collapsed .menu-item i {
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-toggler {
+            color: var(--gray-text);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggler:hover {
+            color: var(--light-text);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            text-decoration: none;
+            color: #0068FF;
+        }
+
+        .nav-menu {
+            padding: 10px 0;
+        }
+
+        .menu-label {
+            padding: 0 25px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--gray-text);
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            color: var(--light-text);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-item.active {
+            color: var(--light-text);
+            background-color: rgba(0, 104, 255, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            transition: all 0.3s;
+            overflow-x: hidden;
+        }
+
+        .main-content-expanded {
+            margin-left: 80px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h2 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .breadcrumb {
+            color: var(--gray-text);
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-dark);
+            background-color: var(--darker);
+            color: var(--light-text);
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--gray-text);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-text);
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .admin-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-name {
+            font-weight: 500;
+        }
+
+        .admin-role {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 200px;
+            background-color: var(--darker);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 10px 0;
+            z-index: 100;
+            display: none;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .profile-dropdown a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .profile-dropdown a:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .profile-dropdown a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .profile-dropdown hr {
+            border: none;
+            border-top: 1px solid var(--gray-dark);
+            margin: 5px 0;
+        }
+
+        .students-table {
+            background-color: var(--darker);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--gray-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--light-text);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--light-text);
+            border: 1px solid var(--gray-dark);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--light-text);
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 25px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-dark);
+        }
+
+        th {
+            color: var(--gray-text);
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-active {
+            background-color: rgba(74, 222, 128, 0.15);
+            color: var(--success);
+        }
+
+        .status-active i {
+            color: var(--success);
+        }
+
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .status-pending i {
+            color: var(--warning);
+        }
+
+        .status-banned {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .status-banned i {
+            color: var(--danger);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--light-text);
+            background-color: var(--gray-dark);
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 20px 25px;
+        }
+
+        .page-info {
+            color: var(--gray-text);
+            font-size: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--darker);
+            color: var(--light-text);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1100;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast-error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast-warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast i {
+            font-size: 20px;
+        }
+
+        .toast-success i {
+            color: var(--success);
+        }
+
+        .toast-error i {
+            color: var(--danger);
+        }
+
+        .toast-warning i {
+            color: var(--warning);
+        }
+
+        .toast-message {
+            flex: 1;
+        }
+
+        .toast-close {
+            color: var(--gray-text);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            transition: all 0.2s;
+        }
+
+        .toast-close:hover {
+            color: var(--light-text);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .logo-text,
+            .menu-label,
+            .menu-item span {
+                display: none;
+            }
+            
+            .menu-item {
+                justify-content: center;
+                padding: 12px 0;
+            }
+            
+            .menu-item i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+            
+            .search-box {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-controls {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .search-box {
+                width: 100%;
+                position: absolute;
+                top: 80px;
+                left: 0;
+                padding: 0 30px;
+                z-index: 50;
+                display: none;
+            }
+            
+            .search-box.active {
+                display: block;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                position: relative;
+            }
+            
+            .admin-controls {
+                align-self: flex-end;
+            }
+            
+            .search-toggle {
+                display: block;
+            }
+            
+            .admin-info {
+                display: none;
+            }
+        }
+
+        /* Filter Buttons Styling */
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: var(--light-text);
+            background-color: var(--gray-dark);
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary);
+        }
+
+        .filter-btn:hover {
+            background-color: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="page-title">
+                    <h2>Students Management</h2>
+                    <div class="breadcrumb">
+                        Students
+                    </div>
+                </div>
+                <div class="admin-controls">
+                    <div class="search-box" id="search-box">
+                        <input type="text" id="student-search" placeholder="Search students...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="action-btn" id="search-toggle">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="admin-profile" id="admin-profile">
+                        <div class="admin-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="admin-info">
+                            <div class="admin-name">Srihesh</div>
+                            <div class="admin-role">Admin</div>
+                        </div>
+                        <div class="profile-dropdown" id="profile-dropdown">
+                            <a href="profile.html">
+                                <i class="fas fa-user-circle"></i> Profile
+                            </a>
+                            <a href="settings.html">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <hr>
+                            <a href="login.html">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <button class="filter-btn active" id="filter-all">All</button>
+                <button class="filter-btn" id="filter-hosts">Has Hosted Projects</button>
+                <button class="filter-btn" id="filter-doers">Has Completed Tasks</button>
+            </div>
+
+            <!-- Students Table -->
+            <div class="students-table">
+                <div class="table-header">
+                    <h4 class="table-title">All Students</h4>
+                </div>
+                <div class="table-container">
+                    <table id="students-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Hosted Projects</th>
+                                <th>Tasks Completed</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-tbody">
+                            <!-- Data will be populated dynamically via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // Sample student data (replace this with real data from a backend if needed)
+    const studentsData = [
+        {
+            id: 1,
+            name: 'Alex Mitchell',
+            email: 'alex.mitchell@example.com',
+            hostedProjects: 3,
+            tasksCompleted: 5,
+            status: 'Active'
+        },
+        {
+            id: 2,
+            name: 'Sarah Johnson',
+            email: 'sarah.johnson@example.com',
+            hostedProjects: 1,
+            tasksCompleted: 15,
+            status: 'Active'
+        },
+        {
+            id: 3,
+            name: 'Robert Parker',
+            email: 'robert.parker@example.com',
+            hostedProjects: 1,
+            tasksCompleted: 0,
+            status: 'Pending'
+        },
+        {
+            id: 4,
+            name: 'Emily Wilson',
+            email: 'emily.wilson@example.com',
+            hostedProjects: 0,
+            tasksCompleted: 8,
+            status: 'Active'
+        }
+    ];
+
+    // Get the table body element
+    const tbody = document.getElementById('students-tbody');
+
+    // Function to create a table row for a student
+    function createStudentRow(student) {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', student.id);
+
+        // Student info
+        const tdStudent = document.createElement('td');
+        const userInfo = document.createElement('div');
+        userInfo.className = 'user-info';
+        const userAvatar = document.createElement('div');
+        userAvatar.className = 'user-avatar';
+        userAvatar.textContent = student.name.split(' ').map(n => n[0]).join(''); // Initials
+        const userDetails = document.createElement('div');
+        userDetails.className = 'user-details';
+        const userName = document.createElement('div');
+        userName.className = 'user-name';
+        userName.textContent = student.name;
+        const userEmail = document.createElement('div');
+        userEmail.className = 'user-email';
+        userEmail.textContent = student.email;
+        userDetails.appendChild(userName);
+        userDetails.appendChild(userEmail);
+        userInfo.appendChild(userAvatar);
+        userInfo.appendChild(userDetails);
+        tdStudent.appendChild(userInfo);
+
+        // Hosted Projects
+        const tdHosted = document.createElement('td');
+        tdHosted.textContent = student.hostedProjects;
+
+        // Tasks Completed
+        const tdTasks = document.createElement('td');
+        tdTasks.textContent = student.tasksCompleted;
+
+        // Status
+        const tdStatus = document.createElement('td');
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status';
+        statusSpan.innerHTML = `<i class="fas fa-circle"></i> ${student.status}`;
+        if (student.status === 'Active') {
+            statusSpan.classList.add('status-active');
+        } else if (student.status === 'Pending') {
+            statusSpan.classList.add('status-pending');
+        } else if (student.status === 'Banned') {
+            statusSpan.classList.add('status-banned');
+        }
+        tdStatus.appendChild(statusSpan);
+
+        // Actions
+        const tdActions = document.createElement('td');
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'action-buttons';
+        const viewBtn = document.createElement('div');
+        viewBtn.className = 'action-btn view-btn';
+        viewBtn.setAttribute('data-id', student.id);
+        viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        const deleteBtn = document.createElement('div');
+        deleteBtn.className = 'action-btn delete-btn';
+        deleteBtn.setAttribute('data-id', student.id);
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        actionButtons.appendChild(viewBtn);
+        actionButtons.appendChild(deleteBtn);
+        tdActions.appendChild(actionButtons);
+
+        // Append all cells to the row
+        tr.appendChild(tdStudent);
+        tr.appendChild(tdHosted);
+        tr.appendChild(tdTasks);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdActions);
+
+        return tr;
+    }
+
+    // Populate the table with student data
+    function populateTable(data) {
+        tbody.innerHTML = ''; // Clear existing rows
+        data.forEach(student => {
+            const row = createStudentRow(student);
+            tbody.appendChild(row);
+        });
+    }
+
+    // Initial population of the table
+    populateTable(studentsData);
+
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('main-content');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('sidebar-collapsed');
+        mainContent.classList.toggle('main-content-expanded');
+    });
+
+    // Profile dropdown functionality
+    const adminProfile = document.getElementById('admin-profile');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    adminProfile.addEventListener('click', () => {
+        profileDropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!adminProfile.contains(e.target)) {
+            profileDropdown.classList.remove('show');
+        }
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('student-search');
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        const filteredData = studentsData.filter(student =>
+            student.name.toLowerCase().includes(query) ||
+            student.email.toLowerCase().includes(query)
+        );
+        populateTable(filteredData);
+    });
+
+    // Filter functionality
+    const filterAll = document.getElementById('filter-all');
+    const filterHosts = document.getElementById('filter-hosts');
+    const filterDoers = document.getElementById('filter-doers');
+
+    filterAll.addEventListener('click', () => {
+        filterAll.classList.add('active');
+        filterHosts.classList.remove('active');
+        filterDoers.classList.remove('active');
+        populateTable(studentsData);
+    });
+
+    filterHosts.addEventListener('click', () => {
+        filterAll.classList.remove('active');
+        filterHosts.classList.add('active');
+        filterDoers.classList.remove('active');
+        const filteredData = studentsData.filter(student => student.hostedProjects > 0);
+        populateTable(filteredData);
+    });
+
+    filterDoers.addEventListener('click', () => {
+        filterAll.classList.remove('active');
+        filterHosts.classList.remove('active');
+        filterDoers.classList.add('active');
+        const filteredData = studentsData.filter(student => student.tasksCompleted > 0);
+        populateTable(filteredData);
+    });
+});
+    </script>
+   
+</body>
+</html>

@@ -1,0 +1,750 @@
+<!-- views/proj_notif.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RELABTeams Notifications</title>
+  <style>
+    :root {
+      --primary-color: #0068FF;
+      --secondary-color: #4d9fff;
+      --danger-color: #FF5252;
+      --dark-bg: #121212;
+      --darker-bg: #1e1e1e;
+      --card-bg: #2a2a2a;
+      --light-text: #fff;
+      --medium-text: #b0b0b0;
+      --dark-text: #8a8a8a;
+      --border-color: #3a3a3a;
+      --hover-color: #353535;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      --unread-bg: #1a2a4a; /* Background for unread notifications */
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .navbar { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 60px; 
+      background-color: black; 
+      padding: 15px 5%; 
+      display: flex; 
+      z-index: 1000; 
+      align-items: center; 
+      justify-content: space-between; 
+    }
+    .logo { 
+      font-size: 30px; 
+      color: var(--primary-color); 
+      font-weight: bold; 
+      margin-right: 30px; 
+    }
+    #logo-link { 
+      text-decoration: none; 
+      color: var(--primary-color); 
+    }
+    .nav-links { 
+      list-style: none; 
+      display: flex; 
+      gap: 38px; 
+      position: relative; 
+    }
+    .nav-links li { 
+      position: relative; 
+    }
+    .nav-links li a { 
+      color: white; 
+      text-decoration: none; 
+      font-size: 20px; 
+      transition: color 0.3s ease; 
+      padding: 10px; 
+      display: block; 
+    }
+    .nav-links li a:hover { 
+      color: var(--primary-color); 
+    }
+    .dropdown { 
+      display: none; 
+      position: absolute; 
+      top: 100%; 
+      left: 0; 
+      background-color: black; 
+      min-width: max-content; 
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); 
+      z-index: 1000; 
+    }
+    .dropdown li { 
+      width: 100%; 
+    }
+    .dropdown li a { 
+      padding: 12px; 
+      font-size: 18px; 
+      display: block; 
+      color: white; 
+      white-space: nowrap; 
+    }
+    .dropdown li a:hover { 
+      background-color: #333; 
+      color: var(--primary-color); 
+    }
+    .nav-links li:hover .dropdown { 
+      display: block; 
+    }
+    .search-box { 
+      padding: 8px; 
+      border-radius: 5px; 
+      border: none; 
+      outline: none; 
+      width: 205px; 
+      background-color: #222; 
+      color: white; 
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      color: var(--light-text);
+      background: linear-gradient(135deg, var(--dark-bg), #1a1a1a);
+      padding-top: 7vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .dashboard-header {
+      margin-bottom: 30px;
+    }
+    .dashboard-title {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .user-greeting {
+      color: var(--medium-text);
+      font-size: 1rem;
+    }
+
+    .notification-columns {
+      display: flex; /* Changed to flex to place columns side by side */
+      gap: 2rem;
+    }
+
+    .notification-column {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color);
+      flex: 1; /* Each column takes equal space */
+    }
+
+    @media (max-width: 768px) {
+      .notification-columns {
+        flex-direction: column; /* Stack columns on smaller screens */
+      }
+    }
+
+    .column-header {
+      background: var(--darker-bg);
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .column-header h2 {
+      color: var(--primary-color);
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    .badge {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      color: var(--light-text);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 8px rgba(0, 104, 255, 0.5);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .badge:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(0, 104, 255, 0.7);
+    }
+
+    .notification-list {
+      max-height: 70vh;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .notification-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .notification-list::-webkit-scrollbar-track {
+      background: var(--darker-bg);
+    }
+
+    .notification-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    .notification-list::-webkit-scrollbar-thumb:hover {
+      background: var(--medium-text);
+    }
+
+    .notification-card {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .notification-card.unread {
+      background: var(--unread-bg);
+    }
+
+    .notification-card:hover {
+      background: var(--hover-color);
+    }
+
+    .notification-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .notification-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .notification-date {
+      font-size: 0.8rem;
+      color: var(--medium-text);
+      font-style: italic;
+    }
+
+    .notification-content {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notification-content p {
+      color: var(--medium-text);
+      font-size: 0.95rem;
+      flex: 1;
+    }
+
+    .notification-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .team-member-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .team-member-profile:hover {
+      transform: translateX(5px);
+    }
+
+    .team-member-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--light-text);
+    }
+
+    .team-member-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      padding: 0.3rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .delete-btn:hover {
+      background: var(--danger-color);
+      color: var(--light-text);
+    }
+
+    .view-review-btn {
+      background: var(--primary-color);
+      border: none;
+      color: var(--light-text);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .view-review-btn:hover {
+      background: var(--secondary-color);
+    }
+
+    .view-review-btn.approve {
+      background: #4CAF50;
+    }
+
+    .view-review-btn.approve:hover {
+      background: #45a049;
+    }
+
+    .view-review-btn.reject {
+      background: var(--danger-color);
+    }
+
+    .view-review-btn.reject:hover {
+      background: #e04848;
+    }
+
+    .view-review-btn:disabled {
+      background: var(--border-color);
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      padding: 2rem;
+      text-align: center;
+      color: var(--dark-text);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: var(--primary-color);
+      color: var(--light-text);
+      border-radius: 4px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+      z-index: 1000;
+      box-shadow: var(--box-shadow);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.error {
+      background: var(--danger-color);
+    }
+
+    .notification-card.expanded {
+      background: var(--hover-color);
+    }
+
+    .footer {
+      padding: 20px 30px;
+      font-size: 12px;
+      color: var(--medium-text);
+      text-align: center;
+      margin-top: 30px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .notification-card {
+      animation: fadeIn 0.3s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+      <ul class="nav-links">
+        <% navLinks.forEach(link => { %>
+          <li>
+            <a href="<%= link.href %>"><%= link.name %></a>
+            <% if (link.submenu) { %>
+              <ul class="dropdown">
+                <% link.submenu.forEach(sublink => { %>
+                  <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+      <input type="text" placeholder="Search" class="search-box">
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Notifications</h1>
+      <p class="user-greeting">Welcome back, <%= user ? user.name : 'Guest' %>. Here are your latest notifications.</p>
+    </div>
+    <div class="notification-columns">
+      
+<div class="notification-column">
+  <div class="column-header">
+      <h2>As a Member Inbox</h2>
+      <span class="badge" id="member-badge">
+        <%= taskNotifications ? taskNotifications.filter(notif => !notif.is_read).length : 0 %>
+    </span>
+  </div>
+  <div class="notification-list" id="member-notifications">
+      <% if (!taskNotifications || taskNotifications.length === 0) { %>
+          <div class="empty-state">No member notifications available</div>
+      <% } else { %>
+          <% taskNotifications.forEach(notification => { %>
+            <div class="notification-card <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
+                  <div class="notification-header">
+                      <h3 class="notification-title">
+                          <%- notification.task_title ? 'Task: ' + notification.task_title : 'Project Update' %>
+                      </h3>
+                      <span class="notification-date">
+                          <%- new Date(notification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                      </span>
+                  </div>
+                  <div class="notification-content">
+                      <p><%- notification.message %></p>
+                  </div>
+                  <div class="notification-footer">
+                      <% if (notification.task_id && !notification.message.includes('approved') && !notification.message.includes('rejected')) { %>
+                          <button class="view-review-btn" onclick="viewTask('<%= notification.task_id %>', '<%= notification.id %>')" aria-label="View Task">
+                              View Task
+                          </button>
+                      <% } %>
+                      <% if (!notification.is_read) { %>
+                        <button class="view-review-btn approve" onclick="markAsRead('<%= notification.id %>')" aria-label="Mark as Read">
+                            Mark as Read
+                        </button>
+                    <% } %>
+                      <button class="delete-btn" onclick="deleteNotification('<%= notification.id %>')" aria-label="Delete Notification">✕</button>
+                  </div>
+              </div>
+          <% }) %>
+      <% } %>
+  </div>
+</div>
+
+      <!-- Team Leader Inbox (Join Requests) -->
+      <div class="notification-column">
+        <div class="column-header">
+          <h2>Team Leader Inbox</h2>
+          <span class="badge" id="leader-badge">
+            <%- joinRequests ? joinRequests.length : 0 %>
+          </span>
+        </div>
+        <div class="notification-list" id="leader-notifications">
+          <% if (!joinRequests || joinRequests.length === 0) { %>
+            <div class="empty-state">No join requests available</div>
+          <% } else { %>
+            <% joinRequests.forEach(request => { %>
+              <div class="notification-card" data-id="<%= request.id %>">
+                <div class="notification-header">
+                  <h3 class="notification-title">Join Request for <%- request.project_title %></h3>
+                  <span class="notification-date">
+                    <%= new Date(request.requested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                  </span>
+                </div>
+                <div class="notification-content">
+                  <div class="team-member-profile" onclick="viewProfile('<%= request.user_id %>')">
+                    <div class="team-member-avatar"><%- request.user_name.charAt(0) %></div>
+                    <span class="team-member-name"><%- request.user_name %></span>
+                  </div>
+                  <p>Requested to join your project</p>
+                </div>
+                <div class="notification-footer">
+                  <button class="view-review-btn approve" onclick="approveRequest('<%= request.id %>')" aria-label="Approve Request">
+                    Approve
+                  </button>
+                  <button class="view-review-btn reject" onclick="rejectRequest('<%= request.id %>')" aria-label="Reject Request">
+                    Reject
+                  </button>
+                  <button class="delete-btn" onclick="deleteRequest('<%= request.id %>')" aria-label="Delete Request">✕</button>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 RELABTeams Platform • Version 2.4.1 • Last updated: March 24, 2025</p>
+  </footer>
+
+  <script>
+    // Store button states to prevent multiple clicks
+    const buttonStates = new Map();
+
+    function formatDate(date) {
+      return new Date(date).toLocaleDateString('en-US', { month: 'short', day: "numeric", year: "numeric" });
+    }
+
+    function approveRequest(requestId) {
+    const button = event.target;
+    if (buttonStates.get(requestId)) return; // Prevent multiple clicks
+    buttonStates.set(requestId, true);
+    button.disabled = true;
+    button.textContent = 'Approving...';
+
+    fetch('/approve-join-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Request approved successfully');
+            setTimeout(() => window.location.href = '/project', 1000);
+        } else {
+            showToast(data.error || 'Failed to approve request', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while approving the request', 'error');
+    })
+    .finally(() => {
+        buttonStates.delete(requestId);
+        button.disabled = false;
+        button.textContent = 'Approve';
+    });
+}
+
+    function rejectRequest(requestId) {
+        const button = event.target;
+        if (buttonStates.get(requestId)) return; // Prevent multiple clicks
+        buttonStates.set(requestId, true);
+        button.disabled = true;
+        button.textContent = 'Rejecting...';
+
+        fetch('/reject-join-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Request rejected successfully');
+                location.reload();
+            } else {
+                showToast(data.error || 'Failed to reject request', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while rejecting the request', 'error');
+        })
+        .finally(() => {
+            buttonStates.delete(requestId);
+            button.disabled = false;
+            button.textContent = 'Reject';
+        });
+    }
+
+    function deleteRequest(requestId) {
+        if (confirm('Are you sure you want to delete this request?')) {
+            const button = event.target;
+            if (buttonStates.get(requestId)) return; // Prevent multiple clicks
+            buttonStates.set(requestId, true);
+            button.disabled = true;
+
+            fetch('/delete-join-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requestId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Request deleted successfully');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Failed to delete request', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while deleting the request', 'error');
+            })
+            .finally(() => {
+                buttonStates.delete(requestId);
+                button.disabled = false;
+            });
+        }
+    }
+
+    function viewProfile(userId) {
+        window.location.href = `/dashboard?userId=${userId}`;
+    }
+
+    function viewTask(taskId, notificationId) {
+        markAsRead(notificationId);
+        fetch(`/get-task-project/${taskId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = `/joined-projects?highlightProject=${data.projectId}&highlightTask=${taskId}`;
+            } else {
+                showToast('Failed to load task', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while loading the task', 'error');
+        });
+    }
+
+    function markAsRead(notificationId) {
+    const button = event.target;
+    if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
+    buttonStates.set(notificationId, true);
+    button.disabled = true;
+    button.textContent = 'Marking...';
+
+    fetch('/mark-notification-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notificationCard = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+            notificationCard.classList.remove('unread');
+            const markButton = notificationCard.querySelector('.view-review-btn.approve');
+            if (markButton) markButton.remove();
+            updateMemberBadge();
+            showToast('Notification marked as read');
+        } else {
+            showToast(data.error || 'Failed to mark as read', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while marking as read', 'error');
+    })
+    .finally(() => {
+        buttonStates.delete(notificationId);
+        button.disabled = false;
+        button.textContent = 'Mark as Read';
+    });
+}
+
+function updateMemberBadge() {
+    const unreadCount = document.querySelectorAll('#member-notifications .notification-card.unread').length;
+    document.getElementById('member-badge').textContent = unreadCount;
+}
+    function deleteNotification(notificationId) {
+        if (confirm('Are you sure you want to delete this notification?')) {
+            const button = event.target;
+            if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
+            buttonStates.set(notificationId, true);
+            button.disabled = true;
+
+            fetch('/delete-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notificationId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const notificationCard = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+                    notificationCard.remove();
+                    updateMemberBadge();
+                    showToast('Notification deleted successfully');
+                    if (document.querySelectorAll('#member-notifications .notification-card').length === 0) {
+                        document.getElementById('member-notifications').innerHTML = '<div class="empty-state">No member notifications available</div>';
+                    }
+                } else {
+                    showToast(data.error || 'Failed to delete notification', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while deleting the notification', 'error');
+            })
+            .finally(() => {
+                buttonStates.delete(notificationId);
+                button.disabled = false;
+            });
+        }
+    }
+
+
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => document.body.removeChild(toast), 300);
+        }, 3000);
+    }
+  </script>
+</body>
+</html>

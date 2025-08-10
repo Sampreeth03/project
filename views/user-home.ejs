@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <title>RelabTeams - User Homepage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Tektur:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Doto:wght@100..900&family=Julius+Sans+One&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Tektur:wght@400..900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tenorite', sans-serif; }
+        body { background-color: #121212; color: white; padding-top: 70px; }
+        
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: black;
+    padding: 15px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+}
+
+.nav-links {
+    display: flex;
+    gap: 38px;
+}
+
+.nav-links li {
+    position: relative;
+}
+
+.nav-links li a {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    transition: color 0.3s ease;
+    padding: 10px;
+    display: block;
+}
+
+.nav-links li a:hover {
+    color: #0068FF;
+}
+.logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
+#logo-link { text-decoration: none; color: #0068FF; }
+
+.dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: black;
+    min-width: 200px; /* Increased width for better visibility */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    z-index: 1001; /* Higher than navbar */
+    border-radius: 5px;
+}
+
+.dropdown li {
+    width: 100%;
+}
+
+.dropdown li a {
+    padding: 12px 15px;
+    font-size: 18px;
+    display: block;
+    color: white;
+    white-space: nowrap;
+}
+
+.dropdown li a:hover {
+    background-color: #333;
+    color: #0068FF;
+}
+
+/* Show dropdown on hover of parent li */
+.nav-links li:hover > .dropdown {
+    display: block;
+}
+
+/* Ensure navbar has enough space */
+.navbar {
+    min-height: 60px;
+}
+        .welcome-section { position: relative; padding: 200px; text-align: center; border-radius: 20px; background-image: url("./pug.jpg"); }
+        .banner-content { font-size: 500%; font-family: "Montserrat", sans-serif; font-weight: 50px; }
+        .banner-para { font-size: 30px; font-family: "Doto", sans-serif; margin-top: 50px; }
+        #logout-btn { position: absolute; top: 20px; right: 20px; background-color: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
+        #logout-btn:hover { background-color: #ff1a1a; }
+        .topics { display: grid; grid-template-rows: 1.5fr 2fr; grid-template-columns: 1fr 1fr 1fr; grid-gap: 155px; margin: 30px; margin-left: 120px; }
+        .topic { position: relative; width: 300px; height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #0068FF; border-radius: 15px; background-color: #1E1E1E; text-align: center; font-weight: bold; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; padding: 10px; }
+        .topic:hover { transform: scale(1.1); box-shadow: 0 4px 20px rgba(0, 104, 255, 0.5); }
+        .topic-name { font-size: 30px; color: #0068FF; font-weight: bold; }
+        .topic-desc { font-size: 15px; margin-top: 5px; color: #bbb; text-align: center; max-width: 90%; }
+        .options { position: absolute; width: 100%; height: 100%; background: rgba(0, 104, 255, 0.8); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .topic:hover .options { opacity: 1; background-color: #1E1E1E; }
+        button { background-color: white; color: #0068FF; border: none; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
+        button:hover { background-color: #FFD700; color: black; }
+        .features-section { text-align: center; padding: 80px 5%; background: url('/features-background.jpg') no-repeat center center/cover; position: relative; color: white; }
+        .features-section::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 0; }
+        .features-title { color: rgb(235, 215, 0); }
+        .features-container { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; max-width: 1200px; margin: auto; position: relative; z-index: 1; flex-wrap: wrap; }
+        .feature-box { flex: 1 1 calc(25% - 20px); text-align: center; font-size: 18px; font-weight: bold; color: #fff; padding: 20px; }
+        .feature-box h3 { font-size: 22px; color: #0068FF; margin-bottom: 10px; }
+        .feature-box p { font-size: 16px; color: #ddd; max-width: 90%; margin: auto; }
+        .carousel-container { width: 60%; overflow: hidden; position: relative; border-radius: 15px; box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2); margin: 20px auto; }
+        .carousel { height: 300px; width: 100%; display: flex; transition: transform 0.5s ease-in-out; }
+        .testimonial { flex: 0 0 100%; text-align: center; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; }
+        .dots { display: flex; justify-content: center; margin-top: 15px; }
+        .dot { width: 10px; height: 10px; background-color: gray; margin: 5px; border-radius: 50%; cursor: pointer; transition: background-color 0.3s; }
+        .dot.active { background-color: #0068FF; }
+        footer { background-color: #0068FF; padding: 20px; text-align: center; margin-top: 50px; }
+        footer a { color: white; margin: 0 10px; text-decoration: none; }
+        @media (max-width: 1024px) { .topics { grid-template-columns: 1fr 1fr; } .feature-box { flex: 1 1 calc(50% - 20px); } }
+        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .nav-links { flex-direction: column; gap: 10px; } .topics { grid-template-columns: 1fr; } .features-container { flex-direction: column; align-items: center; } .feature-box { flex: 1 1 100%; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+            <ul class="nav-links">
+                <% navLinks.forEach(link => { %>
+                    <li>
+                        <a href="<%= link.href %>"><%= link.name %></a>
+                        <% if (link.submenu) { %>
+                            <ul class="dropdown">
+                                <% link.submenu.forEach(sublink => { %>
+                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                <% }) %>
+                            </ul>
+                        <% } %>
+                    </li>
+                <% }) %>
+            </ul>
+            <input type="text" placeholder="Search" class="search-box">
+        </div>
+    </header>
+    
+    <section class="welcome-section">
+        <button id="logout-btn"><a style="text-decoration: none; color:white;" href="/logout">Logout</a></button>
+        <h1 class="banner-content">Welcome to RELABTeams <%= user.name %></h1>
+        <p class="banner-para">--Collaborate, Learn, and Build Innovative Projects--</p>
+    </section>
+
+    <!-- Topics Section -->
+    <div class="topics-anxtion-container">
+        <div class="topics">
+            <% const topics = [
+                { name: "Web Development", description: "Learn front-end & back-end development to create responsive and dynamic websites.", joinLink: "/web-dev" },
+                { name: "Cyber Security", description: "Understand ethical hacking, encryption, and security protocols to protect data.", joinLink: "/cyb" },
+                { name: "Robotics", description: "Design, build, and program robots with AI to automate tasks.", joinLink: "/robo" },
+                { name: "Data Science", description: "Analyze big data using Python, R, and SQL for decision-making.", joinLink: "/ds" },
+                { name: "Deep Learning", description: "Understand deep learning and its advanced topics.", joinLink: "/dl" },
+                { name: "Blockchain", description: "Understand decentralized networks, smart contracts, and cryptocurrencies.", joinLink: "/blockchain" }
+            ]; %>
+            <% topics.forEach(topic => { %>
+                <div class="topic">
+                    <span class="topic-name"><%= topic.name %></span>
+                    <p class="topic-desc"><%= topic.description %></p>
+                    <div class="options">
+                        <button style="width:120px;"><a href="/ask" style="text-decoration: none;">Ask a Doubt</a></button>
+                        <button style="width:120px;"><a href="/e" style="text-decoration: none;">Create Project</a></button>
+                        <button style="width:120px;"><a href="<%= topic.joinLink %>" style="text-decoration: none;">Join a Project</a></button>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <h1 class="features-title">FEATURES</h1>
+        <div class="features-container">
+            <% const features = [
+                { title: "Student Doubt Clarification Hub", description: "Post doubts, get expert answers, earn reputation points, and chat with peers" },
+                { title: "Project Idea Collaboration Space", description: "Share ideas, form teams, track progress, and showcase work" },
+                { title: "Recruiter Talent Discovery Portal", description: "Find top students, verify skills, send offers, and validate certificates" },
+                { title: "Admin Monitoring & Moderation", description: "Monitor activity, remove spam, verify recruiters, and resolve disputes" }
+            ]; %>
+            <% features.forEach(feature => { %>
+                <div class="feature-box">
+                    <h3><%= feature.title %></h3>
+                    <p><%= feature.description %></p>
+                </div>
+            <% }) %>
+        </div>
+    </section>
+
+    <!-- Testimonial Carousel -->
+    <div class="carousel-container">
+        <div class="carousel">
+            <% const testimonials = [
+                { quote: "Great platform! Helped me collaborate on projects easily.", author: "User 1" },
+                { quote: "The best place to find team members for CS projects!", author: "User 2" },
+                { quote: "Amazing experience, learned a lot from my peers!", author: "User 3" }
+            ]; %>
+            <% testimonials.forEach(testimonial => { %>
+                <div class="testimonial">
+                    <p>"<%= testimonial.quote %>"</p>
+                    <h4>- <%= testimonial.author %></h4>
+                </div>
+            <% }) %>
+        </div>
+        <div class="dots"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>Follow us on:</p>
+        <a href="https://linkedin.com">LinkedIn</a>
+        <a href="https://instagram.com">Instagram</a>
+        <a href="https://youtube.com">YouTube</a>
+    </footer>
+
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const carousel = document.querySelector(".carousel");
+            const testimonials = document.querySelectorAll(".testimonial");
+            const dotsContainer = document.querySelector(".dots");
+            let index = 0;
+            const totalSlides = testimonials.length;
+            let interval;
+
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement("span");
+                dot.classList.add("dot");
+                if (i === 0) dot.classList.add("active");
+                dotsContainer.appendChild(dot);
+            }
+            const dots = document.querySelectorAll(".dot");
+
+            function updateCarousel() {
+                carousel.style.transform = `translateX(-${index * 100}%)`;
+                dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+            }
+            function nextSlide() {
+                index = (index + 1) % totalSlides;
+                updateCarousel();
+            }
+            function startAutoSlide() {
+                interval = setInterval(nextSlide, 3000);
+            }
+            function stopAutoSlide() {
+                clearInterval(interval);
+            }
+            dots.forEach((dot, i) => {
+                dot.addEventListener("click", () => {
+                    index = i;
+                    updateCarousel();
+                    stopAutoSlide();
+                    startAutoSlide();
+                });
+            });
+            startAutoSlide();
+        });
+    </script>
+</body>
+</html>

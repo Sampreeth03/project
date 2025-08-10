@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recruiter Signup</title>
+    <style>
+      body {
+        background-color: #121212;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .signup-container {
+        background-color: #1e1e1e;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        width: 400px;
+        transition: 0.3s;
+      }
+
+      .signup-form h2 {
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 24px;
+      }
+
+      .input-group,
+      .password-group,
+      .file-group {
+        margin-bottom: 15px;
+      }
+
+      .input-group input,
+      .password-group input {
+        width: 93%;
+        padding: 12px;
+        border: 1px solid #1079e9;
+        border-radius: 5px;
+        background-color: transparent;
+        color: #ffffff;
+        outline: none;
+      }
+
+      .input-group input:focus,
+      .password-group input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+      }
+
+      .password-group {
+        position: relative;
+      }
+
+      .toggle-password {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .toggle-password:hover {
+        color: #0068ff;
+      }
+
+      .file-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .file-group input {
+        flex-grow: 1;
+        border: 1px solid #1079e9;
+        border-radius: 5px;
+        background-color: transparent;
+        color: #ffffff;
+        padding: 10px;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin: 15px 0;
+      }
+
+      .checkbox-group a {
+        color: #0068ff;
+        text-decoration: underline;
+      }
+
+      .signup-btn {
+        width: 100%;
+        background-color: #0068ff;
+        color: #ffffff;
+        border: none;
+        padding: 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: 0.3s;
+        margin-top: 10px;
+      }
+
+      .signup-btn:hover {
+        background-color: #1f5bb4;
+      }
+
+      .signin-text {
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      .signin-text a {
+        color: #0068ff;
+        text-decoration: underline;
+      }
+      
+      .error {
+        color: #ff4d4d;
+        text-align: center;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="signup-container">
+      <form class="signup-form" action="/recruiter-signup" method="POST" enctype="multipart/form-data" onsubmit="return validateForm(event)">
+        <h2>Recruiter Sign Up</h2>
+        
+        <% if (error) { %>
+        <p class="error"><%= error %></p>
+        <% } %>
+
+        <div class="input-group">
+          <input type="text" name="Name" placeholder="Name" required />
+        </div>
+        <div class="input-group">
+          <input type="email" name="email" placeholder="Email" required />
+        </div>
+        <div class="password-group">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <span
+            class="toggle-password"
+            onclick="togglePassword('password', this)"
+            >Show</span
+          >
+        </div>
+        <div class="password-group">
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            required
+          />
+          <span
+            class="toggle-password"
+            onclick="togglePassword('confirmPassword', this)"
+            >Show</span
+          >
+        </div>
+
+        <div class="file-group">
+          <label for="objectFile">Upload Verification:</label>
+
+          <input
+            type="file"
+            id="objectFile"
+            name="objectFile"
+          />
+        </div>
+
+        <button type="submit" class="signup-btn">Sign Up</button>
+        <p class="signin-text">
+          Already have an account? <a href="/login">Sign In</a>
+        </p>
+      </form>
+    </div>
+
+    <script>
+      function togglePassword(id, element) {
+        var input = document.getElementById(id);
+        if (input.type === "password") {
+          input.type = "text";
+          element.textContent = "Hide";
+        } else {
+          input.type = "password";
+          element.textContent = "Show";
+        }
+      }
+      
+      function validateForm(event) {
+        var password = document.getElementById("password").value;
+        var confirmPassword = document.getElementById("confirmPassword").value;
+
+        if (password !== confirmPassword) {
+          alert("Passwords do not match!");
+          event.preventDefault(); 
+          return false;
+        }
+        return true;
+      }
+
+     
+  document.getElementById("signupForm").addEventListener("submit", function (e) {
+    let password = document.getElementById("password").value;
+    let confirmPassword = document.getElementById("confirmPassword").value;
+    let passwordRegex = /^(?=.[A-Z])(?=.[\W_]).{8,}$/; // At least 1 uppercase, 1 special char, 8+ chars
+
+    if (!passwordRegex.test(password)) {
+      alert("Password must contain at least one uppercase letter, one special character, and be at least 8 characters long.");
+      e.preventDefault(); // Stop form submission
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      e.preventDefault();
+    }
+  });
+
+
+
+
+    </script>
+  </body>
+</html>

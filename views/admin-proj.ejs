@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELABTeams Projects</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0068FF;
+            --secondary: #0056d6;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light-text: #ffffff;
+            --gray-text: #a0a0a0;
+            --gray-dark: #2a2a2a;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light-text);
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background-color: var(--darker);
+            color: var(--light-text);
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            text-decoration: none;
+        }
+        
+        .logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0068FF;
+        }
+        
+        .nav-menu {
+            padding: 10px 0;
+        }
+        
+        .menu-label {
+            padding: 0 25px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--gray-text);
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        
+        .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        
+        .menu-item:hover {
+            color: var(--light-text);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .menu-item.active {
+            color: var(--light-text);
+            background-color: rgba(0, 104, 255, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            transition: all 0.3s;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title h2 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .page-title h4 {
+            color: var(--gray-text);
+            font-weight: normal;
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .admin-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .admin-name {
+            font-weight: 500;
+        }
+        
+        .admin-role {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .project-card {
+            background-color: var(--darker);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .project-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-dark);
+        }
+        
+        .project-title {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .project-category {
+            color: var(--primary);
+            font-size: 14px;
+        }
+        
+        .project-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .status-active {
+            background-color: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+        }
+        
+        .status-completed {
+            background-color: rgba(0, 104, 255, 0.2);
+            color: var(--primary);
+        }
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        
+        .project-body {
+            padding: 20px;
+        }
+        
+        .project-description {
+            color: var(--gray-text);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .project-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .detail-label {
+            color: var(--gray-text);
+            font-size: 14px;
+        }
+        
+        .detail-value {
+            font-size: 14px;
+        }
+        
+        .project-members {
+            display: flex;
+            align-items: center;
+        }
+        
+        .member-avatars {
+            display: flex;
+        }
+        
+        .member-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-right: -8px;
+            border: 2px solid var(--darker);
+        }
+        
+        .member-count {
+            color: var(--gray-text);
+            font-size: 14px;
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="page-title">
+                    <h2>All Projects</h2>
+                    <h4>Overview of all RELABTeams projects</h4>
+                </div>
+                <div class="admin-controls">
+                    <div class="admin-profile">
+                        <div class="admin-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="admin-info">
+                            <div class="admin-name">Srihesh</div>
+                            <div class="admin-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Grid -->
+            <div class="projects-grid" id="projectsGrid">
+                <!-- Projects will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample project data
+        const projects = [
+            {
+                id: 1,
+                title: "E-commerce Website Redesign",
+                category: "Web Development",
+                status: "active",
+                description: "Redesign the user interface and improve the shopping experience for an existing e-commerce platform.",
+                startDate: "2025-02-15",
+                deadline: "2025-04-30",
+                members: 5
+            },
+            {
+                id: 2,
+                title: "AI-Powered Chat Application",
+                category: "Machine Learning",
+                status: "completed",
+                description: "Develop a chat application with AI capabilities for automated customer support.",
+                startDate: "2024-11-10",
+                deadline: "2025-02-10",
+                members: 7
+            },
+            {
+                id: 3,
+                title: "Mobile Banking App",
+                category: "Mobile App",
+                status: "active",
+                description: "Create a secure and intuitive mobile banking application for a financial institution.",
+                startDate: "2025-01-20",
+                deadline: "2025-05-15",
+                members: 6
+            },
+            {
+                id: 4,
+                title: "Analytics Dashboard",
+                category: "Data Analysis",
+                status: "pending",
+                description: "Design and implement a comprehensive analytics dashboard for tracking user behavior.",
+                startDate: "2025-03-05",
+                deadline: "2025-06-10",
+                members: 4
+            },
+            {
+                id: 5,
+                title: "Healthcare Patient Portal",
+                category: "Web Development",
+                status: "active",
+                description: "Develop a patient portal for a healthcare provider to manage appointments and medical records.",
+                startDate: "2025-02-01",
+                deadline: "2025-05-01",
+                members: 8
+            },
+            {
+                id: 6,
+                title: "Travel Booking Platform",
+                category: "UI/UX Design",
+                status: "pending",
+                description: "Design the user experience for a travel booking platform focusing on ease of use and conversion.",
+                startDate: "2025-03-15",
+                deadline: "2025-06-30",
+                members: 3
+            }
+        ];
+
+        // DOM Elements
+        const projectsGrid = document.getElementById('projectsGrid');
+
+        // Format date
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Generate member avatars
+        function generateMemberAvatars(count) {
+            let avatars = '';
+            const colors = ['#0068FF', '#4ade80', '#f59e0b', '#ef4444', '#a855f7'];
+            
+            const maxDisplay = Math.min(count, 4);
+            for (let i = 0; i < maxDisplay; i++) {
+                const color = colors[i % colors.length];
+                avatars += `<div class="member-avatar" style="background-color: ${color}; z-index: ${5 - i};">${String.fromCharCode(65 + i)}</div>`;
+            }
+            
+            if (count > 4) {
+                avatars += `<div class="member-avatar" style="background-color: var(--gray-dark); z-index: 1;">+${count - 4}</div>`;
+            }
+            
+            return avatars;
+        }
+
+        // Display all projects
+        function displayProjects() {
+            projectsGrid.innerHTML = '';
+            
+            projects.forEach(project => {
+                const statusClass = `status-${project.status}`;
+                const statusText = project.status.charAt(0).toUpperCase() + project.status.slice(1);
+                
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <div class="project-header">
+                        <div class="project-title">${project.title}</div>
+                        <div class="project-category">${project.category}</div>
+                        <span class="project-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="project-body">
+                        <div class="project-description">${project.description}</div>
+                        <div class="project-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Start Date:</span>
+                                <span class="detail-value">${formatDate(project.startDate)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Deadline:</span>
+                                <span class="detail-value">${formatDate(project.deadline)}</span>
+                            </div>
+                        </div>
+                        <div class="project-members">
+                            <div class="member-avatars">
+                                ${generateMemberAvatars(project.members)}
+                            </div>
+                            <div class="member-count">${project.members} Members</div>
+                        </div>
+                    </div>
+                `;
+                
+                projectsGrid.appendChild(projectCard);
+            });
+        }
+
+        // Initial display of all projects
+        displayProjects();
+    </script>
+</body>
+</html>

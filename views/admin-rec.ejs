@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELABTeams Recruiters</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Keeping all original styles, just removing unnecessary modal styles */
+        :root {
+            --primary: #0068FF;
+            --secondary: #0056d6;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light-text: #ffffff;
+            --gray-text: #a0a0a0;
+            --gray-dark: #2a2a2a;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light-text);
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background-color: var(--darker);
+            color: var(--light-text);
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            text-decoration: none;
+        }
+        
+        .logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0068FF;
+        }
+        
+        .nav-menu {
+            padding: 10px 0;
+        }
+        
+        .menu-label {
+            padding: 0 25px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--gray-text);
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        
+        .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        
+        .menu-item:hover {
+            color: var(--light-text);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .menu-item.active {
+            color: var(--light-text);
+            background-color: rgba(0, 104, 255, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            transition: all 0.3s;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title h2 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .page-title h4 {
+            color: var(--gray-text);
+            font-weight: normal;
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-dark);
+            background-color: var(--darker);
+            color: var(--light-text);
+            outline: none;
+        }
+        
+        .search-box input::placeholder {
+            color: var(--gray-text);
+        }
+        
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-text);
+        }
+        
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .admin-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .admin-name {
+            font-weight: 500;
+        }
+        
+        .admin-role {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+        
+        .recruiter-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-item {
+            padding: 8px 16px;
+            background-color: var(--darker);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-item.active {
+            background-color: var(--primary);
+        }
+        
+        .filter-item:hover {
+            background-color: var(--gray-dark);
+        }
+        
+        .recruiters-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--darker);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .recruiters-table th, 
+        .recruiters-table td {
+            padding: 15px 20px;
+            text-align: left;
+        }
+        
+        .recruiters-table th {
+            background-color: rgba(0, 0, 0, 0.2);
+            font-weight: 500;
+            color: var(--gray-text);
+        }
+        
+        .recruiters-table tr {
+            border-bottom: 1px solid var(--gray-dark);
+        }
+        
+        .recruiters-table tr:last-child {
+            border-bottom: none;
+        }
+        
+        .recruiters-table tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .recruiter-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        
+        .status-active {
+            background-color: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+        }
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        
+        .status-inactive {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--gray-text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--light-text);
+        }
+        
+        .profile-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            background-color: var(--primary);
+            color: var(--light-text);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .profile-btn:hover {
+            background-color: var(--secondary);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .page-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--darker);
+            color: var(--gray-text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .page-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--light-text);
+        }
+        
+        .page-btn.active {
+            background-color: var(--primary);
+            color: var(--light-text);
+        }
+        
+        .company-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--dark);
+            margin-right: 10px;
+            font-weight: bold;
+            color: var(--light-text);
+        }
+        
+        .recruiter-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .recruiter-name {
+            font-weight: 500;
+        }
+        
+        .recruiter-company {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+        
+        .recruitment-count {
+            font-weight: 600;
+            color: var(--light-text);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="page-title">
+                    <h2>Recruiters</h2>
+                    <h4>Manage CSE department recruiters and their accounts</h4>
+                </div>
+                <div class="admin-controls">
+                    <div class="search-box">
+                        <input type="text" placeholder="Search recruiters..." id="searchRecruiter">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <div class="admin-profile">
+                        <div class="admin-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="admin-info">
+                            <div class="admin-name">Srihesh</div>
+                            <div class="admin-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="recruiter-filters">
+                <div class="filter-item active" data-filter="all">All Recruiters</div>
+                <div class="filter-item" data-filter="active">Active</div>
+                <div class="filter-item" data-filter="pending">Pending</div>
+                <div class="filter-item" data-filter="inactive">Inactive</div>
+            </div>
+
+            <!-- Recruiters Table -->
+            <table class="recruiters-table">
+                <thead>
+                    <tr>
+                        <th>Recruiter</th>
+                        <th>Email</th>
+                        <th>CSE Role</th>
+                        <th>Recruitments</th>
+                        <th>Joined Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="recruitersTableBody">
+                    
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <div class="page-btn"><i class="fas fa-chevron-left"></i></div>
+                <div class="page-btn active">1</div>
+                <div class="page-btn">2</div>
+                <div class="page-btn">3</div>
+                <div class="page-btn"><i class="fas fa-chevron-right"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated sample data with CSE roles
+        const recruiters = [
+            {
+                id: 1,
+                name: "Sarah Johnson",
+                email: "sarah.j@techco.com",
+                company: "TechCo",
+                role: "Software Engineer",
+                joinedDate: "2023-01-15",
+                status: "active",
+                recruitmentCount: 27
+            },
+            {
+                id: 2,
+                name: "Michael Chen",
+                email: "m.chen@syssoft.com",
+                company: "SysSoft",
+                role: "Data Scientist",
+                joinedDate: "2023-02-05",
+                status: "active",
+                recruitmentCount: 15
+            },
+            {
+                id: 3,
+                name: "Emily Rodriguez",
+                email: "e.rodriguez@netsecure.com",
+                company: "NetSecure",
+                role: "Cybersecurity Specialist",
+                joinedDate: "2023-02-18",
+                status: "pending",
+                recruitmentCount: 8
+            },
+            {
+                id: 4,
+                name: "David Park",
+                email: "d.park@cloudtech.com",
+                company: "CloudTech",
+                role: "Cloud Architect",
+                joinedDate: "2023-03-10",
+                status: "inactive",
+                recruitmentCount: 5
+            },
+            {
+                id: 5,
+                name: "Lisa Wilson",
+                email: "lisa.w@aiworks.com",
+                company: "AIWorks",
+                role: "AI/ML Engineer",
+                joinedDate: "2023-03-22",
+                status: "active",
+                recruitmentCount: 19
+            }
+        ];
+
+        // DOM elements
+        const recruitersTableBody = document.getElementById('recruitersTableBody');
+        const searchInput = document.getElementById('searchRecruiter');
+        const filterItems = document.querySelectorAll('.filter-item');
+
+        // Current filter
+        let currentFilter = 'all';
+
+        // Load recruiters data
+        function loadRecruiters(filter = 'all', searchTerm = '') {
+            recruitersTableBody.innerHTML = '';
+            
+            let filteredRecruiters = recruiters;
+            
+            if (filter !== 'all') {
+                filteredRecruiters = recruiters.filter(recruiter => recruiter.status === filter);
+            }
+            
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredRecruiters = filteredRecruiters.filter(recruiter => 
+                    recruiter.name.toLowerCase().includes(term) || 
+                    recruiter.email.toLowerCase().includes(term) || 
+                    recruiter.company.toLowerCase().includes(term)
+                );
+            }
+            
+            filteredRecruiters.forEach(recruiter => {
+                const row = document.createElement('tr');
+                
+                const joinDate = new Date(recruiter.joinedDate);
+                const formattedDate = joinDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                let statusClass = '';
+                switch(recruiter.status) {
+                    case 'active':
+                        statusClass = 'status-active';
+                        break;
+                    case 'pending':
+                        statusClass = 'status-pending';
+                        break;
+                    case 'inactive':
+                        statusClass = 'status-inactive';
+                        break;
+                }
+                
+                const companyInitial = recruiter.company.charAt(0);
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="recruiter-info">
+                            <div class="company-logo">${companyInitial}</div>
+                            <div>
+                                <div class="recruiter-name">${recruiter.name}</div>
+                                <div class="recruiter-company">${recruiter.company}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${recruiter.email}</td>
+                    <td>${recruiter.role}</td>
+                    <td>
+                        <div class="recruitment-count">${recruiter.recruitmentCount}</div>
+                    </td>
+                    <td>${formattedDate}</td>
+                    <td><span class="recruiter-status ${statusClass}">${recruiter.status.charAt(0).toUpperCase() + recruiter.status.slice(1)}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <div class="action-btn view-btn" data-id="${recruiter.id}"><i class="fas fa-eye"></i></div>
+                            <div class="profile-btn" data-id="${recruiter.id}"><i class="fas fa-user"></i> Profile</div>
+                        </div>
+                    </td>
+                `;
+                
+                recruitersTableBody.appendChild(row);
+            });
+            
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const recruiterId = this.dataset.id;
+                    viewRecruiter(recruiterId);
+                });
+            });
+            
+            document.querySelectorAll('.profile-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const recruiterId = this.dataset.id;
+                    viewProfile(recruiterId);
+                });
+            });
+        }
+
+        // Filter recruiters
+        filterItems.forEach(item => {
+            item.addEventListener('click', function() {
+                filterItems.forEach(filter => filter.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                loadRecruiters(currentFilter, searchInput.value);
+            });
+        });
+
+        // Search recruiters
+        searchInput.addEventListener('input', function() {
+            loadRecruiters(currentFilter, this.value);
+        });
+
+        // View recruiter details
+        function viewRecruiter(id) {
+            const recruiter = recruiters.find(r => r.id == id);
+            if (recruiter) {
+                console.log('Viewing recruiter:', recruiter);
+            }
+        }
+
+        // View recruiter profile
+        function viewProfile(id) {
+            const recruiter = recruiters.find(r => r.id == id);
+            if (recruiter) {
+                console.log('Viewing profile for recruiter:', recruiter);
+            }
+        }
+
+        // Load recruiters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecruiters();
+        });
+    </script>
+</body>
+</html>

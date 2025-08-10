@@ -1,0 +1,482 @@
+<!-- views/joined_projects.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joined Projects - RELABTeams</title>
+    <style>
+        :root {
+            --primary-color: #0068FF;
+            --secondary-color: #4d9fff;
+            --danger-color: #FF5252;
+            --dark-bg: #121212;
+            --darker-bg: #1e1e1e;
+            --card-bg: #2a2a2a;
+            --light-text: #fff;
+            --medium-text: #b0b0b0;
+            --dark-text: #8a8a8a;
+            --border-color: #3a3a3a;
+            --hover-color: #353535;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--light-text);
+            background: linear-gradient(135deg, var(--dark-bg), #1a1a1a);
+            padding-top: 7vh;
+        }
+
+        .navbar { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 60px; 
+            background-color: black; 
+            padding: 15px 5%; 
+            display: flex; 
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+        .logo { 
+            font-size: 30px; 
+            color: var(--primary-color); 
+            font-weight: bold; 
+            margin-right: 30px; 
+        }
+        #logo-link { 
+            text-decoration: none; 
+            color: var(--primary-color); 
+        }
+        .nav-links { 
+            list-style: none; 
+            display: flex; 
+            gap: 38px; 
+            position: relative; 
+        }
+        .nav-links li { 
+            position: relative; 
+        }
+        .nav-links li a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 20px; 
+            transition: color 0.3s ease; 
+            padding: 10px; 
+            display: block; 
+        }
+        .nav-links li a:hover { 
+            color: var(--primary-color); 
+        }
+        .dropdown { 
+            display: none; 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            background-color: black; 
+            min-width: max-content; 
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); 
+            z-index: 1000; 
+        }
+        .dropdown li { 
+            width: 100%; 
+        }
+        .dropdown li a { 
+            padding: 12px; 
+            font-size: 18px; 
+            display: block; 
+            color: white; 
+            white-space: nowrap; 
+        }
+        .dropdown li a:hover { 
+            background-color: #333; 
+            color: var(--primary-color); 
+        }
+        .nav-links li:hover .dropdown { 
+            display: block; 
+        }
+        .search-box { 
+            padding: 8px; 
+            border-radius: 5px; 
+            border: none; 
+            outline: none; 
+            width: 205px; 
+            background-color: #222; 
+            color: white; 
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .project-header {
+            margin-bottom: 20px;
+            color: var(--light-text);
+        }
+
+        .project-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .project-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .project-title {
+            background: var(--darker-bg);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-title h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .project-description {
+            padding: 1rem;
+            color: var(--medium-text);
+        }
+
+        .task-list {
+            padding: 0.5rem;
+        }
+
+        .task-card {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-card:last-child {
+            border-bottom: none;
+        }
+
+        .task-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--light-text);
+        }
+
+        .task-info p {
+            color: var(--medium-text);
+            font-size: 0.95rem;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--light-text);
+        }
+
+        .status-badge.in-progress {
+            background: var(--primary-color);
+        }
+
+        .status-badge.to-be-reviewed {
+            background: #4CAF50;
+        }
+
+        .action-btn {
+            background: var(--primary-color);
+            border: none;
+            color: var(--light-text);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .action-btn.view-feedback {
+            background: #9c27b0;
+        }
+
+        .action-btn.view-feedback:hover {
+            background: #ab47bc;
+        }
+
+        .empty-state {
+            padding: 2rem;
+            text-align: center;
+            color: var(--dark-text);
+        }
+
+        .footer {
+            padding: 20px 30px;
+            font-size: 12px;
+            color: var(--medium-text);
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: var(--primary-color);
+            color: var(--light-text);
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            background: var(--danger-color);
+        }
+
+        .github-form {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--darker-bg);
+            border-radius: 4px;
+        }
+
+        .github-form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #333;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--light-text);
+        }
+        .status-badge.completed {
+    background-color: #4caf50; /* Green for completed */
+    color: white;
+}
+
+        .github-form button {
+            background: var(--primary-color);
+            border: none;
+            color: var(--light-text);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .github-form button:hover {
+            background: var(--secondary-color);
+        }
+
+        .github-form .cancel-btn {
+            background: var(--danger-color);
+            margin-left: 5px;
+        }
+
+        .github-form .cancel-btn:hover {
+            background: #e04848;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+            <ul class="nav-links">
+                <% navLinks.forEach(link => { %>
+                    <li>
+                        <a href="<%= link.href %>"><%= link.name %></a>
+                        <% if (link.submenu) { %>
+                            <ul class="dropdown">
+                                <% link.submenu.forEach(sublink => { %>
+                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                <% }) %>
+                            </ul>
+                        <% } %>
+                    </li>
+                <% }) %>
+            </ul>
+            <input type="text" placeholder="Search" class="search-box">
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="project-header">
+            <h1>Joined Projects</h1>
+        </div>
+
+        <% if (!projects || projects.length === 0) { %>
+            <div class="empty-state">You have not joined any projects yet.</div>
+        <% } else { %>
+            <% projects.forEach(project => { %>
+                <div class="project-card" data-project-id="<%= project.id %>">
+                    <div class="project-title">
+                        <h2><%= project.title %></h2>
+                    </div>
+                    <div class="project-description">
+                        <%= project.description %>
+                    </div>
+                    <div class="task-list">
+                        <% if (!tasks[project.id] || tasks[project.id].length === 0) { %>
+                            <div class="empty-state">No tasks assigned to you in this project.</div>
+                        <% } else { %>
+                            <% tasks[project.id].forEach(task => { %>
+                                <div class="task-card" data-task-id="<%= task.id %>">
+                                    <div class="task-info">
+                                        <h3><%= task.title %></h3>
+                                        <p><%= task.description %></p>
+                                        <p>Due: <%= new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></p>
+                                        <% if (task.github_link) { %>
+                                            <p><a href="<%= task.github_link %>" target="_blank" style="color: var(--primary-color);"><%= task.github_link %></a></p>
+                                        <% } %>
+                                        <div class="github-form" id="github-form-<%= task.id %>">
+                                            <input type="text" id="github-link-<%= task.id %>" placeholder="Enter GitHub link">
+                                            <button onclick="submitGitHubLink('<%= task.id %>', '<%= project.id %>')">Submit</button>
+                                            <button class="cancel-btn" onclick="cancelGitHubForm('<%= task.id %>')">Cancel</button>
+                                        </div>
+                                    </div>
+                                    <div class="task-actions">
+                                        <span class="status-badge <%= task.status === 'Assigned' ? 'in-progress' : task.status === 'To Be Reviewed' ? 'to-be-reviewed' : 'completed' %>">
+                                            <%= task.status === 'Assigned' ? 'In Progress' : task.status === 'To Be Reviewed' ? 'To Be Reviewed' : 'Completed' %>
+                                        </span>
+                                        <% if (task.status === 'Assigned' || task.status === 'To Be Reviewed') { %>
+                                            <button class="action-btn" onclick="showGitHubForm('<%= task.id %>')">Update Progress</button>
+                                        <% } %>
+                                        <% if (task.status === 'To Be Reviewed' && task.feedback) { %>
+                                            <button class="action-btn view-feedback" onclick="viewFeedback('<%= task.feedback %>')">View Feedback</button>
+                                        <% } %>
+                                        <% if (task.status === 'Completed' && task.feedback) { %>
+                                            <button class="action-btn view-feedback" onclick="viewFeedback('<%= task.feedback %>')">View Feedback</button>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
+            <% }) %>
+        <% } %>
+    </main>
+
+    <footer class="footer">
+        <p>© 2025 RELABTeams Platform • Version 2.4.1 • Last updated: March 24, 2025</p>
+    </footer>
+
+    <script>
+        function showGitHubForm(taskId) {
+            const form = document.getElementById(`github-form-${taskId}`);
+            form.style.display = 'block';
+        }
+
+        function cancelGitHubForm(taskId) {
+            const form = document.getElementById(`github-form-${taskId}`);
+            form.style.display = 'none';
+        }
+
+        function submitGitHubLink(taskId, projectId) {
+    const githubLink = document.getElementById(`github-link-${taskId}`).value;
+    if (!githubLink) {
+        showToast('Please enter a GitHub link', 'error');
+        return;
+    }
+
+    console.log('Submitting GitHub link:', { taskId, projectId, githubLink });
+
+    fetch('/task/submit-github-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, githubLink, projectId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Server response:', data);
+        if (data.success) {
+            showToast('GitHub link submitted successfully');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Failed to submit GitHub link', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        showToast('An error occurred while submitting the GitHub link', 'error');
+    });
+}
+
+        function viewFeedback(feedback) {
+            alert('Feedback: ' + feedback);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlightProject = urlParams.get('highlightProject');
+            const highlightTask = urlParams.get('highlightTask');
+
+            if (highlightProject && highlightTask) {
+                const projectCard = document.querySelector(`.project-card[data-project-id="${highlightProject}"]`);
+                const taskCard = document.querySelector(`.task-card[data-task-id="${highlightTask}"]`);
+
+                if (projectCard) {
+                    projectCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    projectCard.style.background = '#1a2a4a'; // Highlight the project card
+                }
+
+                if (taskCard) {
+                    taskCard.style.background = '#1a2a4a'; // Highlight the task card
+                }
+            }
+        });
+    </script>
+</body>
+</html>

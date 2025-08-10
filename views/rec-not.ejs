@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruiter Notifications</title>
+    <style>
+        :root {
+            --primary: #0688FF;
+            --dark: #121212;
+            --gray: #333333;
+            --light-gray: #555555;
+            --text: #FFFFFF;
+            --success: #4CAF50;
+            --danger: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: black;
+            padding: 15px 5%;
+            display: flex;
+            z-index: 1000;
+            align-items: center;
+            justify-content: flex-start;
+            box-sizing: border-box;
+        }
+        
+        .logo {
+            font-size: 30px;
+            color: #0068FF;
+            font-weight: bold;
+            margin-right: 30px;
+            flex-shrink: 0;
+        }
+        
+        #logo-link {
+            text-decoration: none;
+            color: #0068FF;
+        }
+        
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 38px;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            flex: 1;
+        }
+        
+        .nav-links li {
+            position: relative;
+        }
+        
+        .nav-links li a {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            transition: color 0.3s ease;
+            padding: 10px;
+            display: block;
+        }
+        
+        .nav-links li a:hover {
+            color: #0068FF;
+        }
+        
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: black;
+            min-width: max-content;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        
+        .dropdown li {
+            width: 100%;
+        }
+        
+        .dropdown li a {
+            padding: 12px;
+            font-size: 18px;
+            display: block;
+            color: white;
+            white-space: nowrap;
+        }
+        
+        .dropdown li a:hover {
+            background-color: #333;
+            color: #0068FF;
+        }
+        
+        .nav-links li:hover .dropdown {
+            display: block;
+        }
+        
+        .search-box {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            width: 205px;
+            background-color: #222;
+            color: white;
+        }
+        body {
+            background-color: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            margin-top: 60px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary);
+        }
+
+        .notification-count {
+            background-color: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-weight: bold;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background-color: var(--gray);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-tab.active, .nav-tab:hover {
+            background-color: var(--primary);
+        }
+
+        .notifications {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .notification {
+            background-color: var(--gray);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .notification.unread::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+
+        .notification:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification-time {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .notification-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .notification-body {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .job-description {
+            margin-bottom: 5px;
+        }
+
+        .job-salary {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .notification-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .notification-badge {
+            background-color: var(--light-gray);
+            color: var(--text);
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .notification-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text);
+            border: 1px solid var(--light-gray);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 0;
+            display: none;
+        }
+
+        .empty-state img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--gray);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            transform: translateY(100px);
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .notification-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .menu-btn {
+                display: block;
+            }
+            
+            .nav-links.show {
+                position: absolute;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background-color: black;
+                display: block;
+                text-align: center;
+                padding: 0;
+                z-index: 100;
+                border-bottom: 1px solid #0068FF;
+            }
+            
+            .nav-links.show a {
+                display: block;
+                padding: 15px;
+                margin: 0;
+                border-bottom: 1px solid #333;
+            }
+        }
+        
+        .menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .menu-btn {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="logo">
+                <a id="logo-link" href="<%= homeUrl %>">RELABTeams</a>
+            </div>
+            <ul class="nav-links">
+                <% navLinks.forEach(link => { %>
+                    <li>
+                        <a href="<%= link.href %>"><%= link.name %></a>
+                        <% if (link.submenu) { %>
+                            <ul class="dropdown">
+                                <% link.submenu.forEach(sublink => { %>
+                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                <% }) %>
+                            </ul>
+                        <% } %>
+                    </li>
+                <% }) %>
+            </ul>
+            <button class="menu-btn">☰</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Notifications</h1>
+            <span class="notification-count" id="notification-count"><%= notifications.filter(n => !n.is_read).length %></span>
+        </div>
+
+        <div class="nav-tabs">
+            <a href="/rec-not" class="nav-tab active">Notifications</a>
+            <a href="/rec-app" class="nav-tab">Applications</a>
+        </div>
+
+        <div class="notifications" id="notifications-container">
+            <% if (notifications && notifications.length > 0) { %>
+                <% notifications.forEach(notification => { %>
+                    <div class="notification <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
+                        <div class="notification-title">Job Posted Successfully</div>
+                        <div class="notification-body"><%= notification.message %></div>
+                        <% if (notification.job_id) { %>
+                            <div class="job-description"><%= notification.description %></div>
+                            <div class="job-salary"><%= notification.salary_range %></div>
+                        <% } %>
+                        <div class="notification-time"><%= new Date(notification.created_at).toLocaleString() %></div>
+                        <div class="notification-footer">
+                            <span class="notification-badge">Job Post</span>
+                            
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="empty-state" id="empty-state">
+                    <img src="/api/placeholder/100/100" alt="No notifications">
+                    <h3>No notifications to display</h3>
+                    <p>New notifications will appear here</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = toast ${type} show;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function updateNotificationCount() {
+            const unreadCount = document.querySelectorAll('.notification.unread').length;
+            document.getElementById('notification-count').textContent = unreadCount;
+        }
+
+        function markAsRead(notificationId) {
+            fetch('/mark-notification-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notificationId })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const notification = document.querySelector(.notification[data-id="${notificationId}"]);
+                    notification.classList.remove('unread');
+                    updateNotificationCount();
+                } else {
+                    showToast('Failed to mark as read');
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+                showToast('An error occurred');
+            });
+        }
+
+        function viewJob(jobId) {
+            // Redirect to a job details page (you can implement this separately)
+            window.location.href = /rec-job#job-${jobId};
+        }
+
+        function editJob(jobId) {
+            // Redirect to an edit job page (you can implement this separately)
+            showToast('Edit functionality not implemented yet');
+        }
+
+        document.querySelectorAll('.notification').forEach(element => {
+            element.addEventListener('click', function(e) {
+                if (e.target.tagName === 'BUTTON') return;
+                const notificationId = parseInt(this.getAttribute('data-id'));
+                markAsRead(notificationId);
+            });
+        });
+
+        document.querySelector('.menu-btn')?.addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('show');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNotificationCount();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!-- views/projects.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELABTeams - My Projects</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: #111111;
+            color: white;
+            padding-top: 7vh;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: black;
+            padding: 15px 5%;
+            display: flex;
+            z-index: 1000;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 30px;
+            color: #0068FF;
+            font-weight: bold;
+            margin-right: 30px;
+        }
+
+        #logo-link {
+            text-decoration: none;
+            color: #0068FF;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 38px;
+            position: relative;
+        }
+
+        .nav-links li {
+            position: relative;
+        }
+
+        .nav-links li a {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            transition: color 0.3s ease;
+            padding: 10px;
+            display: block;
+        }
+
+        .nav-links li a:hover {
+            color: #0068FF;
+        }
+
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: black;
+            min-width: max-content;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .dropdown li {
+            width: 100%;
+        }
+
+        .dropdown li a {
+            padding: 12px;
+            font-size: 18px;
+            display: block;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .dropdown li a:hover {
+            background-color: #333;
+            color: #0068FF;
+        }
+
+        .nav-links li:hover .dropdown {
+            display: block;
+        }
+
+        .search-box {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            width: 205px;
+            background-color: #222;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .projects-header {
+            margin-bottom: 20px;
+        }
+
+        .projects-title {
+            font-size: 28px;
+            color: white;
+        }
+
+        .project-card {
+            background-color: #222222;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .project-card h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .project-card p {
+            color: #BBBBBB;
+            margin-bottom: 8px;
+        }
+
+        .project-card a {
+            color: #0068FF;
+            text-decoration: none;
+        }
+
+        .project-card a:hover {
+            text-decoration: underline;
+        }
+
+        .no-projects {
+            text-align: center;
+            color: #BBBBBB;
+            font-size: 18px;
+            margin-top: 50px;
+        }
+
+        .no-projects a {
+            color: #0068FF;
+            text-decoration: none;
+        }
+
+        .no-projects a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+            <ul class="nav-links">
+                <% navLinks.forEach(link => { %>
+                    <li>
+                        <a href="<%= link.href %>"><%= link.name %></a>
+                        <% if (link.submenu) { %>
+                            <ul class="dropdown">
+                                <% link.submenu.forEach(sublink => { %>
+                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                <% }) %>
+                            </ul>
+                        <% } %>
+                    </li>
+                <% }) %>
+            </ul>
+            <input type="text" placeholder="Search" class="search-box">
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="projects-header">
+            <h1 class="projects-title">My Projects</h1>
+        </div>
+
+        <% if (projects.length === 0) { %>
+            <div class="no-projects">
+                You haven't joined any projects yet. <a href="/cyb">Explore Cyber Security projects</a> to get started!
+            </div>
+        <% } else { %>
+            <% projects.forEach(project => { %
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>RELABTeams - My Created Projects</title>
+                    <style>
+                        * {
+                            box-sizing: border-box;
+                            margin: 0;
+                            padding: 0;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                        }
+                
+                        body {
+                            background-color: #111111;
+                            color: white;
+                            padding-top: 7vh;
+                        }
+                
+                        .navbar {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 60px;
+                            background-color: black;
+                            padding: 15px 5%;
+                            display: flex;
+                            z-index: 1000;
+                            align-items: center;
+                            justify-content: space-between;
+                        }
+                
+                        .logo {
+                            font-size: 30px;
+                            color: #0068FF;
+                            font-weight: bold;
+                            margin-right: 30px;
+                        }
+                
+                        #logo-link {
+                            text-decoration: none;
+                            color: #0068FF;
+                        }
+                
+                        .nav-links {
+                            list-style: none;
+                            display: flex;
+                            gap: 38px;
+                            position: relative;
+                        }
+                
+                        .nav-links li {
+                            position: relative;
+                        }
+                
+                        .nav-links li a {
+                            color: white;
+                            text-decoration: none;
+                            font-size: 20px;
+                            transition: color 0.3s ease;
+                            padding: 10px;
+                            display: block;
+                        }
+                
+                        .nav-links li a:hover {
+                            color: #0068FF;
+                        }
+                
+                        .dropdown {
+                            display: none;
+                            position: absolute;
+                            top: 100%;
+                            left: 0;
+                            background-color: black;
+                            min-width: max-content;
+                            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+                            z-index: 1000;
+                        }
+                
+                        .dropdown li {
+                            width: 100%;
+                        }
+                
+                        .dropdown li a {
+                            padding: 12px;
+                            font-size: 18px;
+                            display: block;
+                            color: white;
+                            white-space: nowrap;
+                        }
+                
+                        .dropdown li a:hover {
+                            background-color: #333;
+                            color: #0068FF;
+                        }
+                
+                        .nav-links li:hover .dropdown {
+                            display: block;
+                        }
+                
+                        .search-box {
+                            padding: 8px;
+                            border-radius: 5px;
+                            border: none;
+                            outline: none;
+                            width: 205px;
+                            background-color: #222;
+                            color: white;
+                        }
+                
+                        .container {
+                            max-width: 1200px;
+                            margin: 24px auto;
+                            padding: 0 16px;
+                        }
+                
+                        .projects-header {
+                            margin-bottom: 20px;
+                        }
+                
+                        .projects-title {
+                            font-size: 28px;
+                            color: white;
+                        }
+                
+                        .project-card {
+                            background-color: #222222;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin-bottom: 16px;
+                            box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+                        }
+                
+                        .project-card h3 {
+                            font-size: 20px;
+                            margin-bottom: 8px;
+                        }
+                
+                        .project-card p {
+                            color: #BBBBBB;
+                            margin-bottom: 8px;
+                        }
+                
+                        .project-card a {
+                            color: #0068FF;
+                            text-decoration: none;
+                        }
+                
+                        .project-card a:hover {
+                            text-decoration: underline;
+                        }
+                
+                        .no-projects {
+                            text-align: center;
+                            color: #BBBBBB;
+                            font-size: 18px;
+                            margin-top: 50px;
+                        }
+                
+                        .no-projects a {
+                            color: #0068FF;
+                            text-decoration: none;
+                        }
+                
+                        .no-projects a:hover {
+                            text-decoration: underline;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <header>
+                        <div class="navbar">
+                            <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+                            <ul class="nav-links">
+                                <% navLinks.forEach(link => { %>
+                                    <li>
+                                        <a href="<%= link.href %>"><%= link.name %></a>
+                                        <% if (link.submenu) { %>
+                                            <ul class="dropdown">
+                                                <% link.submenu.forEach(sublink => { %>
+                                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                                <% }) %>
+                                            </ul>
+                                        <% } %>
+                                    </li>
+                                <% }) %>
+                            </ul>
+                            <input type="text" placeholder="Search" class="search-box">
+                        </div>
+                    </header>
+                
+                    <div class="container">
+                        <div class="projects-header">
+                            <h1 class="projects-title">My Created Projects</h1>
+                        </div>
+                
+                        <% if (projects.length === 0) { %>
+                            <div class="no-projects">
+                                You haven't created any projects yet. <a href="/dashboard">Create a new project</a> to get started!
+                            </div>
+                        <% } else { %>
+                            <% projects.forEach(project => { %>
+                                <div class="project-card">
+                                    <h3><a href="/project/<%= project.id %>"><%= project.title %></a></h3>
+                                    <p><%= project.description %></p>
+                                    <p>Members: <%= project.member_count %></p>
+                                    <p>Status: <%= project.status %></p>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                </body>
+                </html>
+                <div class="project-card">
+                    <h3><a href="/project/<%= project.id %>"><%= project.title %></a></h3>
+                    <p><%= project.description %></p>
+                    <p>Members: <%= project.member_count %></p>
+                    <p>Status: <%= project.status %></p>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+</body>
+</html>

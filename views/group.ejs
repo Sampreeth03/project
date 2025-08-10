@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RELABteams</title>
+  <style>
+    :root {
+    --primary: #0068FF;
+    --dark-bg: #121212;
+    --sidebar-bg: #1E1E1E;
+    --channel-hover: #2a2a2a;
+    --text: #FFFFFF;
+    --text-muted: #8e9297;
+    --border: #2D2D2D;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  body {
+    background-color: var(--dark-bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    padding-top: 8vh;
+  }
+  
+  
+.navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
+        .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
+        #logo-link { text-decoration: none; color: #0068FF; }
+        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+        .nav-links li { position: relative; }
+        .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
+        .nav-links li a:hover { color: #0068FF; }
+        .dropdown { display: none; position: absolute; top: 100%; left: 0; background-color: black; min-width: max-content; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .dropdown li { width: 100%; }
+        .dropdown li a { padding: 12px; font-size: 18px; display: block; color: white; white-space: nowrap; }
+        .dropdown li a:hover { background-color: #333; color: #0068FF; }
+        .nav-links li:hover .dropdown { display: block; }
+        .search-box { padding: 8px; border-radius: 5px; border: none; outline: none; width: 205px; background-color: #222; color: white; }
+
+  
+  /* App Container */
+  .app-container {
+    display: flex;
+    height: calc(100vh - 56px);
+  }
+  
+  /* Server List Sidebar */
+  .server-list {
+    width: 70px;
+    background-color: #0E0E0E;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .server-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--sidebar-bg);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  .server-icon:hover {
+    background-color: var(--primary);
+  }
+  
+  /* Channels Sidebar */
+  .channels-sidebar {
+    width: 240px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .server-header {
+    padding: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .channels-header {
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .channels-list {
+    padding: 0 8px;
+  }
+  
+  .channel {
+    padding: 8px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .channel:hover {
+    background-color: var(--channel-hover);
+  }
+  
+  .channel.active {
+    background-color: var(--channel-hover);
+  }
+  
+  .direct-messages-header {
+    padding: 16px;
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .user {
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .user:hover {
+    background-color: var(--channel-hover);
+  }
+  
+  .user.active {
+    background-color: var(--channel-hover);
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+  
+  .user-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #43b581;
+    margin-left: auto;
+  }
+  
+  .user-status.offline {
+    background-color: #747f8d;
+  }
+  
+  /* Chat Area */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chat-header {
+    height: 60px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+  }
+  
+  .chat-header-icon {
+    margin-right: 8px;
+    color: var(--text-muted);
+  }
+  
+  .messages-container {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    height: 0;
+  }
+  
+  .message {
+    display: flex;
+    margin-bottom: 16px;
+  }
+  
+  .message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+  
+  .message-content {
+    flex: 1;
+  }
+  
+  .message-header {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  
+  .message-author {
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  
+  .message-time {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  
+  .message-text {
+    line-height: 1.4;
+  }
+  
+  .message-input-container {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  
+  .message-input-form {
+    display: flex;
+    align-items: center;
+  }
+  
+  .file-upload {
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+  }
+  
+  .file-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #303030;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .file-upload-label:hover {
+    background-color: #404040;
+  }
+  
+  .file-upload input[type="file"] {
+    display: none;
+  }
+  
+  .message-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #303030;
+    color: var(--text);
+    font-size: 16px;
+  }
+  
+  .message-input:focus {
+    outline: none;
+  }
+  
+  .send-button {
+    margin-left: 8px;
+    padding: 0 16px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    transition: background-color 0.2s;
+  }
+  
+  .send-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .send-button i {
+    font-size: 18px;
+  }
+  
+  /* Members Sidebar */
+  .members-sidebar {
+    width: 240px;
+    background-color: var(--sidebar-bg);
+    border-left: 1px solid var(--border);
+    padding: 16px;
+  }
+  
+  .members-header {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<header>
+  <div class="navbar">
+      <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+      <ul class="nav-links">
+          <% navLinks.forEach(link => { %>
+              <li>
+                  <a href="<%= link.href %>"><%= link.name %></a>
+                  <% if (link.submenu) { %>
+                      <ul class="dropdown">
+                          <% link.submenu.forEach(sublink => { %>
+                              <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                          <% }) %>
+                      </ul>
+                  <% } %>
+              </li>
+          <% }) %>
+      </ul>
+      <input type="text" placeholder="Search" class="search-box">
+  </div>
+</header>
+<body>
+  
+
+  <!-- App Container -->
+  <div class="app-container">
+    <!-- Server List Sidebar -->
+    <div class="server-list">
+      <div class="server-icon active">P1</div>
+      <div class="server-icon">P2</div>
+      <div class="server-icon">+</div>
+    </div>
+
+    <!-- Channels Sidebar -->
+    <div class="channels-sidebar">
+      <div class="server-header">Project 1</div>
+      <div class="channels-header">
+        <span>Text Channels</span>
+        <span>+</span>
+      </div>
+      <div class="channels-list">
+        <div class="channel active" data-channel="general"># general</div>
+        <div class="channel" data-channel="announcements"># announcements</div>
+        <div class="channel" data-channel="random"># random</div>
+      </div>
+
+      <div class="direct-messages-header">
+        <span>Direct Messages</span>
+      </div>
+      <div class="channels-list" id="dm-users">
+        <!-- Users will be added dynamically via JavaScript -->
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="chat-area">
+      <div class="chat-header">
+        <span class="chat-header-icon">#</span>
+        <span id="current-channel">general</span>
+      </div>
+
+      <div class="messages-container" id="messages">
+        <!-- Messages will be loaded dynamically -->
+      </div>
+
+      <div class="message-input-container">
+        <form class="message-input-form" id="message-form">
+          <div class="file-upload">
+            <label for="file-input" class="file-upload-label">
+              <i class="fas fa-paperclip"></i>
+            </label>
+            <input type="file" id="file-input">
+          </div>
+          <input type="text" class="message-input" id="message-input" placeholder="Message #general" required autocomplete="off">
+          <button type="submit" class="send-button">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Members Sidebar -->
+    <div class="members-sidebar">
+      <div class="members-header" id="members-count">Members</div>
+      <div id="members-list">
+        <!-- Members will be added dynamically via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const users = [
+    { id: '1', username: 'Sampreeth', online: true },
+    { id: '2', username: 'Eswar', online: true },
+    { id: '3', username: 'Surya', online: false },
+    { id: '4', username: 'Shiva', online: true }
+  ];
+  
+  const messages = {
+    general: [
+      { author: 'Sampreeth', text: 'Hey everyone! Welcome to our project!', time: '2:30 PM' },
+      { author: 'Eswar', text: 'Hello! Everyone', time: '2:32 PM' },
+      { author: 'Surya', text: 'Hey', time: '2:35 PM' }
+    ],
+    announcements: [
+      { author: 'Sampreeth', text: 'Important announcement: We have a new team member joining next week!', time: '3:00 PM' }
+    ],
+    random: [
+      { author: 'Shiva', text: 'Did anyone see that new movie that came out last weekend?', time: '4:15 PM' }
+    ]
+  };
+  
+  const directMessages = {
+    '1-2': [
+      { from: '1', text: 'Hey Eswar, how are you doing?', time: '3:15 PM' },
+      { from: '2', text: 'I\'m good Sampreeth! Just checking out this new chat app.', time: '3:16 PM' }
+    ]
+  };
+  
+  const currentUser = { id: '5', username: 'You' };
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const messagesContainer = document.getElementById('messages');
+    const dmUsersContainer = document.getElementById('dm-users');
+    const membersListContainer = document.getElementById('members-list');
+    const membersCountElement = document.getElementById('members-count');
+    const currentChannelElement = document.getElementById('current-channel');
+    const channels = document.querySelectorAll('.channel');
+  
+    let currentChannel = 'general';
+    let isDM = false;
+    let currentDmUser = null;
+  
+    populateUsers();
+    populateMembers();
+    loadMessages(currentChannel);
+  
+    messageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+  
+      if (isDM && currentDmUser) {
+        const conversationId = [currentUser.id, currentDmUser].sort().join('-');
+        if (!directMessages[conversationId]) directMessages[conversationId] = [];
+        directMessages[conversationId].push({ from: currentUser.id, text: message, time: new Date().toLocaleTimeString() });
+      } else {
+        messages[currentChannel].push({ author: currentUser.username, text: message, time: new Date().toLocaleTimeString() });
+      }
+  
+      if (isDM) loadDirectMessages(currentDmUser);
+      else loadMessages(currentChannel);
+  
+      messageInput.value = '';
+    });
+  
+    channels.forEach(channel => {
+      channel.addEventListener('click', () => switchToChannel(channel.dataset.channel));
+    });
+  
+    function populateUsers() {
+      dmUsersContainer.innerHTML = '';
+      users.forEach(user => {
+        const userElement = document.createElement('div');
+        userElement.className = 'user';
+        userElement.dataset.userid = user.id;
+        userElement.innerHTML = `
+          <div class="user-avatar">${user.username.charAt(0)}</div>
+          <span>${user.username}</span>
+          <span class="user-status ${user.online ? '' : 'offline'}"></span>
+        `;
+        userElement.addEventListener('click', () => switchToDM(user.id));
+        dmUsersContainer.appendChild(userElement);
+      });
+    }
+  
+    function populateMembers() {
+      membersListContainer.innerHTML = '';
+      users.forEach(user => {
+        const userElement = document.createElement('div');
+        userElement.className = 'user';
+        userElement.innerHTML = `
+          <div class="user-avatar">${user.username.charAt(0)}</div>
+          <span>${user.username}</span>
+          <span class="user-status ${user.online ? '' : 'offline'}"></span>
+        `;
+        membersListContainer.appendChild(userElement);
+      });
+      membersCountElement.textContent = `Members — ${users.length + 1}`;
+    }
+  
+    function loadMessages(channel) {
+      messagesContainer.innerHTML = '';
+      messages[channel].forEach(message => addMessageToUI(message));
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  
+    function loadDirectMessages(userId) {
+      messagesContainer.innerHTML = '';
+      const conversationId = [currentUser.id, userId].sort().join('-');
+      if (directMessages[conversationId]) {
+        directMessages[conversationId].forEach(dm => {
+          const user = users.find(u => u.id === (dm.from === currentUser.id ? userId : dm.from));
+          addMessageToUI({ author: user.username, text: dm.text, time: dm.time });
+        });
+      }
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  
+    function addMessageToUI(message) {
+      const messageElement = document.createElement('div');
+      messageElement.className = 'message';
+      messageElement.innerHTML = `
+        <div class="message-avatar">${message.author.charAt(0)}</div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="message-author">${message.author}</span>
+            <span class="message-time">${message.time}</span>
+          </div>
+          <div class="message-text">${message.text}</div>
+        </div>
+      `;
+      messagesContainer.appendChild(messageElement);
+    }
+  
+    function switchToChannel(channel) {
+      currentChannel = channel;
+      isDM = false;
+      currentDmUser = null;
+      document.querySelectorAll('.channel, .user').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.channel[data-channel="${channel}"]`).classList.add('active');
+      currentChannelElement.textContent = channel;
+      messageInput.placeholder = `Message #${channel}`;
+      loadMessages(channel);
+    }
+  
+    function switchToDM(userId) {
+      isDM = true;
+      currentDmUser = userId;
+      document.querySelectorAll('.channel, .user').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.user[data-userid="${userId}"]`).classList.add('active');
+      const user = users.find(u => u.id === userId);
+      currentChannelElement.textContent = user.username;
+      messageInput.placeholder = `Message @${user.username}`;
+      loadDirectMessages(userId);
+    }
+  });
+  </script>
+</body>
+</html>

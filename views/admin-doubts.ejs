@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELABTeams Admin - Doubts Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0068FF;
+            --secondary: #0056d6;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light-text: #ffffff;
+            --gray-text: #a0a0a0;
+            --gray-dark: #2a2a2a;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light-text);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--darker);
+            color: var(--light-text);
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 100;
+            display: block;
+        }
+
+        .sidebar-collapsed {
+            width: 80px;
+        }
+
+        .sidebar-collapsed .logo-text,
+        .sidebar-collapsed .menu-label,
+        .sidebar-collapsed .menu-item span {
+            display: none;
+        }
+
+        .sidebar-collapsed .menu-item {
+            justify-content: center;
+        }
+
+        .sidebar-collapsed .menu-item i {
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-toggler {
+            color: var(--gray-text);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggler:hover {
+            color: var(--light-text);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            text-decoration: none;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            text-decoration: none;
+            color: #0068FF;
+        }
+
+        .nav-menu {
+            padding: 10px 0;
+        }
+
+        .menu-label {
+            padding: 0 25px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--gray-text);
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            color: var(--light-text);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-item.active {
+            color: var(--light-text);
+            background-color: rgba(0, 104, 255, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            transition: all 0.3s;
+            overflow-x: hidden;
+        }
+
+        .main-content-expanded {
+            margin-left: 80px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h2 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .breadcrumb {
+            color: var(--gray-text);
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-dark);
+            background-color: var(--darker);
+            color: var(--light-text);
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--gray-text);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-text);
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .admin-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-name {
+            font-weight: 500;
+        }
+
+        .admin-role {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 200px;
+            background-color: var(--darker);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 10px 0;
+            z-index: 100;
+            display: none;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .profile-dropdown a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .profile-dropdown a:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .profile-dropdown a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .profile-dropdown hr {
+            border: none;
+            border-top: 1px solid var(--gray-dark);
+            margin: 5px 0;
+        }
+
+        .doubts-table {
+            background-color: var(--darker);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--gray-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 25px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-dark);
+        }
+
+        th {
+            color: var(--gray-text);
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--light-text);
+            background-color: var(--gray-dark);
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: var(--light-text);
+            background-color: var(--gray-dark);
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary);
+        }
+
+        .filter-btn:hover {
+            background-color: var(--secondary);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .logo-text,
+            .menu-label,
+            .menu-item span {
+                display: none;
+            }
+            
+            .menu-item {
+                justify-content: center;
+                padding: 12px 0;
+            }
+            
+            .menu-item i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+            
+            .search-box {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-controls {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .search-box {
+                width: 100%;
+                position: absolute;
+                top: 80px;
+                left: 0;
+                padding: 0 30px;
+                z-index: 50;
+                display: none;
+            }
+            
+            .search-box.active {
+                display: block;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                position: relative;
+            }
+            
+            .admin-controls {
+                align-self: flex-end;
+            }
+            
+            .search-toggle {
+                display: block;
+            }
+            
+            .admin-info {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="page-title">
+                    <h2>Doubts Management</h2>
+                    <div class="breadcrumb">
+                        Doubts
+                    </div>
+                </div>
+                <div class="admin-controls">
+                    <div class="search-box" id="search-box">
+                        <input type="text" id="doubt-search" placeholder="Search users...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="action-btn" id="search-toggle">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="admin-profile" id="admin-profile">
+                        <div class="admin-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="admin-info">
+                            <div class="admin-name">Srihesh</div>
+                            <div class="admin-role">Admin</div>
+                        </div>
+                        <div class="profile-dropdown" id="profile-dropdown">
+                            <a href="profile.html">
+                                <i class="fas fa-user-circle"></i> Profile
+                            </a>
+                            <a href="settings.html">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <hr>
+                            <a href="login.html">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <button class="filter-btn active" id="filter-all">All</button>
+                <button class="filter-btn" id="filter-cleared">Has Cleared Doubts</button>
+                <button class="filter-btn" id="filter-asked">Has Asked Doubts</button>
+            </div>
+
+            <!-- Doubts Table -->
+            <div class="doubts-table">
+                <div class="table-header">
+                    <h4 class="table-title">Doubts Statistics</h4>
+                </div>
+                <div class="table-container">
+                    <table id="doubts-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Doubts Cleared</th>
+                                <th>Total Doubts Asked</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doubts-tbody">
+                            <!-- Data will be populated dynamically via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Dynamic Data -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample doubts statistics data (replace with real data from a backend if needed)
+            const doubtsData = [
+                {
+                    id: 1,
+                    name: 'Alex Mitchell',
+                    email: 'alex.mitchell@example.com',
+                    doubtsCleared: 5,
+                    doubtsAsked: 8
+                },
+                {
+                    id: 2,
+                    name: 'Sarah Johnson',
+                    email: 'sarah.johnson@example.com',
+                    doubtsCleared: 2,
+                    doubtsAsked: 10
+                },
+                {
+                    id: 3,
+                    name: 'Robert Parker',
+                    email: 'robert.parker@example.com',
+                    doubtsCleared: 0,
+                    doubtsAsked: 3
+                },
+                {
+                    id: 4,
+                    name: 'Emily Wilson',
+                    email: 'emily.wilson@example.com',
+                    doubtsCleared: 7,
+                    doubtsAsked: 7
+                }
+            ];
+
+            // Get the table body element
+            const tbody = document.getElementById('doubts-tbody');
+
+            // Function to create a table row for a user's doubt stats
+            function createDoubtRow(user) {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', user.id);
+
+                // User info
+                const tdUser = document.createElement('td');
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                const userAvatar = document.createElement('div');
+                userAvatar.className = 'user-avatar';
+                userAvatar.textContent = user.name.split(' ').map(n => n[0]).join(''); // Initials
+                const userDetails = document.createElement('div');
+                userDetails.className = 'user-details';
+                const userName = document.createElement('div');
+                userName.className = 'user-name';
+                userName.textContent = user.name;
+                const userEmail = document.createElement('div');
+                userEmail.className = 'user-email';
+                userEmail.textContent = user.email;
+                userDetails.appendChild(userName);
+                userDetails.appendChild(userEmail);
+                userInfo.appendChild(userAvatar);
+                userInfo.appendChild(userDetails);
+                tdUser.appendChild(userInfo);
+
+                // Doubts Cleared
+                const tdCleared = document.createElement('td');
+                tdCleared.textContent = user.doubtsCleared;
+
+                // Total Doubts Asked
+                const tdAsked = document.createElement('td');
+                tdAsked.textContent = user.doubtsAsked;
+
+                // Actions
+                const tdActions = document.createElement('td');
+                const actionButtons = document.createElement('div');
+                actionButtons.className = 'action-buttons';
+                const viewBtn = document.createElement('div');
+                viewBtn.className = 'action-btn view-btn';
+                viewBtn.setAttribute('data-id', user.id);
+                viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                actionButtons.appendChild(viewBtn);
+                tdActions.appendChild(actionButtons);
+
+                // Append all cells to the row
+                tr.appendChild(tdUser);
+                tr.appendChild(tdCleared);
+                tr.appendChild(tdAsked);
+                tr.appendChild(tdActions);
+
+                return tr;
+            }
+
+            // Populate the table with doubt data
+            function populateTable(data) {
+                tbody.innerHTML = ''; // Clear existing rows
+                data.forEach(user => {
+                    const row = createDoubtRow(user);
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Initial population of the table
+            populateTable(doubtsData);
+
+            // Sidebar toggle functionality
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('sidebar-collapsed');
+                mainContent.classList.toggle('main-content-expanded');
+            });
+
+            // Profile dropdown functionality
+            const adminProfile = document.getElementById('admin-profile');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            adminProfile.addEventListener('click', () => {
+                profileDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!adminProfile.contains(e.target)) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+
+            // Search functionality
+            const searchInput = document.getElementById('doubt-search');
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value.toLowerCase();
+                const filteredData = doubtsData.filter(user =>
+                    user.name.toLowerCase().includes(query) ||
+                    user.email.toLowerCase().includes(query)
+                );
+                populateTable(filteredData);
+            });
+
+            // Filter functionality
+            const filterAll = document.getElementById('filter-all');
+            const filterCleared = document.getElementById('filter-cleared');
+            const filterAsked = document.getElementById('filter-asked');
+
+            filterAll.addEventListener('click', () => {
+                filterAll.classList.add('active');
+                filterCleared.classList.remove('active');
+                filterAsked.classList.remove('active');
+                populateTable(doubtsData);
+            });
+
+            filterCleared.addEventListener('click', () => {
+                filterAll.classList.remove('active');
+                filterCleared.classList.add('active');
+                filterAsked.classList.remove('active');
+                const filteredData = doubtsData.filter(user => user.doubtsCleared > 0);
+                populateTable(filteredData);
+            });
+
+            filterAsked.addEventListener('click', () => {
+                filterAll.classList.remove('active');
+                filterCleared.classList.remove('active');
+                filterAsked.classList.add('active');
+                const filteredData = doubtsData.filter(user => user.doubtsAsked > 0);
+                populateTable(filteredData);
+            });
+        });
+    </script>
+</body>
+</html>

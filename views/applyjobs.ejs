@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Application Page</title>
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: #121212;
+        color: white;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+      }
+      
+.navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
+        .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
+        #logo-link { text-decoration: none; color: #0068FF; }
+        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+        .nav-links li { position: relative; }
+        .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
+        .nav-links li a:hover { color: #0068FF; }
+        .dropdown { display: none; position: absolute; top: 100%; left: 0; background-color: black; min-width: max-content; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .dropdown li { width: 100%; }
+        .dropdown li a { padding: 12px; font-size: 18px; display: block; color: white; white-space: nowrap; }
+        .dropdown li a:hover { background-color: #333; color: #0068FF; }
+        .nav-links li:hover .dropdown { display: block; }
+        .search-box { padding: 8px; border-radius: 5px; border: none; outline: none; width: 205px; background-color: #222; color: white; }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        max-width: 100%;
+      }
+      .job-card {
+        background-color: #1e1e1e;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 600px;
+        text-align: left;
+        position: relative;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5);
+      }
+      .job-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #0068ff;
+      }
+      .job-poster {
+        font-size: 14px;
+        color: #888;
+        margin: 5px 0;
+      }
+      .salary-range {
+        font-size: 16px;
+        color: #00cc00;
+        margin: 5px 0;
+      }
+      .job-desc {
+        margin: 10px 0;
+        font-size: 16px;
+        color: #bbb;
+        line-height: 1.5;
+      }
+      .apply-btn {
+        background-color: #0068ff;
+        color: #222;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      .apply-btn:disabled {
+        background-color: #666;
+        cursor: not-allowed;
+      }
+      .apply-btn:hover:not(:disabled) {
+        background-color: #0c408e;
+      }
+      .applied {
+        background-color: #444;
+        color: white;
+      }
+      .resume-upload {
+        margin: 10px 0;
+      }
+      .resume-upload input[type="file"] {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="navbar">
+          <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+          <ul class="nav-links">
+              <% navLinks.forEach(link => { %>
+                  <li>
+                      <a href="<%= link.href %>"><%= link.name %></a>
+                      <% if (link.submenu) { %>
+                          <ul class="dropdown">
+                              <% link.submenu.forEach(sublink => { %>
+                                  <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                              <% }) %>
+                          </ul>
+                      <% } %>
+                  </li>
+              <% }) %>
+          </ul>
+          <input type="text" placeholder="Search" class="search-box">
+      </div>
+      <header>
+        <div class="navbar">
+          <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+          <ul class="nav-links">
+            <% navLinks.forEach(link => { %>
+              <li>
+                <a href="<%= link.href %>"><%= link.name %></a>
+                <% if (link.submenu) { %>
+                  <ul class="dropdown">
+                    <% link.submenu.forEach(sublink => { %>
+                      <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                    <% }) %>
+                  </ul>
+                <% } %>
+              </li>
+            <% }) %>
+          </ul>
+          <input type="text" placeholder="Search" class="search-box">
+        </div>
+      </header>
+      <h1>Available Jobs</h1>
+      <div class="container" id="jobContainer">
+        <% jobs.forEach((job, index) => { %>
+          <div class="job-card">
+            <div class="job-title"><%= job.job_title %></div>
+            <div class="job-poster">Posted by: <%= job.company_name %></div>
+            <div class="salary-range">Salary: <%= job.salary_range %></div>
+            <div class="job-desc"><%= job.description %></div>
+            <div class="resume-upload">
+              <label>resume</label>
+              <input type="file" accept=".pdf,.doc,.docx" id="resume<%= index %>" onchange="enableApply('apply<%= index %>', this)" placeholder="resume" /> 
+            </div>
+            <button class="apply-btn" id="apply<%= index %>" data-job-id="<%= job.id %>" onclick="apply(this)" disabled>Apply</button>
+          </div>
+        <% }) %>
+        <% if (jobs.length === 0) { %>
+          <p>No available jobs at the moment.</p>
+        <% } %>
+      </div>
+    
+      <script>
+        function enableApply(buttonId, fileInput) {
+          const button = document.getElementById(buttonId);
+          button.disabled = !fileInput.files.length;
+        }
+        
+        function apply(button) {
+          const resumeInput = button.previousElementSibling.querySelector('input[type="file"]');
+          if (!resumeInput.files.length) return;
+    
+          const jobId = button.getAttribute('data-job-id');
+          const formData = new FormData();
+          formData.append('resume', resumeInput.files[0]);
+          formData.append('jobId', jobId);
+    
+          fetch('/apply-job', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              button.innerText = "Application Sent";
+              button.classList.add("applied");
+              button.disabled = true;
+              resumeInput.disabled = true;
+              button.closest('.job-card').remove();
+            } else {
+              alert(data.error || "Failed to apply");
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert("Failed to apply");
+          });
+        }
+      </script>
+  </body>
+</html>
