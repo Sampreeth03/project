@@ -1,4 +1,7 @@
-self reply for doubts
+notification page-> view task not working
+profile page when abt to join project
+payment after 3-5 projects creation
+bug: members have the permission to remove leader(need to remove that)
+self reply check once
 
-change by srihesh
 
