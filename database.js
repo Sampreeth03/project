@@ -10,7 +10,7 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
     process.exit(1);
   });
 
-// Define Schemas
+// Define Schema
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
