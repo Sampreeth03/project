@@ -4,4 +4,7 @@ payment after 3-5 projects creation
 bug: members have the permission to remove leader(need to remove that)
 self reply check once
 
-
+Requirements for 5 sem:
+atleast 3 use cases(satisfied) with 2-4 functionalites each
+add event listeners and ajax funstionalites wherever possible mark them with comment
+#maybe afer mid-> use React
