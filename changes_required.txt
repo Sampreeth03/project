@@ -3,6 +3,8 @@ profile page when abt to join project
 payment after 3-5 projects creation
 bug: members have the permission to remove leader(need to remove that)
 self reply check once
+add chat interface for project groups
+
 seperate server.js -> 
 Authentication: authRoutes + authController + User model
 User Dashboards: dashboardRoutes + dashboardController + metrics utilities
@@ -18,7 +20,7 @@ Seeding/Migrations: seedController + startup/seed.js
 
 
 Requirements for 5 sem:
-atleast 3 use cases(satisfied) with 2-4 functionalites each
+atleast 3 use cases(satisfied) with 2-4 functionalites each (satisfied)
 add event listeners and ajax funstionalites wherever possible mark them with comment
 #maybe afer mid-> use React
 
