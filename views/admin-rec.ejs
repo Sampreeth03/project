@@ -257,74 +257,6 @@
             background-color: rgba(255, 255, 255, 0.05);
         }
         
-        .recruiter-status {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        
-        .status-active {
-            background-color: rgba(74, 222, 128, 0.2);
-            color: var(--success);
-        }
-        
-        .status-pending {
-            background-color: rgba(245, 158, 11, 0.2);
-            color: var(--warning);
-        }
-        
-        .status-inactive {
-            background-color: rgba(239, 68, 68, 0.2);
-            color: var(--danger);
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--gray-text);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .action-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: var(--light-text);
-        }
-        
-        .profile-btn {
-            padding: 6px 12px;
-            border-radius: 6px;
-            background-color: var(--primary);
-            color: var(--light-text);
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .profile-btn:hover {
-            background-color: var(--secondary);
-        }
-        
-        .pagination {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
-            gap: 5px;
-        }
         
         .page-btn {
             width: 35px;
@@ -406,235 +338,103 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="admin-info">
-                            <div class="admin-name">Srihesh</div>
+                            <div class="admin-name"><%= adminName %></div>
                             <div class="admin-role">Super Admin</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="recruiter-filters">
-                <div class="filter-item active" data-filter="all">All Recruiters</div>
-                <div class="filter-item" data-filter="active">Active</div>
-                <div class="filter-item" data-filter="pending">Pending</div>
-                <div class="filter-item" data-filter="inactive">Inactive</div>
-            </div>
-
             <!-- Recruiters Table -->
-            <table class="recruiters-table">
-                <thead>
-                    <tr>
-                        <th>Recruiter</th>
-                        <th>Email</th>
-                        <th>CSE Role</th>
-                        <th>Recruitments</th>
-                        <th>Joined Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="recruitersTableBody">
-                    
-                </tbody>
-            </table>
-
-            <!-- Pagination -->
-            <div class="pagination">
-                <div class="page-btn"><i class="fas fa-chevron-left"></i></div>
-                <div class="page-btn active">1</div>
-                <div class="page-btn">2</div>
-                <div class="page-btn">3</div>
-                <div class="page-btn"><i class="fas fa-chevron-right"></i></div>
-            </div>
+<table class="recruiters-table">
+    <thead>
+        <tr>
+            <th>Recruiter</th>
+            <th>Email</th>
+            <th>CSE Role</th>
+            <th>Recruitments</th>
+            <th>Joined Date</th>
+        </tr>
+    </thead>
+    <tbody id="recruitersTableBody">
+    </tbody>
+</table>
         </div>
     </div>
 
     <script>
-        // Updated sample data with CSE roles
-        const recruiters = [
-            {
-                id: 1,
-                name: "Sarah Johnson",
-                email: "sarah.j@techco.com",
-                company: "TechCo",
-                role: "Software Engineer",
-                joinedDate: "2023-01-15",
-                status: "active",
-                recruitmentCount: 27
-            },
-            {
-                id: 2,
-                name: "Michael Chen",
-                email: "m.chen@syssoft.com",
-                company: "SysSoft",
-                role: "Data Scientist",
-                joinedDate: "2023-02-05",
-                status: "active",
-                recruitmentCount: 15
-            },
-            {
-                id: 3,
-                name: "Emily Rodriguez",
-                email: "e.rodriguez@netsecure.com",
-                company: "NetSecure",
-                role: "Cybersecurity Specialist",
-                joinedDate: "2023-02-18",
-                status: "pending",
-                recruitmentCount: 8
-            },
-            {
-                id: 4,
-                name: "David Park",
-                email: "d.park@cloudtech.com",
-                company: "CloudTech",
-                role: "Cloud Architect",
-                joinedDate: "2023-03-10",
-                status: "inactive",
-                recruitmentCount: 5
-            },
-            {
-                id: 5,
-                name: "Lisa Wilson",
-                email: "lisa.w@aiworks.com",
-                company: "AIWorks",
-                role: "AI/ML Engineer",
-                joinedDate: "2023-03-22",
-                status: "active",
-                recruitmentCount: 19
-            }
-        ];
+    document.addEventListener('DOMContentLoaded', function() {
+    // Store initial data from server
+    const recruiters = <%- JSON.stringify(recruitersData) %>;
 
-        // DOM elements
-        const recruitersTableBody = document.getElementById('recruitersTableBody');
-        const searchInput = document.getElementById('searchRecruiter');
-        const filterItems = document.querySelectorAll('.filter-item');
+    console.log('Recruiters data:', recruiters); // Debug log to check received data
 
-        // Current filter
-        let currentFilter = 'all';
+    // DOM elements
+    const recruitersTableBody = document.getElementById('recruitersTableBody');
+    const searchInput = document.getElementById('searchRecruiter');
 
-        // Load recruiters data
-        function loadRecruiters(filter = 'all', searchTerm = '') {
-            recruitersTableBody.innerHTML = '';
+    // Load recruiters data
+    function loadRecruiters(searchTerm = '') {
+        recruitersTableBody.innerHTML = '';
+        
+        let filteredRecruiters = recruiters;
+        
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filteredRecruiters = recruiters.filter(recruiter => 
+                (recruiter.name && recruiter.name.toLowerCase().includes(term)) || 
+                (recruiter.email && recruiter.email.toLowerCase().includes(term)) || 
+                (recruiter.company && recruiter.company.toLowerCase().includes(term))
+            );
+        }
+        
+        filteredRecruiters.forEach(recruiter => {
+            const row = document.createElement('tr');
             
-            let filteredRecruiters = recruiters;
+            // Handle joinDate safely
+            const joinDate = recruiter.joinedDate && !isNaN(new Date(recruiter.joinedDate).getTime())
+                ? new Date(recruiter.joinedDate)
+                : new Date();
+            const formattedDate = joinDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
             
-            if (filter !== 'all') {
-                filteredRecruiters = recruiters.filter(recruiter => recruiter.status === filter);
-            }
+            const companyInitial = recruiter.company && recruiter.company.length > 0 
+                ? recruiter.company.charAt(0) 
+                : 'N/A';
             
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                filteredRecruiters = filteredRecruiters.filter(recruiter => 
-                    recruiter.name.toLowerCase().includes(term) || 
-                    recruiter.email.toLowerCase().includes(term) || 
-                    recruiter.company.toLowerCase().includes(term)
-                );
-            }
-            
-            filteredRecruiters.forEach(recruiter => {
-                const row = document.createElement('tr');
-                
-                const joinDate = new Date(recruiter.joinedDate);
-                const formattedDate = joinDate.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-                
-                let statusClass = '';
-                switch(recruiter.status) {
-                    case 'active':
-                        statusClass = 'status-active';
-                        break;
-                    case 'pending':
-                        statusClass = 'status-pending';
-                        break;
-                    case 'inactive':
-                        statusClass = 'status-inactive';
-                        break;
-                }
-                
-                const companyInitial = recruiter.company.charAt(0);
-                
-                row.innerHTML = `
-                    <td>
-                        <div class="recruiter-info">
-                            <div class="company-logo">${companyInitial}</div>
-                            <div>
-                                <div class="recruiter-name">${recruiter.name}</div>
-                                <div class="recruiter-company">${recruiter.company}</div>
-                            </div>
+            row.innerHTML = `
+                <td>
+                    <div class="recruiter-info">
+                        <div class="company-logo">${companyInitial}</div>
+                        <div>
+                            <div class="recruiter-name">${recruiter.name}</div>
+                            <div class="recruiter-company">${recruiter.company}</div>
                         </div>
-                    </td>
-                    <td>${recruiter.email}</td>
-                    <td>${recruiter.role}</td>
-                    <td>
-                        <div class="recruitment-count">${recruiter.recruitmentCount}</div>
-                    </td>
-                    <td>${formattedDate}</td>
-                    <td><span class="recruiter-status ${statusClass}">${recruiter.status.charAt(0).toUpperCase() + recruiter.status.slice(1)}</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <div class="action-btn view-btn" data-id="${recruiter.id}"><i class="fas fa-eye"></i></div>
-                            <div class="profile-btn" data-id="${recruiter.id}"><i class="fas fa-user"></i> Profile</div>
-                        </div>
-                    </td>
-                `;
-                
-                recruitersTableBody.appendChild(row);
-            });
+                    </div>
+                </td>
+                <td>${recruiter.email || 'N/A'}</td>
+                <td>${recruiter.role || 'Recruiter'}</td>
+                <td>
+                    <div class="recruitment-count">${recruiter.recruitmentCount || 0}</div>
+                </td>
+                <td>${formattedDate}</td>
+            `;
             
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const recruiterId = this.dataset.id;
-                    viewRecruiter(recruiterId);
-                });
-            });
-            
-            document.querySelectorAll('.profile-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const recruiterId = this.dataset.id;
-                    viewProfile(recruiterId);
-                });
-            });
-        }
-
-        // Filter recruiters
-        filterItems.forEach(item => {
-            item.addEventListener('click', function() {
-                filterItems.forEach(filter => filter.classList.remove('active'));
-                this.classList.add('active');
-                currentFilter = this.dataset.filter;
-                loadRecruiters(currentFilter, searchInput.value);
-            });
+            recruitersTableBody.appendChild(row);
         });
+    }
 
-        // Search recruiters
-        searchInput.addEventListener('input', function() {
-            loadRecruiters(currentFilter, this.value);
-        });
+    // Search recruiters
+    searchInput.addEventListener('input', function() {
+        loadRecruiters(this.value);
+    });
 
-        // View recruiter details
-        function viewRecruiter(id) {
-            const recruiter = recruiters.find(r => r.id == id);
-            if (recruiter) {
-                console.log('Viewing recruiter:', recruiter);
-            }
-        }
-
-        // View recruiter profile
-        function viewProfile(id) {
-            const recruiter = recruiters.find(r => r.id == id);
-            if (recruiter) {
-                console.log('Viewing profile for recruiter:', recruiter);
-            }
-        }
-
-        // Load recruiters on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadRecruiters();
-        });
+    // Load recruiters on page load
+    loadRecruiters();
+});
     </script>
 </body>
 </html>

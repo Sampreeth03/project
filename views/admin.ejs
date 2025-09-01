@@ -18,24 +18,20 @@
             --danger: #ef4444;
             --warning: #f59e0b;
         }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
         body {
             background-color: var(--dark);
             color: var(--light-text);
         }
-        
         .container {
             display: flex;
             min-height: 100vh;
         }
-        
         .sidebar {
             width: 280px;
             background-color: var(--darker);
@@ -47,23 +43,19 @@
             transition: all 0.3s;
             z-index: 100;
         }
-        
         .sidebar-header {
             padding: 0 25px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 20px;
         }
-        
         .logo-text {
             font-size: 22px;
             font-weight: 700;
             color: #0068FF;
         }
-        
         .nav-menu {
             padding: 10px 0;
         }
-        
         .menu-label {
             padding: 0 25px;
             font-size: 12px;
@@ -72,7 +64,6 @@
             margin-bottom: 10px;
             margin-top: 20px;
         }
-        
         .menu-item {
             padding: 12px 25px;
             display: flex;
@@ -82,25 +73,21 @@
             transition: all 0.2s;
             border-left: 4px solid transparent;
         }
-        
         .menu-item:hover {
             color: var(--light-text);
             background-color: rgba(255, 255, 255, 0.05);
         }
-        
         .menu-item.active {
             color: var(--light-text);
             background-color: rgba(0, 104, 255, 0.1);
             border-left: 4px solid var(--primary);
         }
-        
         .menu-item i {
             margin-right: 10px;
             width: 20px;
             text-align: center;
             font-size: 18px;
         }
-        
         .main-content {
             flex: 1;
             margin-left: 280px;
@@ -108,35 +95,29 @@
             transition: all 0.3s;
             overflow-x: hidden;
         }
-        
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
         }
-        
         .welcome h2 {
             font-weight: 600;
             margin-bottom: 5px;
         }
-        
         .welcome h4 {
             color: var(--gray-text);
             font-weight: normal;
         }
-        
         .admin-controls {
             display: flex;
             gap: 15px;
             align-items: center;
         }
-        
         .search-box {
             position: relative;
             width: 300px;
         }
-        
         .search-box input {
             width: 100%;
             padding: 10px 40px 10px 15px;
@@ -146,11 +127,9 @@
             color: var(--light-text);
             outline: none;
         }
-        
         .search-box input::placeholder {
             color: var(--gray-text);
         }
-        
         .search-box i {
             position: absolute;
             right: 15px;
@@ -158,13 +137,11 @@
             transform: translateY(-50%);
             color: var(--gray-text);
         }
-        
         .admin-profile {
             display: flex;
             align-items: center;
             cursor: pointer;
         }
-        
         .admin-avatar {
             width: 40px;
             height: 40px;
@@ -175,28 +152,23 @@
             justify-content: center;
             margin-right: 10px;
         }
-        
         .admin-info {
             display: flex;
             flex-direction: column;
         }
-        
         .admin-name {
             font-weight: 500;
         }
-        
         .admin-role {
             font-size: 12px;
             color: var(--gray-text);
         }
-        
         .dashboard-cards {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
         .card {
             background-color: var(--darker);
             border-radius: 10px;
@@ -204,24 +176,20 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.3s;
         }
-        
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
-        
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
-        
         .card-title {
             font-size: 18px;
             font-weight: 500;
         }
-        
         .card-icon {
             width: 50px;
             height: 50px;
@@ -231,34 +199,28 @@
             justify-content: center;
             font-size: 22px;
         }
-        
         .bg-primary { background-color: var(--primary); }
         .bg-success { background-color: var(--success); }
         .bg-danger { background-color: var(--danger); }
         .bg-warning { background-color: var(--warning); }
-        
         .card-body {
             flex: 1;
         }
-        
         .stat {
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 5px;
         }
-        
         .stat-desc {
             color: var(--gray-text);
             font-size: 14px;
             display: flex;
             align-items: center;
         }
-        
         .stat-up {
             color: var(--success);
             margin-right: 5px;
         }
-        
         .stat-down {
             color: var(--danger);
             margin-right: 5px;
@@ -267,14 +229,14 @@
 </head>
 <body>
     <div class="container">
-        <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+        <%- include('partials/sidebar', { activePage: activePage }) %>
 
         <!-- Main Content -->
         <div class="main-content">
             <!-- Header -->
             <div class="header">
                 <div class="welcome">
-                    <h2>Welcome, Admin!</h2>
+                    <h2>Welcome, <%= dashboardData.adminName %>!</h2>
                     <h4>Here's what's happening on RELABTeams today</h4>
                 </div>
                 <div class="admin-controls">
@@ -287,112 +249,33 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="admin-info">
-                            <div class="admin-name">Srihesh</div>
-                            <div class="admin-role">Super Admin</div>
+                            <div class="admin-name"><%= dashboardData.adminName %></div>
+                            <div class="admin-role"><%= dashboardData.adminRole %></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Dashboard Cards Container -->
-            <div class="dashboard-cards" id="dashboardCards"></div>
+            <div class="dashboard-cards">
+                <% dashboardData.dashboardCards.forEach(card => { %>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><%= card.title %></div>
+                            <div class="card-icon bg-<%= card.colorClass %>">
+                                <i class="fas fa-<%= card.icon %>"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="stat"><%= card.stat %></div>
+                            <div class="stat-desc">
+                                <span class="stat-up"><i class="fas fa-arrow-up"></i> <%= card.change %>%</span> since last month
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
         </div>
     </div>
-
-    <!-- JavaScript to Dynamically Create Dashboard Cards -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Sample data (you can replace this with your in-memory database)
-            const dashboardData = [
-                {
-                    title: 'Students',
-                    stat: '2,547',
-                    change: '12%',
-                    changeDirection: 'up',
-                    icon: 'fas fa-user-graduate',
-                    bgClass: 'bg-primary'
-                },
-                {
-                    title: 'Recruiters',
-                    stat: '348',
-                    change: '8%',
-                    changeDirection: 'up',
-                    icon: 'fas fa-building',
-                    bgClass: 'bg-success'
-                },
-                {
-                    title: 'Projects',
-                    stat: '982',
-                    change: '23%',
-                    changeDirection: 'up',
-                    icon: 'fas fa-lightbulb',
-                    bgClass: 'bg-warning'
-                },
-                {
-                    title: 'Doubts Asked',
-                    stat: '1,245',
-                    change: '15%',
-                    changeDirection: 'up',
-                    icon: 'fas fa-question-circle',
-                    bgClass: 'bg-danger'
-                }
-            ];
-
-            // Get the dashboard cards container
-            const dashboardCardsContainer = document.getElementById('dashboardCards');
-
-            // Function to create a card
-            function createCard(data) {
-                const card = document.createElement('div');
-                card.className = 'card';
-
-                const cardHeader = document.createElement('div');
-                cardHeader.className = 'card-header';
-
-                const cardTitle = document.createElement('div');
-                cardTitle.className = 'card-title';
-                cardTitle.textContent = data.title;
-
-                const cardIcon = document.createElement('div');
-                cardIcon.className = `card-icon ${data.bgClass}`;
-                cardIcon.innerHTML = `<i class="${data.icon}"></i>`;
-
-                const cardBody = document.createElement('div');
-                cardBody.className = 'card-body';
-
-                const stat = document.createElement('div');
-                stat.className = 'stat';
-                stat.textContent = data.stat;
-
-                const statDesc = document.createElement('div');
-                statDesc.className = 'stat-desc';
-
-                const statChange = document.createElement('span');
-                statChange.className = data.changeDirection === 'up' ? 'stat-up' : 'stat-down';
-                statChange.innerHTML = `<i class="fas fa-arrow-${data.changeDirection}"></i> ${data.change}`;
-
-                const statText = document.createTextNode(' since last month');
-
-                // Assemble the card
-                cardHeader.appendChild(cardTitle);
-                cardHeader.appendChild(cardIcon);
-                statDesc.appendChild(statChange);
-                statDesc.appendChild(statText);
-                cardBody.appendChild(stat);
-                cardBody.appendChild(statDesc);
-                card.appendChild(cardHeader);
-                card.appendChild(cardBody);
-
-                return card;
-            }
-
-            // Populate the dashboard with cards
-            dashboardData.forEach(data => {
-                const cardElement = createCard(data);
-                dashboardCardsContainer.appendChild(cardElement);
-            });
-        });
-    </script>
-    
 </body>
 </html>

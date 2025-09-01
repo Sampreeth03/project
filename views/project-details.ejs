@@ -286,6 +286,128 @@
       color: white;
       border: 1px solid #444444;
     }
+    .task-feedback {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.accept-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.accept-btn:hover {
+    background-color: #218838;
+}
+
+.reject-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.reject-btn:hover {
+    background-color: #c82333;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.close {
+    cursor: pointer;
+    font-size: 24px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group textarea {
+    width: 100%;
+    height: 100px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cancel-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.cancel-btn:hover {
+    background-color: #5a6268;
+}
+
+.confirm-btn {
+    background-color: #0068FF;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.confirm-btn:hover {
+    background-color: #0056d6;
+}
 
     .approve-btn {
       background-color: #004D40;
@@ -444,7 +566,32 @@
       margin-top: 12px;
       display: none;
     }
+.status-label {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
 
+.status-label.in-progress {
+    background-color: #FFE082;
+    color: #333;
+}
+
+.status-label.review {
+    background-color: #42A5F5;
+    color: white;
+}
+
+.status-label.completed {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-label.rejected {
+    background-color: #dc3545;
+    color: white;
+}
     .finish-project-btn {
       background-color: #388E3C;
       color: white;
@@ -567,358 +714,530 @@
 </head>
 <body>
   <header>
-    <header>
-      <div class="navbar">
-          <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
-          <ul class="nav-links">
-              <% navLinks.forEach(link => { %>
-                  <li>
-                      <a href="<%= link.href %>"><%= link.name %></a>
-                      <% if (link.submenu) { %>
-                          <ul class="dropdown">
-                              <% link.submenu.forEach(sublink => { %>
-                                  <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
-                              <% }) %>
-                          </ul>
-                      <% } %>
-                  </li>
-              <% }) %>
-          </ul>
-          <input type="text" placeholder="Search" class="search-box">
-      </div>
+    <div class="navbar">
+      <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+      <ul class="nav-links">
+        <% navLinks.forEach(link => { %>
+          <li>
+            <a href="<%= link.href %>"><%= link.name %></a>
+            <% if (link.submenu) { %>
+              <ul class="dropdown">
+                <% link.submenu.forEach(sublink => { %>
+                  <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+      <input type="text" placeholder="Search" class="search-box">
+    </div>
   </header>
   
   <div class="container">
-      <div class="project-header">
-          <div>
-              <h1 class="project-title"><%= project.title %></h1>
-              <span class="project-status <%= project.status === 'active' ? 'project-active' : 'finished' %>" id="projectStatus">
-                  <%= project.status === 'active' ? 'Active' : 'Finished' %>
-              </span>
-          </div>
-          <div class="project-actions">
-              <div class="project-nav">
-                  <button class="project-dropdown-btn">
-                      Switch Project
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
-                  </button>
-                  <div class="project-dropdown-content">
-                      <% if (projects && projects.length > 0) { %>
-                          <% projects.forEach(project => { %>
-                              <a href="/project/<%= project._id %>"><%= project.title %></a>
-                          <% }) %>
-                      <% } else { %>
-                          <p>No other projects available</p>
-                      <% } %>
-                  </div>
-              </div>
-              <button class="finish-project-btn" onclick="finishProject('<%= project._id %>')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                  Finish Project
-              </button>
-          </div>
+    <div class="project-header">
+      <div>
+        <h1 class="project-title"><%= project.title %></h1>
+        <span class="project-status <%= project.status === 'active' ? 'project-active' : 'finished' %>" id="projectStatus">
+          <%= project.status === 'active' ? 'Active' : 'Finished' %>
+        </span>
       </div>
-  
-      <div class="tasks-container">
-          <div class="tasks-header">
-              <h2>Tasks</h2>
-              <button class="new-task-btn" onclick="openModal()">+ New Task</button>
-          </div>
-          <div id="tasks-list">
-              <% if (tasks && tasks.length > 0) { %>
-                  <% tasks.forEach(task => { %>
-                      <div class="task-card">
-                          <div class="task-header">
-                              <h3 class="task-title"><%= task.title %></h3>
-                              <span class="status-label <%= task.status.toLowerCase().replace(' ', '-') %>"><%= task.status %></span>
-                          </div>
-                          <div class="task-meta">
-                              <div>Assigned to: <%= task.assigned_to?.name || 'Unassigned' %></div>
-                              <div>Due: <%= task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No due date' %></div>
-                          </div>
-                          <p class="task-description"><%= task.description || 'No description' %></p>
-                          <% if (task.github_link) { %>
-                              <a href="<%= task.github_link %>" class="task-link" target="_blank"><%= task.github_link %></a>
-                          <% } %>
-                          <div class="task-actions">
-                              <button class="task-btn check-status-btn" onclick="openStatusModal('<%= task.github_link || '#' %>')">Check Status</button>
-                              <button class="task-btn extend-deadline-btn" onclick="extendDeadline('<%= task.title %>', '<%= project._id %>')">Extend Deadline</button>
-                          </div>
-                      </div>
-                  <% }) %>
-              <% } else { %>
-                  <div class="no-projects">No tasks available for this project.</div>
-              <% } %>
-          </div>
-      </div>
-  
-      <!-- Members section -->
-      <div class="team-members">
-        <% if (projectMembers && projectMembers.length > 0 && user && user.id) { %>
-          <% projectMembers.forEach(member => { %>
-                  <% if (member.user_id) { %>
-                      <div class="member">
-                          <div class="member-avatar"><%= member.user_id.name ? member.user_id.name.charAt(0).toUpperCase() : '?' %></div>
-                          <div class="member-info">
-                              <div class="member-name"><%= member.user_id.name || 'Unknown User' %></div>
-                              <div class="member-role"><%= member.user_id.email || 'No Email' %></div>
-                          </div>
-                          <% if (member.user_id._id && user && user.id && member.user_id._id.toString() !== user.id.toString()) { %>
-                              <button class="remove-member-btn" onclick="removeMember('<%= member.user_id.name || 'Unknown' %>', '<%= member.user_id._id %>', '<%= project._id %>')">Remove</button>
-                          <% } %>
-                      </div>
-                  <% } %>
+      <div class="project-actions">
+        <div class="project-nav">
+          <button class="project-dropdown-btn">
+            Switch Project
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="project-dropdown-content">
+            <% if (projects && projects.length > 0) { %>
+              <% projects.forEach(project => { %>
+                <a href="/project/<%= project._id %>"><%= project.title %></a>
               <% }) %>
-          <% } else { %>
-              <p>No members in this project.</p>
+            <% } else { %>
+              <p>No other projects available</p>
+            <% } %>
+          </div>
+        </div>
+        <% if (user.id === project.user_id.toString() && project.status !== 'completed') { %>
+          <button class="finish-project-btn" onclick="finishProject('<%= project._id %>')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Finish Project
+          </button>
+        <% } %>
+        <% if (user.id !== project.user_id.toString()) { %>
+          <button class="join-btn" 
+                  onclick="joinProject(this, '<%= project._id %>')" 
+                  <%= (project.hasJoined || project.hasPendingRequest || project.memberCount >= project.capacity) ? 'disabled' : '' %>>
+            <%= project.hasJoined ? 'Joined' : project.hasPendingRequest ? 'Request Pending' : 'Request to Join Project' %>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  
+    <div class="tasks-container">
+      <div class="tasks-header">
+        <h2>Tasks</h2>
+        <% if (user.id === project.user_id.toString()) { %>
+          <button class="new-task-btn" onclick="openModal()">+ New Task</button>
+        <% } %>
+      </div>
+      <div id="tasks-list">
+        <% if (tasks && tasks.length > 0) { %>
+          <% tasks.forEach(task => { %>
+            <div class="task-card" id="task-<%= task._id %>">
+              <div class="task-header">
+                <h3 class="task-title"><%= task.title %></h3>
+                <span class="status-label <%= task.status.toLowerCase().replace(' ', '-') %>"><%= task.status %></span>
+              </div>
+              <div class="task-meta">
+                <div>Assigned to: <%= task.assigned_to?.name || 'Unassigned' %></div>
+                <div>Due: <%= task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No due date' %></div>
+              </div>
+              <p class="task-description"><%= task.description || 'No description' %></p>
+              <% if (task.github_link) { %>
+                <a href="<%= task.github_link %>" class="task-link" target="_blank"><%= task.github_link %></a>
+              <% } %>
+              <% if (task.feedback) { %>
+                <p class="task-feedback"><strong>Feedback:</strong> <%= task.feedback %></p>
+              <% } %>
+              <div class="task-actions">
+                <button class="task-btn check-status-btn" onclick="openStatusModal('<%= task.github_link || '#' %>')">Check Status</button>
+                <% if (user.id === project.user_id.toString()) { %>
+                  <button class="task-btn extend-deadline-btn" onclick="extendDeadline('<%= task.title %>', '<%= project._id %>')">Extend Deadline</button>
+                  <% if (task.status === 'Review') { %>
+                    <button class="task-btn accept-btn" onclick="openReviewModal('<%= task._id %>', '<%= project._id %>', 'accept')">Accept</button>
+                    <button class="task-btn reject-btn" onclick="openReviewModal('<%= task._id %>', '<%= project._id %>', 'reject')">Reject</button>
+                  <% } %>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="no-projects">No tasks available for this project.</div>
+        <% } %>
+      </div>
+    </div>
+  
+    <div class="team-members">
+      <% if (projectMembers && projectMembers.length > 0 && user && user.id) { %>
+        <% projectMembers.forEach(member => { %>
+          <% if (member.user_id) { %>
+            <div class="member">
+              <div class="member-avatar"><%= member.user_id.name ? member.user_id.name.charAt(0).toUpperCase() : '?' %></div>
+              <div class="member-info">
+                <div class="member-name"><%= member.user_id.name || 'Unknown User' %></div>
+                <div class="member-role"><%= member.user_id.email || 'No Email' %></div>
+              </div>
+              <% if (user.id === project.user_id.toString() && member.user_id._id && user.id !== member.user_id._id.toString()) { %>
+                <button class="remove-member-btn" onclick="removeMember('<%= member.user_id.name || 'Unknown' %>', '<%= member.user_id._id %>', '<%= project._id %>')">Remove</button>
+              <% } %>
+            </div>
           <% } %>
+        <% }) %>
+      <% } else { %>
+        <p>No members in this project.</p>
+      <% } %>
+    </div>
+  
+    <div id="taskModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create New Task</h2>
+          <span class="close" onclick="closeModal()">×</span>
+        </div>
+        <div class="form-group">
+          <label for="taskTitle">Task Title</label>
+          <input type="text" id="taskTitle" placeholder="Enter task title" required>
+        </div>
+        <div class="form-group">
+          <label for="taskDescription">Description</label>
+          <textarea id="taskDescription" placeholder="Describe the task"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="assignTo">Assign To</label>
+          <select id="assignTo">
+            <option value="">Unassigned</option>
+            <% if (projectMembers && projectMembers.length > 0 && user && user.id) { %>
+              <% projectMembers.forEach(member => { %>
+                <% if (member.user_id && member.user_id._id && member.user_id._id.toString() !== user.id.toString()) { %>
+                  <option value="<%= member.user_id._id %>"><%= member.user_id.name || 'Unknown' %></option>
+                <% } %>
+              <% }) %>
+            <% } %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="dueDate">Due Date</label>
+          <input type="date" id="dueDate" required>
+        </div>
+        <button class="new-task-btn" style="width: 100%;" onclick="createNewTask('<%= project._id %>')">Create Task</button>
       </div>
+    </div>
   
-      <!-- New Task Modal -->
-      <div id="taskModal" class="modal">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h2>Create New Task</h2>
-                  <span class="close" onclick="closeModal()">×</span>
-              </div>
-              <div class="form-group">
-                  <label for="taskTitle">Task Title</label>
-                  <input type="text" id="taskTitle" placeholder="Enter task title">
-              </div>
-              <div class="form-group">
-                  <label for="taskDescription">Description</label>
-                  <textarea id="taskDescription" placeholder="Describe the task"></textarea>
-              </div>
-              <div class="form-group">
-                  <label for="assignTo">Assign To</label>
-                  <select id="assignTo">
-                      <option value="" selected disabled>Select team member</option>
-                      <% if (projectMembers && projectMembers.length > 0 && user && user.id) { %>
-                          <% projectMembers.forEach(member => { %>
-                              <% if (member.user_id && member.user_id._id && member.user_id._id.toString() !== user.id.toString()) { %>
-                                  <option value="<%= member.user_id._id %>"><%= member.user_id.name || 'Unknown' %></option>
-                              <% } %>
-                          <% }) %>
-                      <% } %>
-                  </select>
-              </div>
-              <div class="form-group">
-                  <label for="dueDate">Due Date</label>
-                  <input type="date" id="dueDate">
-              </div>
-              <button class="new-task-btn" style="width: 100%;" onclick="createNewTask('<%= project._id %>')">Create Task</button>
-          </div>
+    <div id="finishProjectModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Finish Project</h2>
+          <span class="close" onclick="closeFinishProjectModal()">×</span>
+        </div>
+        <p>Are you sure you want to mark this project as completed?</p>
+        <div id="pendingTasksWarning" style="color: #FFC107; margin-top: 12px; display: none;">
+          <strong>Warning:</strong> There are still pending tasks in this project. Finishing the project will automatically mark all tasks as completed.
+        </div>
+        <div class="modal-buttons">
+          <button class="cancel-btn" onclick="closeFinishProjectModal()">Cancel</button>
+          <button class="confirm-btn" onclick="confirmFinishProject('<%= project._id %>')">Confirm</button>
+        </div>
       </div>
+    </div>
   
-      <!-- Finish Project Modal -->
-      <div id="finishProjectModal" class="modal">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h2>Finish Project</h2>
-                  <span class="close" onclick="closeFinishProjectModal()">×</span>
-              </div>
-              <p>Are you sure you want to mark this project as completed?</p>
-              <div id="pendingTasksWarning" style="color: #FFC107; margin-top: 12px; display: none;">
-                  <strong>Warning:</strong> There are still pending tasks in this project. Finishing the project will automatically mark all tasks as completed.
-              </div>
-              <div class="modal-buttons">
-                  <button class="cancel-btn" onclick="closeFinishProjectModal()">Cancel</button>
-                  <button class="confirm-btn" onclick="confirmFinishProject('<%= project._id %>')">Confirm</button>
-              </div>
-          </div>
+    <div id="statusModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Task Status</h2>
+          <span class="close" onclick="closeStatusModal()">×</span>
+        </div>
+        <div class="form-group">
+          <label>GitHub Repository:</label>
+          <a id="githubLink" href="#" target="_blank" class="task-link"></a>
+        </div>
+        <div class="modal-buttons">
+          <button class="cancel-btn" onclick="closeStatusModal()">Close</button>
+        </div>
       </div>
+    </div>
   
-      <!-- Task Status Modal -->
-      <div id="statusModal" class="modal">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h2>Task Status</h2>
-                  <span class="close" onclick="closeStatusModal()">×</span>
-              </div>
-              <div class="form-group">
-                  <label>GitHub Repository:</label>
-                  <a id="githubLink" href="#" target="_blank" class="task-link"></a>
-              </div>
-              <div class="modal-buttons">
-                  <button class="cancel-btn" onclick="closeStatusModal()">Close</button>
-              </div>
-          </div>
+    <div id="reviewModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="reviewModalTitle">Review Submission</h2>
+          <span class="close" onclick="closeReviewModal()">×</span>
+        </div>
+        <div class="form-group">
+          <label for="reviewFeedback">Feedback/Rejection Reason</label>
+          <textarea id="reviewFeedback" placeholder="Enter feedback or reason for rejection" required></textarea>
+        </div>
+        <div class="modal-buttons">
+          <button class="cancel-btn" onclick="closeReviewModal()">Cancel</button>
+          <button class="confirm-btn" id="confirmReviewBtn">Confirm</button>
+        </div>
       </div>
+    </div>
   
-      <div id="notification" class="notification"></div>
+    <div id="notification" class="notification"></div>
   
-      <script>
-          function openModal() {
-              document.getElementById('taskModal').style.display = 'block';
+    <script>
+      function openModal() {
+        document.getElementById('taskModal').style.display = 'block';
+      }
+  
+      function closeModal() {
+        document.getElementById('taskModal').style.display = 'none';
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDescription').value = '';
+        document.getElementById('assignTo').value = '';
+        document.getElementById('dueDate').value = '';
+      }
+  
+      function createNewTask(projectId) {
+        const title = document.getElementById('taskTitle').value.trim();
+        const description = document.getElementById('taskDescription').value.trim();
+        const assignedTo = document.getElementById('assignTo').value;
+        const dueDate = document.getElementById('dueDate').value;
+
+        if (!title || !dueDate) {
+          showNotification('Task title and due date are required', 'error');
+          return;
+        }
+
+        fetch('/task/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            projectId,
+            title,
+            description,
+            assignedTo: assignedTo || null,
+            dueDate
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const taskList = document.getElementById('tasks-list');
+            const noTasksDiv = taskList.querySelector('.no-projects');
+            if (noTasksDiv) {
+              noTasksDiv.remove();
+            }
+            const taskCard = document.createElement('div');
+            taskCard.className = 'task-card';
+            taskCard.id = `task-${data.task.id}`;
+            taskCard.innerHTML = `
+              <div class="task-header">
+                <h3 class="task-title">${data.task.title}</h3>
+                <span class="status-label ${data.task.status.toLowerCase().replace(' ', '-')}">
+                  ${data.task.status}
+                </span>
+              </div>
+              <div class="task-meta">
+                <div>Assigned to: ${data.task.assigned_to ? data.task.assigned_to.name : 'Unassigned'}</div>
+                <div>Due: ${new Date(data.task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+              </div>
+              <p class="task-description">${data.task.description || 'No description'}</p>
+              <div class="task-actions">
+                <button class="task-btn check-status-btn" onclick="openStatusModal('#')">Check Status</button>
+                <button class="task-btn extend-deadline-btn" onclick="extendDeadline('${data.task.title}', '${projectId}')">Extend Deadline</button>
+              </div>
+            `;
+            taskList.appendChild(taskCard);
+            showNotification('Task created successfully!');
+            closeModal();
+          } else {
+            showNotification(data.message || 'Failed to create task', 'error');
           }
+        })
+        .catch(error => {
+          console.error('Error creating task:', error);
+          showNotification('Error creating task: ' + error.message, 'error');
+        });
+      }
   
-          function closeModal() {
-              document.getElementById('taskModal').style.display = 'none';
+      function finishProject(projectId) {
+        fetch(`/project/${projectId}/pending-tasks`)
+          .then(response => response.json())
+          .then(data => {
+            const pendingTasksWarning = document.getElementById('pendingTasksWarning');
+            if (data.pendingTasks > 0) {
+              pendingTasksWarning.style.display = 'block';
+            } else {
+              pendingTasksWarning.style.display = 'none';
+            }
+            document.getElementById('finishProjectModal').style.display = 'block';
+          })
+          .catch(error => {
+            console.error('Error checking pending tasks:', error);
+            showNotification('Error checking pending tasks', 'error');
+          });
+      }
+  
+      function closeFinishProjectModal() {
+        document.getElementById('finishProjectModal').style.display = 'none';
+      }
+  
+      function confirmFinishProject(projectId) {
+        fetch(`/project/${projectId}/finish`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showNotification('Project marked as completed!');
+            document.getElementById('projectStatus').textContent = 'Finished';
+            document.getElementById('projectStatus').className = 'project-status finished';
+            closeFinishProjectModal();
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            showNotification(data.message || 'Failed to finish project', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error finishing project:', error);
+          showNotification('Error finishing project', 'error');
+        });
+      }
   
-          function createNewTask(projectId) {
-              const title = document.getElementById('taskTitle').value;
-              const description = document.getElementById('taskDescription').value;
-              const assignedTo = document.getElementById('assignTo').value;
-              const dueDate = document.getElementById('dueDate').value;
+      function openStatusModal(githubLink) {
+        const modal = document.getElementById('statusModal');
+        const githubLinkElement = document.getElementById('githubLink');
+        githubLinkElement.href = githubLink;
+        githubLinkElement.textContent = githubLink;
+        modal.style.display = 'block';
+      }
   
-              if (!title || !description || !assignedTo || !dueDate) {
-                  showNotification('Please fill in all fields', 'error');
-                  return;
+      function closeStatusModal() {
+        document.getElementById('statusModal').style.display = 'none';
+      }
+  
+      function openReviewModal(taskId, projectId, action) {
+        const modal = document.getElementById('reviewModal');
+        const title = document.getElementById('reviewModalTitle');
+        const confirmBtn = document.getElementById('confirmReviewBtn');
+        title.textContent = action === 'accept' ? 'Accept Submission' : 'Reject Submission';
+        confirmBtn.onclick = () => reviewSubmission(taskId, projectId, action);
+        document.getElementById('reviewFeedback').value = '';
+        modal.style.display = 'block';
+      }
+  
+      function closeReviewModal() {
+        document.getElementById('reviewModal').style.display = 'none';
+        document.getElementById('reviewFeedback').value = '';
+      }
+  
+      function reviewSubmission(taskId, projectId, action) {
+        const feedback = document.getElementById('reviewFeedback').value.trim();
+        if (!feedback) {
+          showNotification('Feedback or rejection reason is required', 'error');
+          return;
+        }
+
+        fetch('/task/review-submission', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            taskId,
+            projectId,
+            action,
+            feedback
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Update the task card
+            const taskCard = document.getElementById(`task-${taskId}`);
+            if (taskCard) {
+              const statusLabel = taskCard.querySelector('.status-label');
+              statusLabel.textContent = data.task.status;
+              statusLabel.className = `status-label ${data.task.status.toLowerCase().replace(' ', '-')}`;
+              
+              // Update GitHub link
+              const existingLink = taskCard.querySelector('.task-link');
+              if (existingLink) {
+                existingLink.remove();
               }
-  
-              fetch('/task/create', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                      projectId,
-                      title,
-                      description,
-                      assignedTo,
-                      dueDate
-                  })
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      showNotification('Task created successfully!');
-                      setTimeout(() => window.location.reload(), 1000);
-                  } else {
-                      showNotification(data.message || 'Failed to create task', 'error');
-                  }
-              })
-              .catch(error => {
-                  console.error('Error creating task:', error);
-                  showNotification('Error creating task', 'error');
-              });
+              if (data.task.github_link) {
+                const linkElement = document.createElement('a');
+                linkElement.href = data.task.github_link;
+                linkElement.className = 'task-link';
+                linkElement.target = '_blank';
+                linkElement.textContent = data.task.github_link;
+                taskCard.querySelector('.task-description').after(linkElement);
+              }
+
+              // Update feedback
+              let feedbackElement = taskCard.querySelector('.task-feedback');
+              if (!feedbackElement) {
+                feedbackElement = document.createElement('p');
+                feedbackElement.className = 'task-feedback';
+                taskCard.querySelector('.task-description').after(feedbackElement);
+              }
+              feedbackElement.innerHTML = `<strong>Feedback:</strong> ${data.task.feedback}`;
+
+              // Remove accept/reject buttons
+              const acceptBtn = taskCard.querySelector('.accept-btn');
+              const rejectBtn = taskCard.querySelector('.reject-btn');
+              if (acceptBtn) acceptBtn.remove();
+              if (rejectBtn) rejectBtn.remove();
+            }
+
+            showNotification(`Task ${action === 'accept' ? 'accepted' : 'rejected'} successfully!`);
+            closeReviewModal();
+          } else {
+            showNotification(data.message || `Failed to ${action} submission`, 'error');
           }
+        })
+        .catch(error => {
+          console.error(`Error ${action}ing submission:`, error);
+          showNotification(`Error ${action}ing submission: ${error.message}`, 'error');
+        });
+      }
   
-          function finishProject(projectId) {
-              fetch(`/project/${projectId}/pending-tasks`)
-                  .then(response => response.json())
-                  .then(data => {
-                      const pendingTasksWarning = document.getElementById('pendingTasksWarning');
-                      if (data.pendingTasks > 0) {
-                          pendingTasksWarning.style.display = 'block';
-                      } else {
-                          pendingTasksWarning.style.display = 'none';
-                      }
-                      document.getElementById('finishProjectModal').style.display = 'block';
-                  })
-                  .catch(error => {
-                      console.error('Error checking pending tasks:', error);
-                      showNotification('Error checking pending tasks', 'error');
-                  });
+      function removeMember(memberName, memberId, projectId) {
+        if (!confirm(`Are you sure you want to remove ${memberName} from the project?`)) return;
+  
+        fetch(`/project/${projectId}/remove-member`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ memberId })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showNotification(`${memberName} has been removed from the project!`);
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            showNotification(data.message || 'Failed to remove member', 'error');
           }
+        })
+        .catch(error => {
+          console.error('Error removing member:', error);
+          showNotification('Error removing member', 'error');
+        });
+      }
   
-          function closeFinishProjectModal() {
-              document.getElementById('finishProjectModal').style.display = 'none';
+      function extendDeadline(taskTitle, projectId) {
+        const newDueDate = prompt('Enter new due date (YYYY-MM-DD):');
+        if (!newDueDate) return;
+  
+        fetch('/task/extend-deadline', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ taskTitle, projectId, newDueDate })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showNotification('Deadline extended successfully!');
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            showNotification(data.message || 'Failed to extend deadline', 'error');
           }
+        })
+        .catch(error => {
+          console.error('Error extending deadline:', error);
+          showNotification('Error extending deadline', 'error');
+        });
+      }
   
-          function confirmFinishProject(projectId) {
-              fetch(`/project/${projectId}/finish`, {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  }
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      showNotification('Project marked as completed!');
-                      document.getElementById('projectStatus').textContent = 'Finished';
-                      document.getElementById('projectStatus').className = 'project-status finished';
-                      closeFinishProjectModal();
-                  } else {
-                      showNotification(data.message || 'Failed to finish project', 'error');
-                  }
-              })
-              .catch(error => {
-                  console.error('Error finishing project:', error);
-                  showNotification('Error finishing project', 'error');
-              });
+      function joinProject(button, projectId) {
+        fetch('/join-project', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showNotification(data.message);
+            button.textContent = "Request Pending";
+            button.disabled = true;
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            showNotification(data.message || 'Failed to join project', 'error');
           }
+        })
+        .catch(error => {
+          console.error('Error joining project:', error);
+          showNotification('An error occurred while joining the project', 'error');
+        });
+      }
   
-          function openStatusModal(githubLink) {
-              const modal = document.getElementById('statusModal');
-              const githubLinkElement = document.getElementById('githubLink');
-              githubLinkElement.href = githubLink;
-              githubLinkElement.textContent = githubLink;
-              modal.style.display = 'block';
-          }
-  
-          function closeStatusModal() {
-              document.getElementById('statusModal').style.display = 'none';
-          }
-  
-          function removeMember(memberName, memberId, projectId) {
-              if (!confirm(`Are you sure you want to remove ${memberName} from the project?`)) return;
-  
-              fetch(`/project/${projectId}/remove-member`, {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ memberId })
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      showNotification(`${memberName} has been removed from the project!`);
-                      setTimeout(() => window.location.reload(), 1000);
-                  } else {
-                      showNotification(data.message || 'Failed to remove member', 'error');
-                  }
-              })
-              .catch(error => {
-                  console.error('Error removing member:', error);
-                  showNotification('Error removing member', 'error');
-              });
-          }
-  
-          function extendDeadline(taskTitle, projectId) {
-              const newDueDate = prompt('Enter new due date (YYYY-MM-DD):');
-              if (!newDueDate) return;
-  
-              fetch('/task/extend-deadline', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ taskTitle, projectId, newDueDate })
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      showNotification('Deadline extended successfully!');
-                      setTimeout(() => window.location.reload(), 1000);
-                  } else {
-                      showNotification(data.message || 'Failed to extend deadline', 'error');
-                  }
-              })
-              .catch(error => {
-                  console.error('Error extending deadline:', error);
-                  showNotification('Error extending deadline', 'error');
-              });
-          }
-  
-          function showNotification(message, type = 'success') {
-              const notification = document.getElementById('notification');
-              notification.textContent = message;
-              notification.style.backgroundColor = type === 'success' ? '#0068FF' : '#B71C1C';
-              notification.style.display = 'block';
-              setTimeout(() => {
-                  notification.style.display = 'none';
-              }, 3000);
-          }
-      </script>
+      function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.backgroundColor = type === 'success' ? '#0068FF' : '#B71C1C';
+        notification.style.display = 'block';
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 3000);
+      }
+    </script>
   </div>
 </body>
 </html>

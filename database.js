@@ -10,7 +10,7 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
     process.exit(1);
   });
 
-// Define Schema
+// Define Schemas
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
@@ -62,17 +62,22 @@ const replySchema = new mongoose.Schema({
 
 const jobApplicationSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-  posted_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  job_title: String,
-  company_name: String,
-  salary_range: String,
-  description: String,
-  skills: String,
-  date_applied: Date,
-  status: String,
-  resume_path: String,
-  active: Number
-}, { timestamps: true });
+  posted_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  job_title: { type: String, required: true },
+  company_name: { type: String, required: true },
+  salary_range: { type: String, required: true },
+  description: { type: String, required: true },
+  skills: { type: String, required: true },
+  status: { type: String, default: 'Waiting', enum: ['Waiting', 'Approved', 'Rejected'] },
+  resume: { data: Buffer, contentType: String }, // Updated to match the code
+  active: { type: Boolean, default: true }
+}, { 
+  timestamps: true,
+  indexes: [
+      { key: { posted_by: 1 } },
+      { key: { user_id: 1 } }
+  ]
+});
 
 const projectSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -83,20 +88,21 @@ const projectSchema = new mongoose.Schema({
   deadline: { type: Date, required: true },
   status: { type: String, enum: ['active', 'completed'], default: 'active' }
 });
+
+
+
+const joinRequestSchema = new mongoose.Schema({
+  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  requested_at: { type: Date, default: Date.now }
+});
+
 const projectMemberSchema = new mongoose.Schema({
   project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   joined_at: { type: Date, default: Date.now }
 });
-
-
-
-const joinRequestSchema = new mongoose.Schema({
-  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  status: String,
-  requested_at: Date
-}, { timestamps: true });
 
 const taskSchema = new mongoose.Schema({
   project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
@@ -110,11 +116,15 @@ const taskSchema = new mongoose.Schema({
 });
 
 const notificationSchema = new mongoose.Schema({
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  message: String,
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  message: { type: String, required: true },
   task_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
-  created_at: Date,
-  is_read: Boolean
+  type: {
+      type: String,
+      enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'other', 'task_assignment', 'task_accepted', 'task_rejected'],
+      default: 'task'
+  },
+  is_read: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Create Models

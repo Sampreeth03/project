@@ -299,7 +299,7 @@
                 <p>No Web Development projects available yet.</p>
             <% } else { %>
                 <% projects.forEach(project => { %>
-                    <div class="project-card" data-project-id="<%= project.id %>">
+                    <div class="project-card" data-project-id="<%= project._id %>">
                         <h2 class="project-title"><%= project.title %></h2>
                         <p class="project-description"><%= project.description %></p>
                         <div class="project-meta">
@@ -310,9 +310,9 @@
                             </span>
                         </div>
                         <button class="join-btn" 
-                                onclick="sendRequest(this, <%= project.id %>)" 
-                                <%= (project.memberCount >= project.capacity || project.hasJoined) ? 'disabled' : '' %>>
-                            <%= project.hasJoined ? 'Joined' : 'Request to Join Project' %>
+                                onclick="joinProject(this, '<%= project._id %>')" 
+                                <%= (project.hasJoined || project.hasPendingRequest || project.memberCount >= project.capacity) ? 'disabled' : '' %>>
+                            <%= project.hasJoined ? 'Joined' : project.hasPendingRequest ? 'Request Pending' : 'Request to Join Project' %>
                         </button>
                     </div>
                 <% }) %>
@@ -335,31 +335,28 @@
             event.stopPropagation();
         });
 
-        function sendRequest(button, projectId) {
-            fetch('/join-project', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.textContent = "Joined";
-                    button.disabled = true;
-                    const capacitySpan = button.previousElementSibling.querySelector('.filled-capacity');
-                    capacitySpan.textContent = parseInt(capacitySpan.textContent) + 1;
-                    if (capacitySpan.textContent >= button.previousElementSibling.querySelector('.total-capacity').textContent) {
-                        button.disabled = true;
-                    }
-                } else {
-                    alert(data.error || 'Failed to join project');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while joining the project');
-            });
+        function joinProject(button, projectId) {
+    fetch('/join-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message); // e.g., "Join request sent successfully"
+            button.textContent = "Request Pending";
+            button.disabled = true;
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to join project'); // e.g., "This project is full"
         }
+    })
+    .catch(error => {
+        console.error('Error joining project:', error);
+        alert('An error occurred while joining the project');
+    });
+}
     </script>
 </body>
 </html>

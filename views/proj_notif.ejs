@@ -435,42 +435,42 @@
       <p class="user-greeting">Welcome back, <%= user ? user.name : 'Guest' %>. Here are your latest notifications.</p>
     </div>
     <div class="notification-columns">
-      
+      <!-- As a Member Inbox (Task Notifications and Join Request Approved) -->
 <div class="notification-column">
   <div class="column-header">
       <h2>As a Member Inbox</h2>
       <span class="badge" id="member-badge">
-        <%= taskNotifications ? taskNotifications.filter(notif => !notif.is_read).length : 0 %>
-    </span>
+          <%= taskNotifications ? taskNotifications.filter(notif => !notif.is_read).length : 0 %>
+      </span>
   </div>
   <div class="notification-list" id="member-notifications">
       <% if (!taskNotifications || taskNotifications.length === 0) { %>
           <div class="empty-state">No member notifications available</div>
       <% } else { %>
           <% taskNotifications.forEach(notification => { %>
-            <div class="notification-card <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
+              <div class="notification-card <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
                   <div class="notification-header">
                       <h3 class="notification-title">
-                          <%- notification.task_title ? 'Task: ' + notification.task_title : 'Project Update' %>
+                          <%= notification.type === 'join_request_approved' ? 'Join Request Approved' : (notification.task_title ? 'Task: ' + notification.task_title : 'Project Update') %>
                       </h3>
                       <span class="notification-date">
-                          <%- new Date(notification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                          <%= new Date(notification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
                       </span>
                   </div>
                   <div class="notification-content">
-                      <p><%- notification.message %></p>
+                      <p><%= notification.message %></p>
                   </div>
                   <div class="notification-footer">
-                      <% if (notification.task_id && !notification.message.includes('approved') && !notification.message.includes('rejected')) { %>
+                      <% if (notification.type === 'task' && !notification.message.includes('approved') && !notification.message.includes('rejected')) { %>
                           <button class="view-review-btn" onclick="viewTask('<%= notification.task_id %>', '<%= notification.id %>')" aria-label="View Task">
                               View Task
                           </button>
                       <% } %>
                       <% if (!notification.is_read) { %>
-                        <button class="view-review-btn approve" onclick="markAsRead('<%= notification.id %>')" aria-label="Mark as Read">
-                            Mark as Read
-                        </button>
-                    <% } %>
+                          <button class="view-review-btn approve" onclick="markAsRead('<%= notification.id %>')" aria-label="Mark as Read">
+                              Mark as Read
+                          </button>
+                      <% } %>
                       <button class="delete-btn" onclick="deleteNotification('<%= notification.id %>')" aria-label="Delete Notification">✕</button>
                   </div>
               </div>
@@ -479,40 +479,71 @@
   </div>
 </div>
 
-      <!-- Team Leader Inbox (Join Requests) -->
+      <!-- Team Leader Inbox (Join Requests and Project Notifications) -->
       <div class="notification-column">
         <div class="column-header">
           <h2>Team Leader Inbox</h2>
           <span class="badge" id="leader-badge">
-            <%- joinRequests ? joinRequests.length : 0 %>
+            <%= (joinRequests ? joinRequests.filter(jr => jr.status === 'pending').length : 0) + (projectCreationNotifications ? projectCreationNotifications.filter(notif => !notif.is_read).length : 0) %>
           </span>
         </div>
         <div class="notification-list" id="leader-notifications">
-          <% if (!joinRequests || joinRequests.length === 0) { %>
-            <div class="empty-state">No join requests available</div>
+          <% if ((!joinRequests || joinRequests.length === 0) && (!projectCreationNotifications || projectCreationNotifications.length === 0)) { %>
+            <div class="empty-state">No team leader notifications available</div>
           <% } else { %>
+            <!-- Project Creation, Completion, and Join Request Approved Notifications -->
+            <% projectCreationNotifications.forEach(notification => { %>
+              <div class="notification-card <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
+                <div class="notification-header">
+                  <h3 class="notification-title">
+                    <%= notification.type === 'project_creation' ? 'Project Creation' : notification.type === 'project_completion' ? 'Project Completion' : 'Join Request Approved' %>
+                  </h3>
+                  <span class="notification-date">
+                    <%= new Date(notification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                  </span>
+                </div>
+                <div class="notification-content">
+                  <p><%= notification.message %></p>
+                </div>
+                <div class="notification-footer">
+                  <% if (!notification.is_read) { %>
+                    <button class="view-review-btn approve" onclick="markAsRead('<%= notification.id %>')" aria-label="Mark as Read">
+                      Mark as Read
+                    </button>
+                  <% } %>
+                  <button class="delete-btn" onclick="deleteNotification('<%= notification.id %>')" aria-label="Delete Notification">✕</button>
+                </div>
+              </div>
+            <% }) %>
+            <!-- Join Requests -->
             <% joinRequests.forEach(request => { %>
               <div class="notification-card" data-id="<%= request.id %>">
                 <div class="notification-header">
-                  <h3 class="notification-title">Join Request for <%- request.project_title %></h3>
+                  <h3 class="notification-title">Join Request for <%= request.project_title %></h3>
                   <span class="notification-date">
                     <%= new Date(request.requested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
                   </span>
                 </div>
                 <div class="notification-content">
                   <div class="team-member-profile" onclick="viewProfile('<%= request.user_id %>')">
-                    <div class="team-member-avatar"><%- request.user_name.charAt(0) %></div>
-                    <span class="team-member-name"><%- request.user_name %></span>
+                    <div class="team-member-avatar"><%= request.user_name.charAt(0) %></div>
+                    <span class="team-member-name"><%= request.user_name %></span>
                   </div>
                   <p>Requested to join your project</p>
                 </div>
-                <div class="notification-footer">
-                  <button class="view-review-btn approve" onclick="approveRequest('<%= request.id %>')" aria-label="Approve Request">
-                    Approve
-                  </button>
-                  <button class="view-review-btn reject" onclick="rejectRequest('<%= request.id %>')" aria-label="Reject Request">
-                    Reject
-                  </button>
+                <div class="notification-footer" id="footer-<%= request.id %>">
+                  <% if (request.status === 'pending') { %>
+                    <button class="view-review-btn approve" onclick="approveRequest('<%= request.id %>')" aria-label="Approve Request">
+                      Approve
+                    </button>
+                    <button class="view-review-btn reject" onclick="rejectRequest('<%= request.id %>')" aria-label="Reject Request">
+                      Reject
+                    </button>
+                  <% } else { %>
+                    <button class="view-review-btn info" disabled aria-label="Request Status">
+                      Request <%= request.status %>
+                    </button>
+                  <% } %>
                   <button class="delete-btn" onclick="deleteRequest('<%= request.id %>')" aria-label="Delete Request">✕</button>
                 </div>
               </div>
@@ -531,219 +562,250 @@
     // Store button states to prevent multiple clicks
     const buttonStates = new Map();
 
-    function formatDate(date) {
-      return new Date(date).toLocaleDateString('en-US', { month: 'short', day: "numeric", year: "numeric" });
-    }
-
     function approveRequest(requestId) {
-    const button = event.target;
-    if (buttonStates.get(requestId)) return; // Prevent multiple clicks
-    buttonStates.set(requestId, true);
-    button.disabled = true;
-    button.textContent = 'Approving...';
+      const button = event.target;
+      if (buttonStates.get(requestId)) return; // Prevent multiple clicks
+      buttonStates.set(requestId, true);
+      button.disabled = true;
+      button.textContent = 'Approving...';
 
-    fetch('/approve-join-request', {
+      fetch('/approve-join-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requestId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Request approved successfully');
-            setTimeout(() => window.location.href = '/project', 1000);
-        } else {
-            showToast(data.error || 'Failed to approve request', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('An error occurred while approving the request', 'error');
-    })
-    .finally(() => {
-        buttonStates.delete(requestId);
-        button.disabled = false;
-        button.textContent = 'Approve';
-    });
-}
-
-    function rejectRequest(requestId) {
-        const button = event.target;
-        if (buttonStates.get(requestId)) return; // Prevent multiple clicks
-        buttonStates.set(requestId, true);
-        button.disabled = true;
-        button.textContent = 'Rejecting...';
-
-        fetch('/reject-join-request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestId })
-        })
+      })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                showToast('Request rejected successfully');
-                location.reload();
-            } else {
-                showToast(data.error || 'Failed to reject request', 'error');
-            }
+          if (data.success) {
+            showToast('Request approved successfully');
+            const footer = document.getElementById(`footer-${requestId}`);
+            footer.innerHTML = `
+              <button class="view-review-btn info" disabled aria-label="Request Status">Request approved</button>
+              <button class="delete-btn" onclick="deleteRequest('${requestId}')" aria-label="Delete Request">✕</button>
+            `;
+            updateLeaderBadge();
+            setTimeout(() => window.location.href = '/project', 1000);
+          } else {
+            showToast(data.message || 'Failed to approve request', 'error');
+            button.disabled = false;
+            button.textContent = 'Approve';
+          }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showToast('An error occurred while rejecting the request', 'error');
+          console.error('Error:', error);
+          showToast('An error occurred while approving the request', 'error');
+          button.disabled = false;
+          button.textContent = 'Approve';
         })
         .finally(() => {
-            buttonStates.delete(requestId);
+          buttonStates.delete(requestId);
+        });
+    }
+
+    function rejectRequest(requestId) {
+      const button = event.target;
+      if (buttonStates.get(requestId)) return; // Prevent multiple clicks
+      buttonStates.set(requestId, true);
+      button.disabled = true;
+      button.textContent = 'Rejecting...';
+
+      fetch('/reject-join-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast('Request rejected successfully');
+            const footer = document.getElementById(`footer-${requestId}`);
+            footer.innerHTML = `
+              <button class="view-review-btn info" disabled aria-label="Request Status">Request rejected</button>
+              <button class="delete-btn" onclick="deleteRequest('${requestId}')" aria-label="Delete Request">✕</button>
+            `;
+            updateLeaderBadge();
+          } else {
+            showToast(data.message || 'Failed to reject request', 'error');
             button.disabled = false;
             button.textContent = 'Reject';
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('An error occurred while rejecting the request', 'error');
+          button.disabled = false;
+          button.textContent = 'Reject';
+        })
+        .finally(() => {
+          buttonStates.delete(requestId);
         });
     }
 
     function deleteRequest(requestId) {
-        if (confirm('Are you sure you want to delete this request?')) {
-            const button = event.target;
-            if (buttonStates.get(requestId)) return; // Prevent multiple clicks
-            buttonStates.set(requestId, true);
-            button.disabled = true;
+      if (confirm('Are you sure you want to delete this request?')) {
+        const button = event.target;
+        if (buttonStates.get(requestId)) return; // Prevent multiple clicks
+        buttonStates.set(requestId, true);
+        button.disabled = true;
 
-            fetch('/delete-join-request', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ requestId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Request deleted successfully');
-                    location.reload();
-                } else {
-                    showToast(data.error || 'Failed to delete request', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while deleting the request', 'error');
-            })
-            .finally(() => {
-                buttonStates.delete(requestId);
-                button.disabled = false;
-            });
-        }
+        fetch('/delete-join-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestId })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showToast('Request deleted successfully');
+              const card = document.querySelector(`.notification-card[data-id="${requestId}"]`);
+              card.remove();
+              updateLeaderBadge();
+              if (document.querySelectorAll('#leader-notifications .notification-card').length === 0) {
+                document.getElementById('leader-notifications').innerHTML = '<div class="empty-state">No team leader notifications available</div>';
+              }
+            } else {
+              showToast(data.message || 'Failed to delete request', 'error');
+              button.disabled = false;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while deleting the request', 'error');
+            button.disabled = false;
+          })
+          .finally(() => {
+            buttonStates.delete(requestId);
+          });
+      }
     }
 
     function viewProfile(userId) {
-        window.location.href = `/dashboard?userId=${userId}`;
+      window.location.href = `/dashboard?userId=${userId}`;
     }
 
     function viewTask(taskId, notificationId) {
-        markAsRead(notificationId);
-        fetch(`/get-task-project/${taskId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        })
+      markAsRead(notificationId);
+      fetch(`/get-task-project/${taskId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                window.location.href = `/joined-projects?highlightProject=${data.projectId}&highlightTask=${taskId}`;
-            } else {
-                showToast('Failed to load task', 'error');
-            }
+          if (data.success) {
+            window.location.href = `/joined-projects?highlightProject=${data.projectId}&highlightTask=${taskId}`;
+          } else {
+            showToast('Failed to load task', 'error');
+          }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showToast('An error occurred while loading the task', 'error');
+          console.error('Error:', error);
+          showToast('An error occurred while loading the task', 'error');
         });
     }
 
     function markAsRead(notificationId) {
-    const button = event.target;
-    if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
-    buttonStates.set(notificationId, true);
-    button.disabled = true;
-    button.textContent = 'Marking...';
+      const button = event.target;
+      if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
+      buttonStates.set(notificationId, true);
+      button.disabled = true;
+      button.textContent = 'Marking...';
 
-    fetch('/mark-notification-read', {
+      fetch('/mark-notification-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notificationId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
             const notificationCard = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
             notificationCard.classList.remove('unread');
             const markButton = notificationCard.querySelector('.view-review-btn.approve');
             if (markButton) markButton.remove();
             updateMemberBadge();
+            updateLeaderBadge();
             showToast('Notification marked as read');
-        } else {
-            showToast(data.error || 'Failed to mark as read', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('An error occurred while marking as read', 'error');
-    })
-    .finally(() => {
-        buttonStates.delete(notificationId);
-        button.disabled = false;
-        button.textContent = 'Mark as Read';
-    });
-}
-
-function updateMemberBadge() {
-    const unreadCount = document.querySelectorAll('#member-notifications .notification-card.unread').length;
-    document.getElementById('member-badge').textContent = unreadCount;
-}
-    function deleteNotification(notificationId) {
-        if (confirm('Are you sure you want to delete this notification?')) {
-            const button = event.target;
-            if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
-            buttonStates.set(notificationId, true);
-            button.disabled = true;
-
-            fetch('/delete-notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notificationId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const notificationCard = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
-                    notificationCard.remove();
-                    updateMemberBadge();
-                    showToast('Notification deleted successfully');
-                    if (document.querySelectorAll('#member-notifications .notification-card').length === 0) {
-                        document.getElementById('member-notifications').innerHTML = '<div class="empty-state">No member notifications available</div>';
-                    }
-                } else {
-                    showToast(data.error || 'Failed to delete notification', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while deleting the notification', 'error');
-            })
-            .finally(() => {
-                buttonStates.delete(notificationId);
-                button.disabled = false;
-            });
-        }
+          } else {
+            showToast(data.message || 'Failed to mark as read', 'error');
+            button.disabled = false;
+            button.textContent = 'Mark as Read';
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('An error occurred while marking as read', 'error');
+          button.disabled = false;
+          button.textContent = 'Mark as Read';
+        })
+        .finally(() => {
+          buttonStates.delete(notificationId);
+        });
     }
 
+    function deleteNotification(notificationId) {
+      if (confirm('Are you sure you want to delete this notification?')) {
+        const button = event.target;
+        if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
+        buttonStates.set(notificationId, true);
+        button.disabled = true;
 
+        fetch('/delete-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notificationId })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              const notificationCard = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+              notificationCard.remove();
+              updateMemberBadge();
+              updateLeaderBadge();
+              showToast('Notification deleted successfully');
+              if (document.querySelectorAll('#member-notifications .notification-card').length === 0) {
+                document.getElementById('member-notifications').innerHTML = '<div class="empty-state">No member notifications available</div>';
+              }
+              if (document.querySelectorAll('#leader-notifications .notification-card').length === 0) {
+                document.getElementById('leader-notifications').innerHTML = '<div class="empty-state">No team leader notifications available</div>';
+              }
+            } else {
+              showToast(data.message || 'Failed to delete notification', 'error');
+              button.disabled = false;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while deleting the notification', 'error');
+            button.disabled = false;
+          })
+          .finally(() => {
+            buttonStates.delete(notificationId);
+          });
+      }
+    }
+
+    function updateMemberBadge() {
+      const unreadCount = document.querySelectorAll('#member-notifications .notification-card.unread').length;
+      document.getElementById('member-badge').textContent = unreadCount;
+    }
+
+    function updateLeaderBadge() {
+      const unreadProjectNotifications = document.querySelectorAll('#leader-notifications .notification-card.unread').length;
+      const pendingJoinRequests = document.querySelectorAll('#leader-notifications .notification-card[data-id]').length -
+        document.querySelectorAll('#leader-notifications .notification-card .view-review-btn.info').length;
+      document.getElementById('leader-badge').textContent = unreadProjectNotifications + pendingJoinRequests;
+    }
 
     function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 10);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => document.body.removeChild(toast), 300);
-        }, 3000);
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
     }
   </script>
 </body>
