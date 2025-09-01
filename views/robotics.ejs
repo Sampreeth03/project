@@ -281,14 +281,14 @@
     </header>
     <div class="container">
         <div class="header-container">
-            <h1>Robotics</h1>
+            <h1>Robotics Projects</h1>
             <div class="topics-dropdown">
                 <button class="dropdown-btn" id="topicsButton">Topics</button>
                 <div id="topicsDropdown" class="dropdown-content">
-                    <a href="/robo">Robotics</a>
-                    <a href="/cyb">Cyber Security</a>
                     <a href="/web-dev">Web Development</a>
+                    <a href="/cyb">Cyber Security</a>
                     <a href="/dl">Deep Learning</a>
+                    <a href="/robo">Robotics</a>
                     <a href="/ds">Data Science</a>
                     <a href="/blockchain">Blockchain</a>
                 </div>
@@ -300,7 +300,7 @@
                 <p>No Robotics projects available yet.</p>
             <% } else { %>
                 <% projects.forEach(project => { %>
-                    <div class="project-card" data-project-id="<%= project.id %>">
+                    <div class="project-card" data-project-id="<%= project._id %>">
                         <h2 class="project-title"><%= project.title %></h2>
                         <p class="project-description"><%= project.description %></p>
                         <div class="project-meta">
@@ -311,9 +311,9 @@
                             </span>
                         </div>
                         <button class="join-btn" 
-                                onclick="sendRequest(this, <%= project.id %>)" 
-                                <%= (project.memberCount >= project.capacity || project.hasJoined) ? 'disabled' : '' %>>
-                            <%= project.hasJoined ? 'Joined' : 'Request to Join Project' %>
+                                onclick="joinProject(this, '<%= project._id %>')" 
+                                <%= (project.hasJoined || project.hasPendingRequest || project.memberCount >= project.capacity) ? 'disabled' : '' %>>
+                            <%= project.hasJoined ? 'Joined' : project.hasPendingRequest ? 'Request Pending' : 'Request to Join Project' %>
                         </button>
                     </div>
                 <% }) %>
@@ -336,7 +336,7 @@
             event.stopPropagation();
         });
 
-        function sendRequest(button, projectId) {
+        function joinProject(button, projectId) {
             fetch('/join-project', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -345,19 +345,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    button.textContent = "Joined";
+                    alert(data.message);
+                    button.textContent = "Request Pending";
                     button.disabled = true;
-                    const capacitySpan = button.previousElementSibling.querySelector('.filled-capacity');
-                    capacitySpan.textContent = parseInt(capacitySpan.textContent) + 1;
-                    if (capacitySpan.textContent >= button.previousElementSibling.querySelector('.total-capacity').textContent) {
-                        button.disabled = true;
-                    }
+                    location.reload();
                 } else {
-                    alert(data.error || 'Failed to join project');
+                    alert(data.message || 'Failed to join project');
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error joining project:', error);
                 alert('An error occurred while joining the project');
             });
         }

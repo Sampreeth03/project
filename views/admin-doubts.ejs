@@ -366,53 +366,6 @@
             color: var(--gray-text);
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-btn {
-            width: 35px;
-            height: 35px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--light-text);
-            background-color: var(--gray-dark);
-        }
-
-        .action-btn:hover {
-            background-color: var(--primary);
-        }
-
-        .filter-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            color: var(--light-text);
-            background-color: var(--gray-dark);
-        }
-
-        .filter-btn.active {
-            background-color: var(--primary);
-        }
-
-        .filter-btn:hover {
-            background-color: var(--secondary);
-        }
-
         @media (max-width: 992px) {
             .sidebar {
                 width: 80px;
@@ -529,13 +482,6 @@
                 </div>
             </div>
 
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <button class="filter-btn active" id="filter-all">All</button>
-                <button class="filter-btn" id="filter-cleared">Has Cleared Doubts</button>
-                <button class="filter-btn" id="filter-asked">Has Asked Doubts</button>
-            </div>
-
             <!-- Doubts Table -->
             <div class="doubts-table">
                 <div class="table-header">
@@ -548,11 +494,30 @@
                                 <th>User</th>
                                 <th>Doubts Cleared</th>
                                 <th>Total Doubts Asked</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="doubts-tbody">
-                            <!-- Data will be populated dynamically via JavaScript -->
+                            <% if (doubtsData && doubtsData.length > 0) { %>
+                                <% doubtsData.forEach(user => { %>
+                                    <tr data-id="<%= user.id %>">
+                                        <td>
+                                            <div class="user-info">
+                                                <div class="user-avatar"><%= user.name.split(' ').map(n => n[0]).join('') %></div>
+                                                <div class="user-details">
+                                                    <div class="user-name"><%= user.name %></div>
+                                                    <div class="user-email"><%= user.email %></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><%= user.doubtsCleared %></td>
+                                        <td><%= user.doubtsAsked %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="3">No data available</td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
@@ -563,108 +528,6 @@
     <!-- JavaScript for Dynamic Data -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Sample doubts statistics data (replace with real data from a backend if needed)
-            const doubtsData = [
-                {
-                    id: 1,
-                    name: 'Alex Mitchell',
-                    email: 'alex.mitchell@example.com',
-                    doubtsCleared: 5,
-                    doubtsAsked: 8
-                },
-                {
-                    id: 2,
-                    name: 'Sarah Johnson',
-                    email: 'sarah.johnson@example.com',
-                    doubtsCleared: 2,
-                    doubtsAsked: 10
-                },
-                {
-                    id: 3,
-                    name: 'Robert Parker',
-                    email: 'robert.parker@example.com',
-                    doubtsCleared: 0,
-                    doubtsAsked: 3
-                },
-                {
-                    id: 4,
-                    name: 'Emily Wilson',
-                    email: 'emily.wilson@example.com',
-                    doubtsCleared: 7,
-                    doubtsAsked: 7
-                }
-            ];
-
-            // Get the table body element
-            const tbody = document.getElementById('doubts-tbody');
-
-            // Function to create a table row for a user's doubt stats
-            function createDoubtRow(user) {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', user.id);
-
-                // User info
-                const tdUser = document.createElement('td');
-                const userInfo = document.createElement('div');
-                userInfo.className = 'user-info';
-                const userAvatar = document.createElement('div');
-                userAvatar.className = 'user-avatar';
-                userAvatar.textContent = user.name.split(' ').map(n => n[0]).join(''); // Initials
-                const userDetails = document.createElement('div');
-                userDetails.className = 'user-details';
-                const userName = document.createElement('div');
-                userName.className = 'user-name';
-                userName.textContent = user.name;
-                const userEmail = document.createElement('div');
-                userEmail.className = 'user-email';
-                userEmail.textContent = user.email;
-                userDetails.appendChild(userName);
-                userDetails.appendChild(userEmail);
-                userInfo.appendChild(userAvatar);
-                userInfo.appendChild(userDetails);
-                tdUser.appendChild(userInfo);
-
-                // Doubts Cleared
-                const tdCleared = document.createElement('td');
-                tdCleared.textContent = user.doubtsCleared;
-
-                // Total Doubts Asked
-                const tdAsked = document.createElement('td');
-                tdAsked.textContent = user.doubtsAsked;
-
-                // Actions
-                const tdActions = document.createElement('td');
-                const actionButtons = document.createElement('div');
-                actionButtons.className = 'action-buttons';
-                const viewBtn = document.createElement('div');
-                viewBtn.className = 'action-btn view-btn';
-                viewBtn.setAttribute('data-id', user.id);
-                viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
-                actionButtons.appendChild(viewBtn);
-                tdActions.appendChild(actionButtons);
-
-                // Append all cells to the row
-                tr.appendChild(tdUser);
-                tr.appendChild(tdCleared);
-                tr.appendChild(tdAsked);
-                tr.appendChild(tdActions);
-
-                return tr;
-            }
-
-            // Populate the table with doubt data
-            function populateTable(data) {
-                tbody.innerHTML = ''; // Clear existing rows
-                data.forEach(user => {
-                    const row = createDoubtRow(user);
-                    tbody.appendChild(row);
-                });
-            }
-
-            // Initial population of the table
-            populateTable(doubtsData);
-
-            // Sidebar toggle functionality
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -673,57 +536,27 @@
                 mainContent.classList.toggle('main-content-expanded');
             });
 
-            // Profile dropdown functionality
             const adminProfile = document.getElementById('admin-profile');
             const profileDropdown = document.getElementById('profile-dropdown');
             adminProfile.addEventListener('click', () => {
                 profileDropdown.classList.toggle('show');
             });
 
-            // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!adminProfile.contains(e.target)) {
                     profileDropdown.classList.remove('show');
                 }
             });
 
-            // Search functionality
             const searchInput = document.getElementById('doubt-search');
             searchInput.addEventListener('input', () => {
                 const query = searchInput.value.toLowerCase();
-                const filteredData = doubtsData.filter(user =>
-                    user.name.toLowerCase().includes(query) ||
-                    user.email.toLowerCase().includes(query)
-                );
-                populateTable(filteredData);
-            });
-
-            // Filter functionality
-            const filterAll = document.getElementById('filter-all');
-            const filterCleared = document.getElementById('filter-cleared');
-            const filterAsked = document.getElementById('filter-asked');
-
-            filterAll.addEventListener('click', () => {
-                filterAll.classList.add('active');
-                filterCleared.classList.remove('active');
-                filterAsked.classList.remove('active');
-                populateTable(doubtsData);
-            });
-
-            filterCleared.addEventListener('click', () => {
-                filterAll.classList.remove('active');
-                filterCleared.classList.add('active');
-                filterAsked.classList.remove('active');
-                const filteredData = doubtsData.filter(user => user.doubtsCleared > 0);
-                populateTable(filteredData);
-            });
-
-            filterAsked.addEventListener('click', () => {
-                filterAll.classList.remove('active');
-                filterCleared.classList.remove('active');
-                filterAsked.classList.add('active');
-                const filteredData = doubtsData.filter(user => user.doubtsAsked > 0);
-                populateTable(filteredData);
+                const rows = document.querySelectorAll('#doubts-tbody tr');
+                rows.forEach(row => {
+                    const name = row.querySelector('.user-name').textContent.toLowerCase();
+                    const email = row.querySelector('.user-email').textContent.toLowerCase();
+                    row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+                });
             });
         });
     </script>

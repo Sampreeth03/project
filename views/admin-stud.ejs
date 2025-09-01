@@ -416,64 +416,8 @@
             color: var(--gray-text);
         }
 
-        .status {
-            padding: 5px 10px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-active {
-            background-color: rgba(74, 222, 128, 0.15);
-            color: var(--success);
-        }
-
-        .status-active i {
-            color: var(--success);
-        }
-
-        .status-pending {
-            background-color: rgba(245, 158, 11, 0.15);
-            color: var(--warning);
-        }
-
-        .status-pending i {
-            color: var(--warning);
-        }
-
-        .status-banned {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: var(--danger);
-        }
-
-        .status-banned i {
-            color: var(--danger);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-btn {
-            width: 35px;
-            height: 35px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--light-text);
-            background-color: var(--gray-dark);
-        }
-
-        .action-btn:hover {
-            background-color: var(--primary);
-        }
+        
+        
 
         .pagination {
             display: flex;
@@ -625,31 +569,7 @@
             }
         }
 
-        /* Filter Buttons Styling */
-        .filter-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            color: var(--light-text);
-            background-color: var(--gray-dark);
-        }
-
-        .filter-btn.active {
-            background-color: var(--primary);
-        }
-
-        .filter-btn:hover {
-            background-color: var(--secondary);
-        }
+        
     </style>
 </head>
 <body>
@@ -678,7 +598,7 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="admin-info">
-                            <div class="admin-name">Srihesh</div>
+                            <div class="admin-name"><%= adminName %></div>
                             <div class="admin-role">Admin</div>
                         </div>
                         <div class="profile-dropdown" id="profile-dropdown">
@@ -697,75 +617,26 @@
                 </div>
             </div>
 
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <button class="filter-btn active" id="filter-all">All</button>
-                <button class="filter-btn" id="filter-hosts">Has Hosted Projects</button>
-                <button class="filter-btn" id="filter-doers">Has Completed Tasks</button>
-            </div>
-
             <!-- Students Table -->
-            <div class="students-table">
-                <div class="table-header">
-                    <h4 class="table-title">All Students</h4>
-                </div>
-                <div class="table-container">
-                    <table id="students-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Hosted Projects</th>
-                                <th>Tasks Completed</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="students-tbody">
-                            <!-- Data will be populated dynamically via JavaScript -->
-                        </tbody>
-                    </table>
+<table class="students-table">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Hosted Projects</th>
+            <th>Tasks Completed</th>
+        </tr>
+    </thead>
+    <tbody id="students-tbody">
+    </tbody>
+</table>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    // Sample student data (replace this with real data from a backend if needed)
-    const studentsData = [
-        {
-            id: 1,
-            name: 'Alex Mitchell',
-            email: 'alex.mitchell@example.com',
-            hostedProjects: 3,
-            tasksCompleted: 5,
-            status: 'Active'
-        },
-        {
-            id: 2,
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@example.com',
-            hostedProjects: 1,
-            tasksCompleted: 15,
-            status: 'Active'
-        },
-        {
-            id: 3,
-            name: 'Robert Parker',
-            email: 'robert.parker@example.com',
-            hostedProjects: 1,
-            tasksCompleted: 0,
-            status: 'Pending'
-        },
-        {
-            id: 4,
-            name: 'Emily Wilson',
-            email: 'emily.wilson@example.com',
-            hostedProjects: 0,
-            tasksCompleted: 8,
-            status: 'Active'
-        }
-    ];
+<script>
+ document.addEventListener('DOMContentLoaded', function() {
+    // Store initial data from server
+    const studentsData = <%- JSON.stringify(studentsData) %>;
 
     // Get the table body element
     const tbody = document.getElementById('students-tbody');
@@ -804,42 +675,10 @@
         const tdTasks = document.createElement('td');
         tdTasks.textContent = student.tasksCompleted;
 
-        // Status
-        const tdStatus = document.createElement('td');
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'status';
-        statusSpan.innerHTML = `<i class="fas fa-circle"></i> ${student.status}`;
-        if (student.status === 'Active') {
-            statusSpan.classList.add('status-active');
-        } else if (student.status === 'Pending') {
-            statusSpan.classList.add('status-pending');
-        } else if (student.status === 'Banned') {
-            statusSpan.classList.add('status-banned');
-        }
-        tdStatus.appendChild(statusSpan);
-
-        // Actions
-        const tdActions = document.createElement('td');
-        const actionButtons = document.createElement('div');
-        actionButtons.className = 'action-buttons';
-        const viewBtn = document.createElement('div');
-        viewBtn.className = 'action-btn view-btn';
-        viewBtn.setAttribute('data-id', student.id);
-        viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
-        const deleteBtn = document.createElement('div');
-        deleteBtn.className = 'action-btn delete-btn';
-        deleteBtn.setAttribute('data-id', student.id);
-        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-        actionButtons.appendChild(viewBtn);
-        actionButtons.appendChild(deleteBtn);
-        tdActions.appendChild(actionButtons);
-
         // Append all cells to the row
         tr.appendChild(tdStudent);
         tr.appendChild(tdHosted);
         tr.appendChild(tdTasks);
-        tr.appendChild(tdStatus);
-        tr.appendChild(tdActions);
 
         return tr;
     }
@@ -889,36 +728,8 @@
         );
         populateTable(filteredData);
     });
-
-    // Filter functionality
-    const filterAll = document.getElementById('filter-all');
-    const filterHosts = document.getElementById('filter-hosts');
-    const filterDoers = document.getElementById('filter-doers');
-
-    filterAll.addEventListener('click', () => {
-        filterAll.classList.add('active');
-        filterHosts.classList.remove('active');
-        filterDoers.classList.remove('active');
-        populateTable(studentsData);
-    });
-
-    filterHosts.addEventListener('click', () => {
-        filterAll.classList.remove('active');
-        filterHosts.classList.add('active');
-        filterDoers.classList.remove('active');
-        const filteredData = studentsData.filter(student => student.hostedProjects > 0);
-        populateTable(filteredData);
-    });
-
-    filterDoers.addEventListener('click', () => {
-        filterAll.classList.remove('active');
-        filterHosts.classList.remove('active');
-        filterDoers.classList.add('active');
-        const filteredData = studentsData.filter(student => student.tasksCompleted > 0);
-        populateTable(filteredData);
-    });
 });
-    </script>
+</script>
    
 </body>
 </html>
