@@ -4,6 +4,7 @@ payment after 3-5 projects creation
 bug: members have the permission to remove leader(need to remove that)
 self reply check once
 add chat interface for project group
+recruiter notification page not working
 
 seperate server.js -> 
 Authentication: authRoutes + authController + User model
