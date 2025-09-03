@@ -23,7 +23,7 @@ Seeding/Migrations: seedController + startup/seed.js
 Requirements for 5 sem:
 atleast 3 use cases(satisfied) with 2-4 functionalites each (satisfied)
 add event listeners and ajax funstionalites wherever possible mark them with comment
-#maybe afer mid-> use React
+#maybe afer mid-> use React.
 
 Functionalities:
 User: 14 
