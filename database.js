@@ -12,12 +12,21 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 
 // Define Schemas
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
+  name: { type: String, trim: true },
+  email: { type: String, unique: true, trim: true },
   password: String,
-  role: String,
+  role: { type: String, default: 'user' },
   verified: { type: Boolean, default: false },
-  verificationFile: String
+  verificationFile: String,
+  // profile fields
+  about: { type: String, default: '' },
+  profileImageUrl: { type: String, default: null },
+  resumeUrl: { type: String, default: null },
+  skills: { type: [String], default: [] },
+  interests: { type: [String], default: [] },
+  questionsAnswered: { type: Number, default: 0 },
+  thumbsUp: { type: Number, default: 0 },
+  thumbsDown: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const userMetricsSchema = new mongoose.Schema({

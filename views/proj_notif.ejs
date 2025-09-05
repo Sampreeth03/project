@@ -1,4 +1,3 @@
-<!-- views/proj_notif.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +19,7 @@
       --hover-color: #353535;
       --border-radius: 8px;
       --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      --unread-bg: #1a2a4a; /* Background for unread notifications */
+      --unread-bg: #1a2a4a; 
     }
 
     * {
@@ -405,6 +404,97 @@
     .notification-card {
       animation: fadeIn 0.3s ease-out;
     }
+    /* Profile modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(2px);
+    }
+    .modal-content {
+      position: relative;
+      z-index: 2001;
+      width: min(760px, 96%);
+      max-height: 85vh;
+      overflow: auto;
+      background: linear-gradient(180deg, var(--card-bg), var(--darker-bg));
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--light-text);
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .profile-header {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--light-text);
+      font-weight: 700;
+      font-size: 24px;
+      flex: 0 0 72px;
+    }
+    .profile-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--light-text);
+    }
+    .profile-meta {
+      color: var(--medium-text);
+      font-size: 0.95rem;
+    }
+    .profile-section {
+      margin-top: 12px;
+      color: var(--medium-text);
+      line-height: 1.45;
+    }
+    .chip {
+      display: inline-block;
+      background: rgba(255,255,255,0.04);
+      color: var(--light-text);
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin: 4px 6px 0 0;
+      font-size: 0.85rem;
+    }
+    .modal-content iframe {
+      width: 100%;
+      height: 70vh;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+    }
   </style>
 </head>
 <body>
@@ -435,8 +525,7 @@
       <p class="user-greeting">Welcome back, <%= user ? user.name : 'Guest' %>. Here are your latest notifications.</p>
     </div>
     <div class="notification-columns">
-      <!-- As a Member Inbox (Task Notifications and Join Request Approved) -->
-<div class="notification-column">
+      <div class="notification-column">
   <div class="column-header">
       <h2>As a Member Inbox</h2>
       <span class="badge" id="member-badge">
@@ -479,7 +568,6 @@
   </div>
 </div>
 
-      <!-- Team Leader Inbox (Join Requests and Project Notifications) -->
       <div class="notification-column">
         <div class="column-header">
           <h2>Team Leader Inbox</h2>
@@ -491,7 +579,6 @@
           <% if ((!joinRequests || joinRequests.length === 0) && (!projectCreationNotifications || projectCreationNotifications.length === 0)) { %>
             <div class="empty-state">No team leader notifications available</div>
           <% } else { %>
-            <!-- Project Creation, Completion, and Join Request Approved Notifications -->
             <% projectCreationNotifications.forEach(notification => { %>
               <div class="notification-card <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
                 <div class="notification-header">
@@ -515,44 +602,60 @@
                 </div>
               </div>
             <% }) %>
-            <!-- Join Requests -->
-            <% joinRequests.forEach(request => { %>
-              <div class="notification-card" data-id="<%= request.id %>">
-                <div class="notification-header">
-                  <h3 class="notification-title">Join Request for <%= request.project_title %></h3>
-                  <span class="notification-date">
-                    <%= new Date(request.requested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
-                  </span>
-                </div>
-                <div class="notification-content">
-                  <div class="team-member-profile" onclick="viewProfile('<%= request.user_id %>')">
-                    <div class="team-member-avatar"><%= request.user_name.charAt(0) %></div>
-                    <span class="team-member-name"><%= request.user_name %></span>
+            <% if (Array.isArray(joinRequests) && joinRequests.length) { %>
+              <% joinRequests.forEach(function(request) { %>
+                <div class="notification-card" data-id="<%= request.id %>">
+                  <div class="notification-header">
+                    <h3 class="notification-title">Join Request for <%= request.project_title %></h3>
+                    <span class="notification-date">
+                      <%= request.requested_at ? new Date(request.requested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '' %>
+                    </span>
                   </div>
-                  <p>Requested to join your project</p>
+
+                  <div class="notification-content">
+                    <div class="team-member-profile">
+                      <div class="team-member-avatar"><%= (request.user_name || 'U').charAt(0).toUpperCase() %></div>
+                      <div>
+                        <div class="team-member-name"><%= request.user_name %></div>
+                        <div class="team-member-sub">Requested to join: <em><%= request.project_title %></em></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="notification-footer" id="footer-<%= request.id %>">
+                    <% if (request.status === 'pending') { %>
+                      <button class="view-review-btn" type="button" onclick="viewProfile('<%= request.user_id %>')" title="View requester profile">View Profile</button>
+
+                      <button class="view-review-btn approve" onclick="approveRequest('<%= request.id %>')" aria-label="Approve Request">Approve</button>
+                      <button class="view-review-btn reject" onclick="rejectRequest('<%= request.id %>')" aria-label="Reject Request">Reject</button>
+                    <% } else { %>
+                      <button class="view-review-btn info" disabled aria-label="Request Status">Request <%= request.status %></button>
+
+                      <button class="view-review-btn" type="button" onclick="viewProfile('<%= request.user_id %>')" title="View requester profile">View Profile</button>
+                    <% } %>
+
+                    <button class="delete-btn" onclick="deleteRequest('<%= request.id %>')" aria-label="Delete Request">✕</button>
+                  </div>
                 </div>
-                <div class="notification-footer" id="footer-<%= request.id %>">
-                  <% if (request.status === 'pending') { %>
-                    <button class="view-review-btn approve" onclick="approveRequest('<%= request.id %>')" aria-label="Approve Request">
-                      Approve
-                    </button>
-                    <button class="view-review-btn reject" onclick="rejectRequest('<%= request.id %>')" aria-label="Reject Request">
-                      Reject
-                    </button>
-                  <% } else { %>
-                    <button class="view-review-btn info" disabled aria-label="Request Status">
-                      Request <%= request.status %>
-                    </button>
-                  <% } %>
-                  <button class="delete-btn" onclick="deleteRequest('<%= request.id %>')" aria-label="Delete Request">✕</button>
-                </div>
-              </div>
-            <% }) %>
-          <% } %>
-        </div>
+              <% }) %>
+            <% } else { %>
+              <p>No join requests.</p>
+            <% } %>
+          <% } %> </div>
       </div>
     </div>
   </main>
+
+  <!-- Profile modal -->
+  <div id="profile-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-backdrop" onclick="closeProfileModal()"></div>
+    <div class="modal-content" role="document" aria-label="User profile">
+      <button class="modal-close" onclick="closeProfileModal()" aria-label="Close profile">✕</button>
+      <div id="profile-modal-body">
+        <!-- profile content will be injected here -->
+      </div>
+    </div>
+  </div>
 
   <footer class="footer">
     <p>© 2025 RELABTeams Platform • Version 2.4.1 • Last updated: March 24, 2025</p>
@@ -680,7 +783,80 @@
     }
 
     function viewProfile(userId) {
-      window.location.href = `/dashboard?userId=${userId}`;
+      // open modal and render a compact profile overview using JSON endpoint
+      const modal = document.getElementById('profile-modal');
+      const body = document.getElementById('profile-modal-body');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      body.innerHTML = '<div class="profile-section">Loading profile…</div>';
+
+      fetch(`/profile-data/${encodeURIComponent(userId)}`)
+        .then(res => {
+          if (res.status === 401) throw new Error('Unauthorized');
+          return res.json();
+        })
+        .then(data => {
+          if (!data || !data.success) {
+            body.innerHTML = '<div class="profile-section">Failed to load profile.</div>';
+            return;
+          }
+          const u = data.user;
+          const avatar = u.avatarUrl ? `<img src="${u.avatarUrl}" alt="${u.name}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.06)">` : `<div class="profile-avatar">${(u.name||'U').charAt(0).toUpperCase()}</div>`;
+
+          const skillsHtml = (u.skills || []).map(s => `<span class="chip">${s}</span>`).join('');
+          const interestsHtml = (u.interests || []).map(i => `<span class="chip">${i}</span>`).join('');
+
+          body.innerHTML = `
+            <div class="profile-header">
+              ${avatar}
+              <div>
+                <div class="profile-name">${u.name || 'Unknown'}</div>
+                <div class="profile-meta">${u.email ? u.email : ''}</div>
+                <div class="profile-meta">Joined: ${u.joinedAt ? new Date(u.joinedAt).toLocaleDateString() : ''}</div>
+              </div>
+            </div>
+            <div class="profile-section" style="margin-top:8px">${u.bio ? `<strong>About:</strong> <div style=\"margin-top:6px;color:var(--medium-text)\">${u.bio}</div>` : '<em style="color:var(--medium-text)">No bio provided</em>'}</div>
+            <div style="margin-top:12px">
+              ${skillsHtml ? `<div style="margin-bottom:8px"><strong>Skills</strong><div>${skillsHtml}</div></div>` : ''}
+              ${interestsHtml ? `<div><strong>Interests</strong><div>${interestsHtml}</div></div>` : ''}
+            </div>
+            <div style="margin-top:14px; text-align:right">
+              ${u.resumeUrl ? `<a class="view-review-btn" href="${u.resumeUrl}" target="_blank" rel="noopener">View Resume</a>` : ''}
+              <button class="view-review-btn" onclick="closeProfileModal()" style="margin-left:6px">Close</button>
+            </div>
+          `;
+        })
+        .catch(err => {
+          console.error('Profile load error:', err);
+          if (err.message === 'Unauthorized') {
+            body.innerHTML = '<div class="profile-section">Please log in to view profiles.</div>';
+          } else {
+            body.innerHTML = '<div class="profile-section">Error loading profile.</div>';
+          }
+        });
+
+      // close on Esc
+      function escHandler(e) {
+        if (e.key === 'Escape') closeProfileModal();
+      }
+      document.addEventListener('keydown', escHandler);
+      modal._escHandler = escHandler;
+    }
+
+    function closeProfileModal() {
+      const modal = document.getElementById('profile-modal');
+      if (!modal) return;
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      const body = document.getElementById('profile-modal-body');
+      if (body) {
+        // if there is an iframe, remove its src first
+        const iframe = body.querySelector('iframe');
+        if (iframe) iframe.src = 'about:blank';
+        body.innerHTML = '';
+      }
+      if (modal._escHandler) document.removeEventListener('keydown', modal._escHandler);
+      modal._escHandler = null;
     }
 
     function viewTask(taskId, notificationId) {
