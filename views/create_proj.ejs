@@ -414,6 +414,7 @@
                                 <option value="deep learning" style="background-color: #252525;">Deep Learning</option>
                                 <option value="data science" style="background-color: #252525;">Data Science</option>
                             </select>
+                         
                         </div>
                         <div class="form-group">
                             <label for="project-capacity">Number of Members</label>
@@ -458,6 +459,12 @@
                 </div>
             </div>
         </div>
+   
+        <div id="paymentPopup" style="display:none; position:fixed; top:30%; left:40%; background:#fff; border:1px solid #ccc; padding:20px; z-index:1000;">
+    <p>You have reached the free project limit. Please pay ₹500 to create more projects.</p>
+    <button id="payBtn">Pay ₹500</button>
+</div>
+
     
         <script>
            document.addEventListener('DOMContentLoaded', function() {
@@ -469,7 +476,7 @@
         projectForm.classList.toggle('active');
     });
 
-    document.getElementById('new-project-form').addEventListener('submit', function(e) {
+    document.getElementById('new-project-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const projectData = {
@@ -480,14 +487,54 @@
             deadline: document.getElementById('project-deadline').value
         };
 
-        fetch('/create-project', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(projectData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+        try {
+            // First attempt without payment flag
+            const resp = await fetch('/create-project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(projectData)
+            });
+            const data = await resp.json();
+
+            if (data.requirePayment) {
+                // Use a simple browser confirm (alert-style) for payment consent
+                const confirmPay = window.confirm('You have reached the free project limit. Pay ₹500 to create more projects? Click OK to pay.');
+                if (!confirmPay) {
+                    // User cancelled — do nothing
+                    return;
+                }
+
+                try {
+                    const paidResp = await fetch('/create-project', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...projectData, paid: true })
+                    });
+                    const paidResult = await paidResp.json();
+                    if (paidResult.success) {
+                        alert('Project created after payment!');
+                        const newProject = {
+                            id: paidResult.projectId,
+                            title: projectData.title,
+                            description: projectData.description,
+                            capacity: projectData.capacity,
+                            memberCount: 0,
+                            topic: projectData.topic,
+                            deadline: projectData.deadline
+                        };
+                        addProject(newProject);
+                        document.getElementById('new-project-form').reset();
+                        projectForm.classList.remove('active');
+                        window.location.href = paidResult.redirect || '/dashboard';
+                    } else {
+                        alert('Payment failed: ' + (paidResult.error || paidResult.message || 'Unknown error'));
+                    }
+                } catch (err) {
+                    console.error('Payment request failed:', err);
+                    alert('Payment request failed');
+                }
+            } else if (data.success) {
+            } else if (data.success) {
                 alert('Project created successfully!');
                 const newProject = {
                     id: data.projectId,
@@ -501,15 +548,14 @@
                 addProject(newProject);
                 document.getElementById('new-project-form').reset();
                 projectForm.classList.remove('active');
-                window.location.href = data.redirect || '/dashboard'; // Enforce redirect
+                window.location.href = data.redirect || '/dashboard';
             } else {
-                alert('Error creating project: ' + (data.error || 'Unknown error'));
+                alert('Error creating project: ' + (data.error || data.message || 'Unknown error'));
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
             alert('Failed to create project');
-        });
+        }
     });
 
     projectsContainer.addEventListener('click', function(e) {
@@ -595,6 +641,16 @@
         });
     }
 });
+
+    // Removed duplicate handler for createProjectForm — using single handler bound to #new-project-form above
+
+
+
+
+
+
+
+
         </script>
 </body>
 </html>
