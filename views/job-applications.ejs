@@ -203,7 +203,11 @@
               <div class="job-footer">
                 <div class="date-applied">Applied: <%= new Date(application.date_applied).toLocaleDateString() %></div>
                 <% if (application.status === 'Approved') { %>
-                  <div class="status-badge" style="background-color: rgba(40,167,69,0.2); color: #28a745;">You are hired </div>
+                  <div class="status-badge" style="background-color: rgba(40,167,69,0.2); color: #28a745;">You are hired</div>
+                <% } else if (application.status === 'Partially Done') { %>
+                  <div class="status-badge" style="background-color: rgba(255,193,7,0.2); color: #ffc107;">Partially done (recruiter kept on hold)</div>
+                <% } else if (application.status === 'Waiting' || application.status === 'Pending') { %>
+                  <div class="status-badge">Pending</div>
                 <% } else { %>
                   <div class="status-badge"><%= application.status %></div>
                 <% } %>

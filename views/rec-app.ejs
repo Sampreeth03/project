@@ -471,7 +471,7 @@
 
             let filteredApplications = applicationsData;
             if (filter === 'pending') {
-                filteredApplications = applicationsData.filter(app => app.status === 'pending');
+                filteredApplications = applicationsData.filter(app => app.status === 'pending' || app.status === 'partially done');
             } else if (filter === 'approved') {
                 filteredApplications = applicationsData.filter(app => app.status === 'approved');
             }
@@ -509,12 +509,19 @@
                         <span class="application-badge">${application.badge}</span>
                         <div class="application-buttons">
                             ${actionButtons}
+                            ${application.status === 'approved' ? `
                             <a href="/view-resume/${application.resumeId}" target="_blank" class="resume-link">
                                 <svg class="resume-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M5 2C3.343 2 2 3.343 2 5v14c0 1.657 1.343 3 3 3h14c1.657 0 3-1.343 3-3V5c0-1.657-1.343-3-3-3H5zm0 2h14c.552 0 1 .448 1 1v14c0 .552-.448 1-1 1H5c-.552 0-1-.448-1-1V5c0-.552.448-1 1-1zm2 3v10h10V7H7zm2 2h6v2H9V9zm0 4h6v2H9v-2z"/>
                                 </svg>
                                 Resume - ${application.applicantName}
-                            </a>
+                            </a>` : `
+                            <a href="#" class="resume-link hold-link">
+                                <svg class="resume-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M5 2C3.343 2 2 3.343 2 5v14c0 1.657 1.343 3 3 3h14c1.657 0 3-1.343 3-3V5c0-1.657-1.343-3-3-3H5zm0 2h14c.552 0 1 .448 1 1v14c0 .552-.448 1-1 1H5c-.552 0-1-.448-1-1V5c0-.552.448-1 1-1zm2 3v10h10V7H7zm2 2h6v2H9V9zm0 4h6v2H9v-2z"/>
+                                </svg>
+                                Keep on Hold
+                            </a>`}
                         </div>
                     </div>
                 `;
@@ -525,6 +532,34 @@
 
             document.querySelectorAll('.application').forEach(element => {
                 element.addEventListener('click', async function(e) {
+                    const holdLink = e.target.closest('.hold-link');
+                    if (holdLink) {
+                        e.preventDefault();
+                        const applicationId = this.getAttribute('data-id');
+                        const application = applicationsData.find(n => n.id === applicationId);
+                        if (application) {
+                            try {
+                                const response = await fetch(`/hold-application/${applicationId}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                                const data = await response.json();
+                                if (data.success) {
+                                    application.status = 'partially done';
+                                    application.unread = false;
+                                    showToast('Application kept on hold.', 'success');
+                                    const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                                    renderApplications(activeTab);
+                                    updateApplicationCount();
+                                } else {
+                                    showToast(data.error || 'Failed to keep on hold', 'danger');
+                                }
+                            } catch (err) {
+                                showToast('Error keeping on hold', 'danger');
+                            }
+                        }
+                        return;
+                    }
                     if (e.target.tagName === 'BUTTON') {
                         e.stopPropagation();
                         

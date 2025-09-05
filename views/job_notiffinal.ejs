@@ -127,6 +127,12 @@
       align-items: center;
       margin-bottom: 1.5rem;
     }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
 
     .header-content h2 {
       font-size: 1.5rem;
@@ -272,7 +278,8 @@
 
     .job-card-footer {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
       gap: 0.75rem;
       margin-top: 1rem;
       padding-top: 1rem;
@@ -414,10 +421,13 @@
 
   <main class="container">
     <div class="header-content">
-      <h2>Your Job Applications</h2>
-      <div class="jobs-count">
-        <span>Total Jobs</span>
-        <span class="jobs-count-number" id="jobs-badge"></span>
+      <h2>Your Job Notifications</h2>
+      <div class="header-actions">
+        <div class="jobs-count">
+          <span>Total Jobs</span>
+          <span class="jobs-count-number" id="jobs-badge"></span>
+        </div>
+        <button id="clear-all" class="btn btn-danger">Clear All</button>
       </div>
     </div>
 
@@ -425,76 +435,8 @@
   </main>
 
   <script>
-    const jobData = {
-      jobsNotifications: [
-        {
-          id: 1,
-          title: "Software Engineer",
-          content: "You applied for the job Software Engineer. Below is its job description.",
-          description: "Develop and maintain web applications using React and Node.js. Collaborate with cross-functional teams to design and implement new features.",
-          pay: "₹8,00,000 per annum",
-          date: "2025-03-18",
-          company: "TechCorp",
-          type: "applied"
-        },
-        {
-          id: 2,
-          title: "Data Analyst",
-          content: "You applied for the job Data Analyst. Below is its job description.",
-          description: "Analyze large datasets to provide actionable insights. Create reports and dashboards using Tableau and SQL.",
-          pay: "₹6,50,000 per annum",
-          date: "2025-03-19",
-          company: "DataWorks",
-          type: "applied"
-        },
-        {
-          id: 3,
-          title: "Product Manager",
-          content: "You applied for the job Product Manager. Below is its job description.",
-          description: "Define product vision and strategy. Work with engineering and design teams to deliver high-quality products.",
-          pay: "₹12,00,000 per annum",
-          date: "2025-03-17",
-          company: "InnovateLabs",
-          type: "applied"
-        },
-        {
-          id: 101,
-          title: "Frontend Developer",
-          content: "You have been shortlisted for this Frontend Developer. Below is its job description.",
-          description: "Build responsive and user-friendly interfaces using HTML, CSS, and JavaScript. Optimize applications for performance.",
-          pay: "₹9,00,000 per annum",
-          date: "2025-03-18",
-          company: "WebSolutions",
-          type: "shortlisted",
-          status: "pending",
-          resumeLink: "https://websolutions.com/submit-resume"
-        },
-        {
-          id: 102,
-          title: "Backend Developer",
-          content: "You have been shortlisted for this Backend Developer. Below is its job description.",
-          description: "Design and implement RESTful APIs using Python and Django. Ensure scalability and security of backend systems.",
-          pay: "₹10,00,000 per annum",
-          date: "2025-03-17",
-          company: "ServerTech",
-          type: "shortlisted",
-          status: "pending",
-          resumeLink: "https://servertech.com/submit-resume"
-        },
-        {
-          id: 103,
-          title: "UI/UX Designer",
-          content: "You have been shortlisted for this UI/UX Designer. Below is its job description.",
-          description: "Create wireframes, prototypes, and high-fidelity designs using Figma. Conduct user research to improve design decisions.",
-          pay: "₹7,50,000 per annum",
-          date: "2025-03-19",
-          company: "DesignPro",
-          type: "shortlisted",
-          status: "pending",
-          resumeLink: "https://designpro.com/submit-resume"
-        }
-      ]
-    };
+  // Notifications provided from server
+  const notifications = <%- JSON.stringify(notifications || []) %>;
   
     document.addEventListener('DOMContentLoaded', function () {
       function formatDate(date) {
@@ -507,51 +449,45 @@
   
       function renderNotifications() {
         const container = document.getElementById('jobs-notifications');
-        const notifications = jobData.jobsNotifications;
-        container.innerHTML = notifications.length ? '' : `<div class="empty-state">No job applications found</div>`;
-        document.getElementById('jobs-badge').textContent = notifications.length;
+        const notificationsList = notifications;
+        container.innerHTML = notificationsList.length ? '' : `<div class="empty-state">No job notifications found</div>`;
+        document.getElementById('jobs-badge').textContent = notificationsList.length;
   
-        notifications.forEach((notification) => {
+        notificationsList.forEach((n) => {
           const jobCard = document.createElement('div');
           jobCard.className = 'job-card';
-          jobCard.dataset.id = notification.id;
-          jobCard.dataset.type = notification.type;
+          jobCard.dataset.id = n._id;
+          jobCard.dataset.type = n.type;
   
-          const jobTypeClass = notification.type === 'applied' ? 'job-type-applied' : 'job-type-shortlisted';
-          const jobTypeLabel = notification.type === 'applied' ? 'Applied' : 
-                              (notification.status === 'approved' ? 'Approved' : 'Shortlisted');
+          const typeMap = {
+            job_application: { cls: 'job-type-applied', label: 'Applied' },
+            job_created: { cls: 'job-type-shortlisted', label: 'New Job' },
+            job_hired: { cls: 'job-type-shortlisted', label: 'Hired' },
+            job_rejected: { cls: 'job-type-shortlisted', label: 'Rejected' },
+            job_on_hold: { cls: 'job-type-shortlisted', label: 'On Hold' }
+          };
+          const meta = typeMap[n.type] || { cls: 'job-type-applied', label: 'Job' };
   
           jobCard.innerHTML = `
             <div class="job-card-header">
               <div>
-                <h3 class="job-card-title">${notification.title}</h3>
-                <span class="job-type ${jobTypeClass}">${jobTypeLabel}</span>
+                <h3 class="job-card-title">${meta.label}</h3>
               </div>
-              <span class="job-card-date">${formatDate(notification.date)}</span>
+              <span class="job-card-date">${formatDate(n.createdAt || new Date())}</span>
             </div>
-            <div class="job-card-company">
-              <div class="company-logo">${getCompanyInitials(notification.company)}</div>
-              <span class="company-name">${notification.company}</span>
-            </div>
+            <!-- Removed company/logo row as it's not required -->
             <div class="job-card-content">
-              <p>${notification.content}</p>
-              <div class="job-description">${notification.description}</div>
-              <div class="job-pay">${notification.pay}</div>
+              <p>${n.message}</p>
             </div>
             <div class="job-card-footer">
-              ${notification.type === 'shortlisted' && notification.status === 'pending' ? `
-                <button class="btn btn-primary" onclick="approveJob(${notification.id})">
-                  <span>Approve</span>
-                </button>
-                <button class="btn btn-danger" onclick="rejectJob(${notification.id})">
-                  <span>Reject</span>
-                </button>
-              ` : ''}
-              ${notification.status !== 'approved' ? `
-                <button class="btn btn-icon btn-secondary" onclick="deleteNotification(${notification.id})">
+              <div class="left-badges">
+                <span class="job-type ${meta.cls}">${meta.label}</span>
+              </div>
+              <div class="right-actions">
+                <button class="btn btn-icon btn-secondary" onclick="deleteNotification('${n._id}')">
                   <span>✕</span>
                 </button>
-              ` : ''}
+              </div>
             </div>
           `;
   
@@ -565,16 +501,25 @@
         });
       }
   
-      function deleteNotification(notificationId) {
-        const notifications = jobData.jobsNotifications;
-        const index = notifications.findIndex(n => n.id === notificationId);
-  
-        if (index > -1) {
-          notifications.splice(index, 1);
-          showToast('Notification deleted successfully');
-          renderNotifications();
-        } else {
-          showToast('Error: Notification not found', 'error');
+      async function deleteNotification(notificationId) {
+        try {
+          const res = await fetch('/delete-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notificationId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Notification deleted successfully');
+            // Remove from local list and re-render
+            const idx = notifications.findIndex(n => n._id === notificationId);
+            if (idx > -1) notifications.splice(idx, 1);
+            renderNotifications();
+          } else {
+            showToast(data.message || 'Failed to delete', 'error');
+          }
+        } catch (e) {
+          showToast('Network error', 'error');
         }
       }
   
@@ -617,8 +562,25 @@
       renderNotifications();
   
       window.deleteNotification = deleteNotification;
-      window.approveJob = approveJob;
-      window.rejectJob = rejectJob;
+      // approve/reject shortlisting not used in this page
+
+      // Clear All button
+      document.getElementById('clear-all').addEventListener('click', async () => {
+        try {
+          const res = await fetch('/clear-notifications', { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            // Clear local list and refresh
+            if (Array.isArray(notifications)) notifications.length = 0;
+            renderNotifications();
+            showToast('All notifications cleared');
+          } else {
+            showToast(data.message || 'Failed to clear notifications', 'error');
+          }
+        } catch (e) {
+          showToast('Network error', 'error');
+        }
+      });
     });
   </script>
 </body>

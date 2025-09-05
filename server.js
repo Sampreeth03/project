@@ -735,6 +735,7 @@ const upload = multer({ storage: storage });
                 posted_by: recruiterId,
                 user_id: { $ne: null }
             })
+                .sort({ createdAt: -1 })
                 .populate('user_id', 'name')
                 .lean();
 
@@ -872,30 +873,29 @@ const upload = multer({ storage: storage });
                 return res.status(404).send('Application not found');
             }
 
-            if (!application.resume_path) {
-                console.log('Resume path is missing in application:', applicationId);
-                return res.status(404).send('Resume not found');
+            // Serve file if present, fallback to DB buffer
+            if (application.resume_path) {
+                const filePath = path.isAbsolute(application.resume_path) ? application.resume_path : path.join(__dirname, application.resume_path);
+                console.log('Resolved filePath:', filePath);
+                if (fs.existsSync(filePath)) {
+                    const fileExtension = path.extname(filePath).slice(1).toLowerCase();
+                    const mimeTypes = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+                    const contentType = mimeTypes[fileExtension] || 'application/octet-stream';
+                    res.set('Content-Type', contentType);
+                    res.set('Content-Disposition', `inline; filename="resume-${applicationId}.${fileExtension}"`);
+                    return fs.createReadStream(filePath).pipe(res);
+                }
             }
 
-            const filePath = path.join(__dirname, application.resume_path);
-            console.log('Resolved filePath:', filePath);
-
-            if (!fs.existsSync(filePath)) {
-                console.log(`File does not exist at: ${filePath}`);
-                return res.status(404).send('Resume file not found on server');
+            if (application.resume && application.resume.data) {
+                const contentType = application.resume.contentType || 'application/octet-stream';
+                res.set('Content-Type', contentType);
+                res.set('Content-Disposition', `inline; filename="resume-${applicationId}"`);
+                return res.send(application.resume.data);
             }
 
-            const fileExtension = path.extname(filePath).slice(1).toLowerCase();
-            const mimeTypes = {
-                pdf: 'application/pdf',
-                doc: 'application/msword',
-                docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            };
-            const contentType = mimeTypes[fileExtension] || 'application/octet-stream';
-
-            res.set('Content-Type', contentType);
-            res.set('Content-Disposition', `inline; filename="resume-${applicationId}.${fileExtension}"`);
-            fs.createReadStream(filePath).pipe(res);
+            console.log('Resume not found');
+            res.status(404).send('Resume not found');
         } catch (err) {
             console.error('Error serving resume:', err.message);
             res.status(500).send('Error serving resume');
@@ -930,6 +930,15 @@ const upload = multer({ storage: storage });
             if (status === 'Rejected') {
                 // Delete the application if rejected
                 await JobApplication.deleteOne({ _id: applicationId });
+                // Notify student rejection
+                const recruiter = await User.findById(recruiterId).select('name').lean();
+                const rejectedAt = new Date();
+                await Notification.create({
+                    user_id: application.user_id,
+                    message: `Your application for "${application.job_title}" was rejected on ${rejectedAt.toLocaleDateString()} by ${recruiter?.name || 'Recruiter'}.`,
+                    type: 'job_rejected',
+                    is_read: false
+                });
                 res.json({ success: true });
             } else {
                 // Update the status if approved
@@ -979,6 +988,18 @@ const upload = multer({ storage: storage });
                 type: 'job_created',
                 is_read: false
             });
+
+            // Broadcast to all students about the new job
+            const students = await User.find({ role: 'user' }).select('_id').lean();
+            if (students && students.length) {
+                const bulk = students.map(s => ({
+                    user_id: s._id,
+                    message: `${req.session.user.name} posted a new job "${jobTitle}" on ${createdAt.toLocaleDateString()}.`,
+                    type: 'job_created',
+                    is_read: false
+                }));
+                await Notification.insertMany(bulk);
+            }
             res.json({ success: true });
         } catch (err) {
             console.error("Error creating job:", err.message);
@@ -1318,11 +1339,21 @@ app.get('/stud', async (req, res) => {
                 return res.redirect('/login?error=User not found');
             }
 
-            // Show all active listings (not yet applied by anyone): user_id is null or missing, active true/1
+            // Exclude jobs the user already applied to (match by title + company)
+            const applied = await JobApplication.find({ user_id: req.session.user.id })
+                .select('job_title company_name')
+                .lean();
+            const appliedPairs = applied.map(a => ({ job_title: a.job_title, company_name: a.company_name }));
+
+            const baseFilters = [
+                { $or: [ { user_id: null }, { user_id: { $exists: false } } ] },
+                { $or: [ { active: true }, { active: 1 } ] }
+            ];
+
             const jobs = await JobApplication.find({
                 $and: [
-                    { $or: [ { user_id: null }, { user_id: { $exists: false } } ] },
-                    { $or: [ { active: true }, { active: 1 } ] }
+                    ...baseFilters,
+                    ...(appliedPairs.length ? [{ $nor: appliedPairs }] : [])
                 ]
             })
                 .select('_id job_title company_name salary_range description skills')
@@ -1406,6 +1437,7 @@ app.get('/stud', async (req, res) => {
                 skills: job.skills,
                 user_id: userId,
                 resume_path: req.file.path,
+                resume: { data: fs.readFileSync(req.file.path), contentType: req.file.mimetype || 'application/octet-stream' },
                 active: true,
                 date_applied: new Date()
             });
@@ -1420,6 +1452,14 @@ app.get('/stud', async (req, res) => {
             await Notification.create({
                 user_id: job.posted_by,
                 message: `You have received a new application for your job posting: "${job.job_title}" from ${applicantName} on ${appliedAt.toLocaleDateString()}.`,
+                type: 'job_application',
+                is_read: false
+            });
+
+            // Notify student they applied for this job
+            await Notification.create({
+                user_id: newApplication.user_id,
+                message: `You applied for "${job.job_title}" at ${job.company_name} on ${appliedAt.toLocaleDateString()}.`,
                 type: 'job_application',
                 is_read: false
             });
@@ -1446,8 +1486,9 @@ app.get('/stud', async (req, res) => {
         try {
             const applications = await JobApplication.find({ 
                     user_id: userId, 
-                    status: { $in: ['Waiting', 'Approved'] }
+                    status: { $in: ['Waiting', 'Pending', 'Partially Done', 'Approved'] }
                 })
+                .sort({ date_applied: -1, createdAt: -1 })
                 .select('job_title company_name salary_range description skills date_applied status posted_by')
                 .populate('posted_by', 'email name')
                 .lean();
@@ -1467,6 +1508,37 @@ app.get('/stud', async (req, res) => {
         } catch (err) {
             console.error("Error fetching applications:", err.message);
             res.status(500).send("Internal Server Error");
+        }
+    });
+
+    // Set application on hold (Partially Done)
+    app.post('/hold-application/:id', async (req, res) => {
+        if (!req.session.user || req.session.user.role !== 'recruiter') {
+            return res.status(403).json({ success: false, error: 'Unauthorized' });
+        }
+
+        const applicationId = req.params.id;
+        const recruiterId = req.session.user.id;
+        try {
+            const application = await JobApplication.findOne({ _id: applicationId, posted_by: recruiterId, user_id: { $ne: null } });
+            if (!application) {
+                return res.status(404).json({ success: false, error: 'Application not found' });
+            }
+            application.status = 'Partially Done';
+            await application.save();
+            // Notify student on-hold
+            const recruiter = await User.findById(recruiterId).select('name').lean();
+            const holdAt = new Date();
+            await Notification.create({
+                user_id: application.user_id,
+                message: `Your application for "${application.job_title}" was kept on hold on ${holdAt.toLocaleDateString()} by ${recruiter?.name || 'Recruiter'}.`,
+                type: 'job_on_hold',
+                is_read: false
+            });
+            return res.json({ success: true });
+        } catch (err) {
+            console.error('Error setting application on hold:', err.message);
+            return res.status(500).json({ success: false, error: 'Database error' });
         }
     });
 
@@ -1638,6 +1710,20 @@ app.get('/stud', async (req, res) => {
             res.json({ success: true });
         } catch (err) {
             console.error('Error deleting notification:', err.message);
+            res.json({ success: false, message: 'Server Error' });
+        }
+    });
+
+    // Clear all notifications for current user
+    app.post('/clear-notifications', async (req, res) => {
+        if (!req.session.user || !req.session.user.id) {
+            return res.json({ success: false, message: 'Not logged in' });
+        }
+        try {
+            await Notification.deleteMany({ user_id: req.session.user.id });
+            res.json({ success: true });
+        } catch (err) {
+            console.error('Error clearing notifications:', err.message);
             res.json({ success: false, message: 'Server Error' });
         }
     });
@@ -2767,4 +2853,24 @@ app.get('/profile-data/:id', async (req, res) => {
 
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
+    });
+
+    // Student Job Notifications page
+    app.get('/job_not', async (req, res) => {
+        if (!req.session.user || req.session.user.role !== 'user') {
+            return res.redirect('/login');
+        }
+        try {
+            const notifications = await Notification.find({ user_id: req.session.user.id, type: { $in: ['job_application', 'job_created', 'job_hired', 'job_rejected', 'job_on_hold'] } })
+                .sort({ createdAt: -1 })
+                .lean();
+            res.render('job_notiffinal', {
+                homeUrl: navData.homeUrl,
+                navLinks: navData.navLinks,
+                notifications
+            });
+        } catch (err) {
+            console.error('Error loading job notifications:', err.message);
+            res.redirect('/home?error=Failed to load job notifications');
+        }
     });

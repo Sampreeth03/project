@@ -394,7 +394,10 @@
     <div class="container">
         <div class="page-header">
             <h1>Notifications</h1>
-            <span class="notification-count" id="notification-count"><%= notifications.filter(n => !n.is_read).length %></span>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="notification-count" id="notification-count"><%= notifications.filter(n => !n.is_read).length %></span>
+                <button id="clear-all" class="btn btn-secondary">Clear All</button>
+            </div>
         </div>
 
         <div class="nav-tabs">
@@ -414,8 +417,10 @@
                         <% } %>
                         <div class="notification-time"><%= new Date(notification.createdAt || notification.created_at).toLocaleString() %></div>
                         <div class="notification-footer">
-                            <span class="notification-badge">Job Post</span>
-                            
+                            <span class="notification-badge"><%= notification.type %></span>
+                            <div class="notification-buttons">
+                                <button class="btn btn-secondary btn-delete" data-id="<%= notification._id %>">Delete</button>
+                            </div>
                         </div>
                     </div>
                 <% }) %>
@@ -490,6 +495,38 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             updateNotificationCount();
+            document.getElementById('clear-all')?.addEventListener('click', () => {
+                fetch('/clear-notifications', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.success) {
+                            document.getElementById('notifications-container').innerHTML = '';
+                            updateNotificationCount();
+                            showToast('Cleared all notifications');
+                        }
+                    });
+            });
+
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute('data-id');
+                    fetch('/delete-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ notificationId: id })
+                    })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.success) {
+                            const el = document.querySelector(`.notification[data-id="${id}"]`);
+                            el?.remove();
+                            updateNotificationCount();
+                            showToast('Deleted notification');
+                        }
+                    });
+                });
+            });
         });
     </script>
 </body>
