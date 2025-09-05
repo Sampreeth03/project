@@ -405,14 +405,14 @@
         <div class="notifications" id="notifications-container">
             <% if (notifications && notifications.length > 0) { %>
                 <% notifications.forEach(notification => { %>
-                    <div class="notification <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification.id %>">
-                        <div class="notification-title">Job Posted Successfully</div>
+                    <div class="notification <%= notification.is_read ? '' : 'unread' %>" data-id="<%= notification._id %>">
+                        <div class="notification-title"><%= notification.type === 'job_application' ? 'New Job Application' : 'Job Posted Successfully' %></div>
                         <div class="notification-body"><%= notification.message %></div>
                         <% if (notification.job_id) { %>
                             <div class="job-description"><%= notification.description %></div>
                             <div class="job-salary"><%= notification.salary_range %></div>
                         <% } %>
-                        <div class="notification-time"><%= new Date(notification.created_at).toLocaleString() %></div>
+                        <div class="notification-time"><%= new Date(notification.createdAt || notification.created_at).toLocaleString() %></div>
                         <div class="notification-footer">
                             <span class="notification-badge">Job Post</span>
                             
@@ -435,7 +435,7 @@
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.className = toast ${type} show;
+            toast.className = `toast ${type} show`;
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
@@ -453,7 +453,7 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    const notification = document.querySelector(.notification[data-id="${notificationId}"]);
+                    const notification = document.querySelector(`.notification[data-id="${notificationId}"]`);
                     notification.classList.remove('unread');
                     updateNotificationCount();
                 } else {
@@ -468,7 +468,7 @@
 
         function viewJob(jobId) {
             // Redirect to a job details page (you can implement this separately)
-            window.location.href = /rec-job#job-${jobId};
+            window.location.href = `/rec-job#job-${jobId}`;
         }
 
         function editJob(jobId) {
@@ -479,7 +479,7 @@
         document.querySelectorAll('.notification').forEach(element => {
             element.addEventListener('click', function(e) {
                 if (e.target.tagName === 'BUTTON') return;
-                const notificationId = parseInt(this.getAttribute('data-id'));
+                const notificationId = this.getAttribute('data-id');
                 markAsRead(notificationId);
             });
         });

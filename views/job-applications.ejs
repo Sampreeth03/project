@@ -202,8 +202,15 @@
               </div>
               <div class="job-footer">
                 <div class="date-applied">Applied: <%= new Date(application.date_applied).toLocaleDateString() %></div>
-                <div class="status-badge"><%= application.status %></div>
+                <% if (application.status === 'Approved') { %>
+                  <div class="status-badge" style="background-color: rgba(40,167,69,0.2); color: #28a745;">You are hired </div>
+                <% } else { %>
+                  <div class="status-badge"><%= application.status %></div>
+                <% } %>
               </div>
+              <% if (application.status === 'Approved' && application.recruiter_email) { %>
+                <div class="date-applied" style="margin-top:8px;">Recruiter email: <strong><%= application.recruiter_email %></strong></div>
+              <% } %>
             </div>
           <% }) %>
         <% } %>
