@@ -15,31 +15,29 @@
     const fs = require('fs');
 
     const app = express();
-    const PORT = 3000;
+    const PORT = 3001;
 
     app.use(express.json());
     app.set('view engine', 'ejs');
     app.set('views', path.join(__dirname, 'views'));
 
 
-    const storage = multer.diskStorage({
-        destination: (req, file, cb) => {
-            const uploadDir = path.join(__dirname, 'uploads');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-            cb(null, uploadDir);
-        },
-        filename: (req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const extension = path.extname(file.originalname);
-            cb(null, `resume-${uniqueSuffix}${extension}`);
+ const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
-    });
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const extension = path.extname(file.originalname);
+        cb(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
+    }
+});
 
-
-
-    const upload = multer({ storage: storage });
+const upload = multer({ storage: storage });
 
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(express.static("public"));
@@ -2540,6 +2538,141 @@ app.get('/stud', async (req, res) => {
             });
         }
     });
+app.get('/profile', async (req, res) => {
+  if (!req.session.user) return res.redirect('/login');
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId).lean();
+    if (!user) return res.redirect('/login?error=User not found');
+    res.render('profile', {
+      user,
+      homeUrl: navData.homeUrl,
+      navLinks: getNavLinks(req.session.user),
+      query: req.query || {}
+    });
+  } catch (err) {
+    console.error('Error loading profile:', err.message);
+    res.redirect('/home?error=Failed to load profile');
+  }
+});
+
+app.post('/profile', upload.fields([
+    { name: 'picture', maxCount: 1 },
+    { name: 'resume', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        console.log('--- /profile called ---');
+        console.log('session present:', !!req.session, req.session && req.session.user ? { id: req.session.user.id, name: req.session.user.name } : req.session);
+        console.log('body keys:', Object.keys(req.body || {}), req.body);
+        console.log('files keys:', req.files ? Object.keys(req.files) : 'no files', req.files);
+
+        const userId = (req.session && req.session.user && (req.session.user.id || req.session.user._id)) || req.session.userId || null;
+        if (!userId) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+        // Build update object
+        const update = {};
+        if (typeof req.body.name === 'string') update.name = req.body.name.trim();
+        if (typeof req.body.email === 'string') update.email = req.body.email.trim();
+        if (typeof req.body.about === 'string') update.about = req.body.about.trim();
+        if (typeof req.body.skills === 'string') update.skills = req.body.skills.split(',').map(s => s.trim()).filter(Boolean);
+        if (typeof req.body.interests === 'string') update.interests = req.body.interests.split(',').map(s => s.trim()).filter(Boolean);
+        if (req.files && req.files.picture && req.files.picture[0]) {
+            const f = req.files.picture[0];
+            update.profileImageUrl = `/uploads/${f.filename}`.replace(/\\/g, '/');
+        }
+        if (req.files && req.files.resume && req.files.resume[0]) {
+            const f = req.files.resume[0];
+            update.resumeUrl = `/uploads/${f.filename}`.replace(/\\/g, '/');
+        }
+
+        const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true });
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+        // update session user info if this is the logged-in user
+        try {
+            if (req.session && req.session.user && String(req.session.user.id) === String(user._id)) {
+                req.session.user.name = user.name;
+                req.session.user.email = user.email;
+            }
+        } catch (syncErr) {
+            console.warn('Failed to sync session after profile save', syncErr);
+        }
+
+        const respUser = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            about: user.about,
+            skills: Array.isArray(user.skills) ? user.skills : [],
+            interests: Array.isArray(user.interests) ? user.interests : [],
+            profileImageUrl: user.profileImageUrl || null,
+            resumeUrl: user.resumeUrl || null,
+            questionsAnswered: user.questionsAnswered || 0,
+            thumbsUp: user.thumbsUp || 0,
+            thumbsDown: user.thumbsDown || 0
+        };
+
+        console.log('/profile: success for user', userId);
+        return res.json({ success: true, user: respUser });
+    } catch (err) {
+        console.error('Error in /profile POST:', err);
+        return res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    }
+});
+app.get('/profile/:id', async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    const otherId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(otherId)) {
+        return res.status(400).send('Invalid user id');
+    }
+    try {
+        const user = await User.findById(otherId).lean();
+        if (!user) return res.status(404).send('User not found');
+        res.render('profile', {
+            user,
+            homeUrl: navData.homeUrl,
+            navLinks: getNavLinks(req.session.user),
+            query: req.query || {}
+        });
+    } catch (err) {
+        console.error('Error loading user profile:', err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// JSON endpoint used by the notifications modal to fetch a lightweight profile
+app.get('/profile-data/:id', async (req, res) => {
+    // require logged-in user to view profile snippets
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Invalid user id' });
+    try {
+        const u = await User.findById(id).lean();
+        if (!u) return res.status(404).json({ success: false, message: 'User not found' });
+
+        const user = {
+            id: u._id,
+            name: u.name || 'Unknown',
+            email: u.email || '',
+            avatarUrl: u.profileImageUrl || u.profileImage || null,
+            bio: u.about || u.bio || '',
+            skills: Array.isArray(u.skills) ? u.skills : (u.skills ? String(u.skills).split(',').map(s => s.trim()).filter(Boolean) : []),
+            interests: Array.isArray(u.interests) ? u.interests : (u.interests ? String(u.interests).split(',').map(s => s.trim()).filter(Boolean) : []),
+            resumeUrl: u.resumeUrl || null,
+            joinedAt: u.createdAt || u.created_at || null
+        };
+
+        return res.json({ success: true, user });
+    } catch (err) {
+        console.error('Error in /profile-data/:id', err);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+  
+
+
+
 
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);

@@ -1,14 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Profile Page</title>
     <style>
         .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 45px; background-color: black; padding: 15px 5%; display: flex; z-index: 1000; align-items: center; justify-content: space-between; }
         .logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
         #logo-link { text-decoration: none; color: #0068FF; }
-        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; }
+        .nav-links { list-style: none; display: flex; gap: 38px; position: relative; margin:0; padding:0; }
         .nav-links li { position: relative; }
         .nav-links li a { color: white; text-decoration: none; font-size: 20px; transition: color 0.3s ease; padding: 10px; display: block; }
         .nav-links li a:hover { color: #0068FF; }
@@ -20,613 +21,348 @@
         .search-box { padding: 8px; border-radius: 5px; border: none; outline: none; width: 205px; background-color: #222; color: white; }
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: flex;
-            background-color: #000000;
+            background-color: #000;
             margin: 0;
             padding: 0;
             margin-top: 75px;
+            color: #fff;
         }
         .profile-container {
-            background: rgb(45, 45, 45);
+            background: rgb(45,45,45);
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             text-align: center;
-            width: 1450px;
+            width: 1150px;
+            max-width: calc(100% - 40px);
+            margin: 0 auto 60px;
             position: relative;
         }
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        .profile-header { display: flex; align-items: center; gap: 20px; justify-content: center; flex-wrap:wrap; }
         .profile-pic {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 2px solid #0068FF;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 200px; height: 200px; border-radius: 50%; border: 2px solid #0068FF; overflow: hidden; position: relative; display:flex; justify-content:center; align-items:center; background:#222;
         }
-        .profile-pic img {
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
-        .profile-pic .plusButton {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: absolute;
-        }
-        .profile-pic .plusButton svg {
-            width: 50px;
-            height: 50px;
-        }
-        .profile-info {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .profile-info h2 {
-            margin: 10px 50px;
-            color: #ffffff;
-            font-size: 45px;
-            text-align: center;
-            justify-content: center;
-        }
-        .profile-info p {
-            color: #ffffff;
-            font-size: 25px;
-            text-align: center;
-            justify-content: center;
-        }
-        .details-container {
-            text-align: left;
-            margin-top: 20px;
-        }
-        .details-container h3 {
-            color: #ffffff;
-            margin-bottom: 5px;
-            font-size: 30px;
-        }
-        .skills, .interests {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .skill, .interest {
-            background: #0068FF;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 20px;
-        }
-        .resume-container {
-            margin-top: 20px;
-            position: relative;
-        }
-        .resume-container iframe {
-            width: 100%;
-            height: 250px;
-            border: 1px solid #ddd;
-            margin-top: 10px; 
-        }
-        .edit-button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: rgb(20, 20, 20);
-            border: none;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.164);
-            cursor: pointer;
-            transition-duration: 0.3s;
-            overflow: hidden;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            text-decoration: none !important;
-        }
-        .edit-svgIcon {
-            width: 17px;
-            transition-duration: 0.3s;
-        }
-        .edit-svgIcon path {
-            fill: white;
-        }
-        .edit-button::before {
-            display: none;
-            content: "Edit";
-            color: white;
-            transition-duration: 0.3s;
-            font-size: 20px;
-        }
-        .edit-button:hover::before {
-            display: block;
-            font-size: 15px;
-        }
-        .edit-mode {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 10;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            display: none;
-        }
-        .edit-mode.active {
-            display: flex;
-        }
-        .edit-mode-content {
-            background: white;
-            padding: 60px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 500px;
-            text-align: center;
-            max-height: 90%;
-            overflow-y: auto;
-        }
-        .edit-mode label {
-            width: 100%;
-            text-align: left;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 20px;
-        }
-        .edit-mode input, .edit-mode textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 20px;
-        }
-        .edit-mode button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #0073b1;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-        }
-        .edit-mode button:hover {
-            background-color: #005bb5;
-        }
-        .but-cont {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-         gap: 10px;
-        }
-        .but-cont button:hover{
-            color: #ffc01d;
-        }
-        ul {
-            list-style: none;
-        }
-        .example {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-            gap: 20px; /* Add this line to create space between icons */
-        }
-        .example .icon-content {
-            margin: 0; /* Remove margin to use gap instead */
-            position: relative;
-        }
-        .example .icon-content .tooltip {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            padding: 6px 10px;
-            border-radius: 5px;
-            opacity: 0;
-            visibility: hidden;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        .example .icon-content:hover .tooltip {
-            opacity: 1;
-            visibility: visible;
-            top: -50px;
-        }
-        .example .icon-content a {
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            color: #4d4d4d;
-            background-color: rgb(45, 45, 45);
-            transition: all 0.3s ease-in-out;
-        }
-        .example .icon-content a:hover {
-            box-shadow: 3px 2px 45px 0px rgb(45, 45, 45)
-        }
-        .example .icon-content a svg {
-            position: relative;
-            z-index: 1;
-            width: 30px;
-            height: 30px;
-        }
-        .example .icon-content a:hover {
-            color: white;
-        }
-        .example .icon-content a .filled {
-            position: absolute;
-            top: auto;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0;
-            background-color: #ffffff;
-            transition: all 0.3s ease-in-out;
-        }
-        .example .icon-content a:hover .filled {
-            height: 100%;
-        }
-        .plusButton {
-            --plus_sideLength: 2.5rem;
-            --plus_topRightTriangleSideLength: 0.9rem;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid white;
-            width: var(--plus_sideLength);
-            height: var(--plus_sideLength);
-            background-color: #000000;
-            overflow: hidden;
-        }
-        .plusButton::before {
-            position: absolute;
-            content: "";
-            top: 0;
-            right: 0;
-            width: 0;
-            height: 0;
-            border-width: 0 var(--plus_topRightTriangleSideLength) var(--plus_topRightTriangleSideLength) 0;
-            border-style: solid;
-            border-color: transparent white transparent transparent;
-            transition-timing-function: ease-in-out;
-            transition-duration: 0.2s;
-        }
-        .plusButton:hover {
-            cursor: pointer;
-        }
-        .plusButton:hover::before {
-            --plus_topRightTriangleSideLength: calc(var(--plus_sideLength) * 2);
-        }
-        .plusButton:focus-visible::before {
-            --plus_topRightTriangleSideLength: calc(var(--plus_sideLength) * 2);
-        }
-        .plusButton > .plusIcon {
-            fill: white;
-            width: calc(var(--plus_sideLength) * 0.7);
-            height: calc(var(--plus_sideLength) * 0.7);
-            z-index: 1;
-            transition-timing-function: ease-in-out;
-            transition-duration: 0.2s;
-        }
-        .plusButton:hover > .plusIcon {
-            fill: black;
-            transform: rotate(180deg);
-        }
-        .plusButton:focus-visible > .plusIcon {
-            fill: black;
-            transform: rotate(180deg);
-        }
-        button {
-            width: 150px;
-            height: 50px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            background: #000000;
-            border: none;
-            border-radius: 5px;
-            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
-        }
-        button,
-        button span {
-            transition: 200ms;
-        }
-        button .text {
-            transform: translateX(35px);
-            color: white;
-            font-weight: bold;
-        }
-        button .icon {
-            position: absolute;
-            border-left: 1px solid #000000;
-            transform: translateX(110px);
-            height: 40px;
-            width: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        button svg {
-            width: 15px;
-            fill: #eee;
-        }
-        button:hover {
-            background: #000000;
-        }
-        button:active {
-            background: #000000;
-        }
-        button:hover .text {
-            color: transparent;
-        }
-        button:hover .icon {
-            width: 150px;
-            border-left: none;
-            transform: translateX(0);
-        }
-        button:focus {
-            outline: none;
-        }
-        button:active .icon svg {
-            transform: scale(0.8);
-        }
-        .buttonSpan {
-            color: white;
-            margin: 150px;
-            font-size: 30px;
-        }
-        .feedback svg {
-    vertical-align: middle;
-    margin-right: 4px;
-}
-        .feedback {
-
-            color: #ffffff;
-            font-size: 20px;
-            margin-left: 800px;
-        }
-        .feedback span {
-            margin-right: 10px;
-        }
+        .profile-pic img { width:100%; height:100%; object-fit:cover; display:none; }
+        .profile-pic .plusButton { display:flex; justify-content:center; align-items:center; position:absolute; }
+        .profile-info { display:flex; flex-direction:column; justify-content:center; align-items:center; }
+        .profile-info h2 { margin: 10px 0; color:#fff; font-size:36px; }
+        .profile-info p { color:#ddd; font-size:18px; margin:5px 0; }
+        .details-container { text-align:left; margin-top:20px; }
+        .details-container h3 { color:#fff; margin-bottom:8px; font-size:24px; }
+        .skills, .interests { display:flex; flex-wrap:wrap; gap:8px; }
+        .skill, .interest { background:#0068FF; color:white; padding:6px 10px; border-radius:5px; font-size:16px; }
+        .resume-container { margin-top:20px; position:relative; }
+        .resume-container iframe { width:100%; height:280px; border:1px solid #333; margin-top:10px; background:#fff; }
+        .edit-button { width:40px; height:40px; border-radius:50%; background-color:rgb(20,20,20); border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(0,0,0,0.16); cursor:pointer; position:absolute; top:10px; right:10px; }
+        .edit-svgIcon { width:17px; }
+        .edit-svgIcon path { fill:white; }
+        .edit-mode { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10; display:none; justify-content:center; align-items:center; }
+        .edit-mode.active { display:flex; }
+        .edit-mode-content { background:white; color:#000; padding:30px; border-radius:8px; width:520px; max-height:90%; overflow:auto; box-shadow:0 6px 24px rgba(0,0,0,0.4); }
+        .edit-mode label { display:block; margin-bottom:6px; font-weight:bold; }
+        .edit-mode input, .edit-mode textarea { width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px; font-size:14px; box-sizing:border-box; }
+        .but-cont { display:flex; gap:10px; justify-content:center; }
+        .but-cont button { padding:8px 16px; border-radius:4px; border:none; cursor:pointer; }
+        .btn-save { background:#0068FF; color:#fff; }
+        .btn-cancel { background:#444; color:#fff; }
+        .feedback { color:#fff; font-size:18px; margin-top:10px; display:flex; gap:18px; justify-content:center; align-items:center; flex-wrap:wrap; }
+        hr { border-color:#333; margin:18px 0; }
+        ul { list-style:none; padding:0; margin:0; }
     </style>
 </head>
 <body>
     <header>
         <div class="navbar">
-            <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+            <span class="logo"><a id="logo-link" href="<%= homeUrl || '/' %>">RELABTeams</a></span>
             <ul class="nav-links">
-                <% navLinks.forEach(link => { %>
+                <% (navLinks || []).forEach(function(link){ %>
                     <li>
                         <a href="<%= link.href %>"><%= link.name %></a>
-                        <% if (link.submenu) { %>
+                        <% if (link.submenu && link.submenu.length){ %>
                             <ul class="dropdown">
-                                <% link.submenu.forEach(sublink => { %>
-                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                <% link.submenu.forEach(function(s){ %>
+                                    <li><a href="<%= s.href %>"><%= s.name %></a></li>
                                 <% }) %>
                             </ul>
                         <% } %>
                     </li>
                 <% }) %>
             </ul>
-            <input type="text" placeholder="Search" class="search-box">
+            <input class="search-box" placeholder="Search" />
         </div>
     </header>
+
     <div class="profile-container">
-        <button class="edit-button" onclick="toggleEditMode()">
-            <svg class="edit-svgIcon" viewBox="0 0 512 512">
-                <path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"></path>
+        <button class="edit-button" onclick="toggleEditMode()" title="Edit profile">
+            <svg class="edit-svgIcon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"/>
             </svg>
         </button>
+
         <div class="profile-header">
-            <div class="profile-pic" id="profilePic">
-                <img id="profileImage" src="" alt="Profile Picture">
-                <div tabindex="0" class="plusButton" onclick="document.getElementById('directProfilePic').click()">
-                    <svg class="plusIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
-                        <g mask="url(#mask0_21_345)">
+            <div class="profile-pic" id="profilePic" style="<%= user && user.profileImageUrl ? 'background-color:transparent;' : '' %>">
+                <img id="profileImage" src="<%= user && user.profileImageUrl ? user.profileImageUrl : '' %>" alt="Profile Picture" style="<%= user && user.profileImageUrl ? 'display:block;' : 'display:none;' %>" />
+                <% if (!(user && user.profileImageUrl)) { %>
+                    <div tabindex="0" class="plusButton" onclick="document.getElementById('directProfilePic').click()">
+                        <svg class="plusIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
                             <path d="M13.75 23.75V16.25H6.25V13.75H13.75V6.25H16.25V13.75H23.75V16.25H16.25V23.75H13.75Z"></path>
-                        </g>
-                    </svg>
-                </div>
-                <input type="file" id="directProfilePic" accept="image/*" style="display:none;" onchange="loadImage(event)">
+                        </svg>
+                    </div>
+                <% } %>
+                <input id="directProfilePic" type="file" accept="image/*" style="display:none" onchange="loadImage(event)" />
             </div>
+
             <div class="profile-info">
-                <h2>Eswar babu Ettaligalla</h2>
-                <p>Email: eswar.e1433@gmail.com</p>
+                <h2 id="displayName"><%= (user && user.name) ? user.name : 'Your name' %></h2>
+                <p id="displayEmail">Email: <%= (user && user.email) ? user.email : '' %></p>
+                <div class="feedback">
+                    <span>Questions Answered: <strong id="questionsAnswered"><%= (user && user.questionsAnswered) ? user.questionsAnswered : 0 %></strong></span>
+                    <span>👍 <strong id="thumbsUp"><%= (user && user.thumbsUp) ? user.thumbsUp : 0 %></strong></span>
+                    <span>👎 <strong id="thumbsDown"><%= (user && user.thumbsDown) ? user.thumbsDown : 0 %></strong></span>
+                </div>
             </div>
         </div>
-        <div class="feedback">
-            <span>Questions Answered: <span id="questionsAnswered">10</span></span>
-            <span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-up" viewBox="0 0 16 16">
-                    <path d="M8.864.046C7.908-.193 7.02.53 6.956 1.466c-.072 1.051-.23 2.016-.428 2.59-.125.36-.479 1.013-1.04 1.639-.557.623-1.282 1.178-2.131 1.41C2.685 7.288 2 7.87 2 8.72v4.001c0 .845.682 1.464 1.448 1.545 1.07.114 1.564.415 2.068.723l.048.03c.272.165.578.348.97.484.397.136.861.217 1.466.217h3.5c.937 0 1.599-.477 1.934-1.064a1.86 1.86 0 0 0 .254-.912c0-.152-.023-.312-.077-.464.201-.263.38-.578.488-.901.11-.33.172-.762.004-1.149.069-.13.12-.269.159-.403.077-.27.113-.568.113-.857 0-.288-.036-.585-.113-.856a2 2 0 0 0-.138-.362 1.9 1.9 0 0 0 .234-1.734c-.206-.592-.682-1.1-1.2-1.272-.847-.282-1.803-.276-2.516-.211a10 10 0 0 0-.443.05 9.4 9.4 0 0 0-.062-4.509A1.38 1.38 0 0 0 9.125.111zM11.5 14.721H8c-.51 0-.863-.069-1.14-.164-.281-.097-.506-.228-.776-.393l-.04-.024c-.555-.339-1.198-.731-2.49-.868-.333-.036-.554-.29-.554-.55V8.72c0-.254.226-.543.62-.65 1.095-.3 1.977-.996 2.614-1.708.635-.71 1.064-1.475 1.238-1.978.243-.7.407-1.768.482-2.85.025-.362.36-.594.667-.518l.262.066c.16.04.258.143.288.255a8.34 8.34 0 0 1-.145 4.725.5.5 0 0 0 .595.644l.003-.001.014-.003.058-.014a9 9 0 0 1 1.036-.157c.663-.06 1.457-.054 2.11.164.175.058.45.3.57.65.107.308.087.67-.266 1.022l-.353.353.353.354c.043.043.105.141.154.315.048.167.075.37.075.581 0 .212-.027.414-.075.582-.05.174-.111.272-.154.315l-.353.353.353.354c.047.047.109.177.005.488a2.2 2.2 0 0 1-.505.805l-.353.353.353.354c.006.005.041.05.041.17a.9.9 0 0 1-.121.416c-.165.288-.503.56-1.066.56z"/>
-                </svg>
-                <span id="thumbsUp">6</span>
-            </span>
-            <span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-down" viewBox="0 0 16 16">
-                    <path d="M8.864 15.674c-.956.24-1.843-.484-1.908-1.42-.072-1.05-.23-2.015-.428-2.59-.125-.36-.479-1.012-1.04-1.638-.557-.624-1.282-1.179-2.131-1.41C2.685 8.432 2 7.85 2 7V3c0-.845.682-1.464 1.448-1.546 1.07-.113 1.564-.415 2.068-.723l.048-.029c.272-.166.578-.349.97-.484C6.931.08 7.395 0 8 0h3.5c.937 0 1.599.478 1.934 1.064.164.287.254.607.254.913 0 .152-.023.312-.077.464.201.262.38.577.488.9.11.33.172.762.004 1.15.069.13.12.268.159.403.077.27.113.567.113.856s-.036.586-.113.856c-.035.12-.08.244-.138.363.394.571.418 1.2.234 1.733-.206.592-.682 1.1-1.2 1.272-.847.283-1.803.276-2.516.211a10 10 0 0 1-.443-.05 9.36 9.36 0 0 1-.062 4.51c-.138.508-.55.848-1.012.964zM11.5 1H8c-.51 0-.863.068-1.14.163-.281.097-.506.229-.776.393l-.04.025c-.555.338-1.198.73-2.49.868-.333.035-.554.29-.554.55V7c0 .255.226.543.62.65 1.095.3 1.977.997 2.614 1.709.635.71 1.064 1.475 1.238 1.977.243.7.407 1.768.482 2.85.025.362.36.595.667.518l.262-.065c.16-.04.258-.144.288-.255a8.34 8.34 0 0 0-.145-4.726.5.5 0 0 1 .595-.643h.003l.014.004.058.013a9 9 0 0 0 1.036.157c.663.06 1.457.054 2.11-.163.175-.059.45-.301.57-.651.107-.308.087-.67-.266-1.021L12.793 7l.353-.354c.043-.042.105-.14.154-.315.048-.167.075-.37.075-.581s-.027-.414-.075-.581c-.05-.174-.111-.273-.154-.315l-.353-.354.353-.354c.047-.047.109-.176.005-.488a2.2 2.2 0 0 0-.505-.804l-.353-.354.353-.354c.006-.005.041-.05.041-.17a.9.9 0 0 0-.121-.415C12.4 1.272 12.063 1 11.5 1"/>
-                </svg>
-                <span id="thumbsDown">4</span>
-            </span>
-        </div><hr>
+
+        <hr />
+
         <div class="profile-details">
             <div class="details-container">
                 <h3>About Me:</h3>
-                <p style="font-size: 20px; color: rgb(195, 191, 191);">👾Hey there! I'm a passionate Data Science enthusiast with a strong commitment to learning and growth. As an academically inclined second-year B.Tech. student at the Indian Institute of Information Technology (IIIT), Sri City specializing in Data Science. I'm on a journey to explore the intersection of technology, data, visualization, and innovation.
-                    📈 My professional journey has been marked by invaluable experiences, including being a Power BI Head Intern @CLUMOSS, PR Lead @GDSC IIIT Sri City and Game development lead @IOTA. These roles have allowed me to immerse myself in the world of technology and gain hands-on experience with cutting-edge solutions.
-                    📚 My certifications speak to my dedication and expertise in the field of data science. </p>
+                <p id="displayAbout" style="font-size:18px; color: #c3bfbf;"><%= (user && user.about) ? user.about : '' %></p>
             </div>
+
             <div class="details-container">
                 <h3>Skills:</h3>
-                <div class="skills">
-                    <span class="skill">HTML</span>
-                    <span class="skill">CSS</span>
-                    <span class="skill">JavaScript</span>
-                    <span class="skill">Python</span>
-                    <span class="skill">React</span>
+                <div class="skills" id="skillsContainer">
+                    <% if (user && Array.isArray(user.skills) && user.skills.length) { %>
+                        <% user.skills.forEach(function(s){ %>
+                            <span class="skill"><%= s %></span>
+                        <% }) %>
+                    <% } %>
                 </div>
             </div>
+
             <div class="details-container">
                 <h3>Interested In:</h3>
-                <div class="interests">
-                    <span class="interest">Web Development</span>
-                    <span class="interest">Machine Learning</span>
-                    <span class="interest">Cloud Computing</span>
-                    <span class="interest">Generative AI</span>
+                <div class="interests" id="interestsContainer">
+                    <% if (user && Array.isArray(user.interests) && user.interests.length) { %>
+                        <% user.interests.forEach(function(i){ %>
+                            <span class="interest"><%= i %></span>
+                        <% }) %>
+                    <% } %>
                 </div>
-            </div><br><br>
-            <hr>
-            <h3 style="color: rgb(255, 255, 255); font-size: 30px;">Resume:</h3>
+            </div>
+
+            <hr />
+            <h3 style="color:#fff; font-size:24px;">Resume:</h3>
             <div class="resume-container">
-                <button class="noselect" onclick="document.getElementById('directResume').click()">
-                    <h4 style=" margin-left: 35%; font-size: 20px;"><span class="text">Add</span></h4>
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" height="24" width="24" xmlns="http://www.w3.org/2000/svg">
-                        </svg>
-                        <span class="buttonSpan">+</span>
-                    </span>
+                <button id="addResumeBtn" onclick="document.getElementById('directResume').click()" style="<%= (user && user.resumeUrl) ? 'display:none;' : '' %>">
+                    <span class="text">Add</span>
+                    <span class="buttonSpan">+</span>
                 </button>
-                <iframe id="resumeFrame" src=""></iframe>
-                <input type="file" id="directResume" accept=".pdf" style="display:none;" onchange="loadResume(event)">
+                <iframe id="resumeFrame" src="<%= (user && user.resumeUrl) ? user.resumeUrl : '' %>"></iframe>
+                <input id="directResume" type="file" accept=".pdf" style="display:none" onchange="loadResume(event)" />
             </div>
         </div>
+
+        <!-- edit form modal -->
         <div class="edit-mode" id="editMode">
             <div class="edit-mode-content">
-                <label for="editName">Name:</label>
-                <input type="text" id="editName" placeholder="Name">
-                <label for="editEmail">Email:</label>
-                <input type="email" id="editEmail" placeholder="Email">
-                <label for="editAbout">About Me:</label>
-                <textarea id="editAbout" placeholder="About Me"></textarea>
-                <label for="editSkills">Skills:</label>
-                <input type="text" id="editSkills" placeholder="Skills">
-                <label for="editInterests">Interests:</label>
-                <input type="text" id="editInterests" placeholder="Interests">
-                <label for="editProfilePic">Profile Picture:</label>
-                <input type="file" id="editProfilePic" accept="image/*">
-                <label for="editResume">Resume:</label>
-                <input type="file" id="editResume" accept=".pdf">
-                <div class="but-cont">
-                    <button onclick="saveChanges()">Save</button><br>
-                    <button onclick="cancelEdit()">Cancel</button>
-                </div>
+                <form id="editForm" onsubmit="event.preventDefault(); saveChanges();">
+                    <label for="editName">Name:</label>
+                    <input id="editName" name="name" type="text" placeholder="Name" />
+
+                    <label for="editEmail">Email:</label>
+                    <input id="editEmail" name="email" type="email" placeholder="Email" />
+
+                    <label for="editAbout">About Me:</label>
+                    <textarea id="editAbout" name="about" placeholder="About Me" rows="4"></textarea>
+
+                    <label for="editSkills">Skills (comma separated):</label>
+                    <input id="editSkills" name="skills" type="text" placeholder="JavaScript, Node.js" />
+
+                    <label for="editInterests">Interests (comma separated):</label>
+                    <input id="editInterests" name="interests" type="text" placeholder="Blockchain, AI" />
+
+                    <label for="editProfilePic">Profile Picture:</label>
+                    <input id="editProfilePic" name="profilePic" type="file" accept="image/*" />
+
+                    <label for="editResume">Resume (PDF):</label>
+                    <input id="editResume" name="resume" type="file" accept=".pdf" />
+
+                    <div class="but-cont">
+                        <button type="button" class="btn-save" onclick="saveChanges()">Save</button>
+                        <button type="button" class="btn-cancel" onclick="cancelEdit()">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+
     <script>
-        function loadImage(event) {
-            const profileImage = document.getElementById("profileImage");
-            const profilePic = document.getElementById("profilePic");
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profileImage.src = e.target.result;
-                    profileImage.style.display = "block";
-                    profilePic.style.backgroundColor = "transparent";
-                    document.querySelector('.plusButton').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-        function loadResume(event) {
-            const resumeFrame = document.getElementById("resumeFrame");
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    resumeFrame.src = e.target.result;
-                    document.querySelector('.noselect').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-        function toggleEditMode() {
-            const editMode = document.getElementById("editMode");
-            editMode.classList.toggle("active");
-            if (editMode.classList.contains("active")) {
-                document.getElementById("editName").value = "Eswar babu Ettaligalla";
-                document.getElementById("editEmail").value = "eswar.e1433@gmail.com";
-                document.getElementById("editAbout").value = "👾Hey there! I'm a passionate Data Science enthusiast with a strong commitment to learning and growth. As an academically inclined second-year B.Tech. student at the Indian Institute of Information Technology (IIIT), Sri City specializing in Data Science. I'm on a journey to explore the intersection of technology, data, visualization, and innovation.📈 My professional journey has been marked by invaluable experiences, including being a Power BI Head Intern @CLUMOSS, PR Lead @GDSC IIIT Sri City and Game development lead @IOTA. These roles have allowed me to immerse myself in the world of technology and gain hands-on experience with cutting-edge solutions. My certifications speak to my dedication and expertise in the field of data science.";
-                document.getElementById("editSkills").value = "HTML, CSS, JavaScript, Python, React";
-                document.getElementById("editInterests").value = "Web Development, Machine Learning, Cloud Computing, Generative AI";
-            }
-        }
-        function saveChanges() {
-            const name = document.getElementById("editName").value;
-            const email = document.getElementById("editEmail").value;
-            const about = document.getElementById("editAbout").value;
-            const skills = document.getElementById("editSkills").value.split(",").map(skill => skill.trim());
-            const interests = document.getElementById("editInterests").value.split(",").map(interest => interest.trim());
-            const resumeFile = document.getElementById("editResume").files[0];
-            const profilePicFile = document.getElementById("editProfilePic").files[0];
-            document.querySelector(".profile-info h2").textContent = name;
-            document.querySelector(".profile-info p").textContent = "Email: " + email;
-            document.querySelector(".details-container p").textContent = about;
-            const skillsContainer = document.querySelector(".skills");
-            skillsContainer.innerHTML = "";
-            skills.forEach(skill => {
-                const skillElement = document.createElement("span");
-                skillElement.classList.add("skill");
-                skillElement.textContent = skill;
-                skillsContainer.appendChild(skillElement);
-            });
-            const interestsContainer = document.querySelector(".interests");
-            interestsContainer.innerHTML = "";
-            interests.forEach(interest => {
-                const interestElement = document.createElement("span");
-                interestElement.classList.add("interest");
-                interestElement.textContent = interest;
-                interestsContainer.appendChild(interestElement);
-            });
-            if (resumeFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById("resumeFrame").src = e.target.result;
-                    document.querySelector('.noselect').style.display = 'none';
-                };
-                reader.readAsDataURL(resumeFile);
-            }
-            if (profilePicFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById("profileImage").src = e.target.result;
-                    document.getElementById("profileImage").style.display = "block";
-                    document.getElementById("profilePic").style.backgroundColor = "transparent";
-                    document.querySelector('.plusButton').style.display = 'none';
-                };
-                reader.readAsDataURL(profilePicFile);
-            }
-            document.getElementById("editMode").classList.remove("active");
-        }
-        function cancelEdit() {
-            document.getElementById("editMode").classList.remove("active");
-        }
-        document.getElementById("editProfilePic").addEventListener("change", loadImage);
-        document.getElementById("editResume").addEventListener("change", loadResume);
+        // wrap to ensure elements exist
+        document.addEventListener('DOMContentLoaded', function(){
+            // load preview when user picks a profile image (shared by both direct and edit inputs)
+            window.loadImage = function(event) {
+                const profileImage = document.getElementById("profileImage");
+                const profilePic = document.getElementById("profilePic");
+                const file = event.target.files && event.target.files[0];
+                if (file && profileImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profileImage.src = e.target.result;
+                        profileImage.style.display = "block";
+                        if (profilePic) profilePic.style.backgroundColor = "transparent";
+                        const plus = document.querySelector('.plusButton');
+                        if (plus) plus.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // load resume preview
+            window.loadResume = function(event) {
+                const resumeFrame = document.getElementById("resumeFrame");
+                const file = event.target.files && event.target.files[0];
+                if (file && resumeFrame) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        resumeFrame.src = e.target.result;
+                        const addBtn = document.getElementById('addResumeBtn');
+                        if (addBtn) addBtn.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // open edit modal and prefill from current page (or server-provided values)
+            window.toggleEditMode = function() {
+                const editMode = document.getElementById("editMode");
+                if (!editMode) return;
+                editMode.classList.toggle("active");
+                if (editMode.classList.contains("active")) {
+                    document.getElementById("editName").value = document.getElementById("displayName").textContent || "";
+                    const emailText = document.getElementById("displayEmail").textContent.replace(/^Email:\s*/i, "");
+                    document.getElementById("editEmail").value = emailText || "";
+                    document.getElementById("editAbout").value = document.getElementById("displayAbout").innerText || "";
+
+                    const skills = Array.from(document.querySelectorAll("#skillsContainer .skill")).map(el => el.textContent);
+                    document.getElementById("editSkills").value = skills.join(", ");
+
+                    const interests = Array.from(document.querySelectorAll("#interestsContainer .interest")).map(el => el.textContent);
+                    document.getElementById("editInterests").value = interests.join(", ");
+                }
+            };
+
+            // save changes via multipart/form-data to server route /profile (server should accept fields and files)
+            window.saveChanges = function() {
+                const form = document.getElementById("editForm");
+                if (!form) return;
+                const formData = new FormData();
+
+                formData.append("name", document.getElementById("editName").value || "");
+                formData.append("email", document.getElementById("editEmail").value || "");
+                formData.append("about", document.getElementById("editAbout").value || "");
+                formData.append("skills", document.getElementById("editSkills").value || "");
+                formData.append("interests", document.getElementById("editInterests").value || "");
+
+                const profilePicFile = document.getElementById("editProfilePic").files[0];
+                const resumeFile = document.getElementById("editResume").files[0];
+
+                // server route in this project expects uploaded picture key named 'picture' for profile picture (upload.single('picture'))
+                if (profilePicFile) formData.append("picture", profilePicFile);
+                if (resumeFile) formData.append("resume", resumeFile);
+
+                // also include values for direct upload fallback
+                // POST to /profile (server route exists in server.js)
+                fetch('/profile', {
+                    method: 'POST',
+                    body: formData
+                }).then(async res => {
+                    if (!res.ok) throw new Error("Server returned " + res.status);
+                    // attempt parse json, but server may redirect/render — handle gracefully
+                    const contentType = res.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        return res.json();
+                    } else {
+                        // non-json response: reload page to reflect changes
+                        window.location.reload();
+                        return null;
+                    }
+                }).then(data => {
+                    if (!data) return;
+                    if (data.success && data.user) {
+                        const u = data.user;
+                        document.getElementById("displayName").textContent = u.name || '';
+                        document.getElementById("displayEmail").textContent = "Email: " + (u.email || '');
+                        document.getElementById("displayAbout").innerText = u.about || '';
+                        document.getElementById("questionsAnswered").textContent = u.questionsAnswered || 0;
+                        document.getElementById("thumbsUp").textContent = u.thumbsUp || 0;
+                        document.getElementById("thumbsDown").textContent = u.thumbsDown || 0;
+
+                        const skillsContainer = document.getElementById("skillsContainer");
+                        if (skillsContainer) {
+                            skillsContainer.innerHTML = "";
+                            (u.skills || []).forEach(s => {
+                                const el = document.createElement("span");
+                                el.className = "skill";
+                                el.textContent = s;
+                                skillsContainer.appendChild(el);
+                            });
+                        }
+
+                        const interestsContainer = document.getElementById("interestsContainer");
+                        if (interestsContainer) {
+                            interestsContainer.innerHTML = "";
+                            (u.interests || []).forEach(i => {
+                                const el = document.createElement("span");
+                                el.className = "interest";
+                                el.textContent = i;
+                                interestsContainer.appendChild(el);
+                            });
+                        }
+
+                        if (u.profileImageUrl) {
+                            const img = document.getElementById("profileImage");
+                            img.src = u.profileImageUrl;
+                            img.style.display = "block";
+                            const plus = document.querySelector('.plusButton');
+                            if (plus) plus.style.display = 'none';
+                        }
+                        if (u.resumeUrl) {
+                            const frame = document.getElementById("resumeFrame");
+                            frame.src = u.resumeUrl;
+                            const addBtn = document.getElementById("addResumeBtn");
+                            if (addBtn) addBtn.style.display = 'none';
+                        }
+
+                        document.getElementById("editMode").classList.remove("active");
+                    } else {
+                        alert("Failed to save profile. Check server response.");
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    alert("Error saving profile.");
+                });
+            };
+
+            window.cancelEdit = function() {
+                const editMode = document.getElementById("editMode");
+                if (editMode) editMode.classList.remove("active");
+            };
+
+            // wire preview inputs to preview functions (if present)
+            const ePic = document.getElementById("editProfilePic");
+            if (ePic) ePic.addEventListener("change", loadImage);
+
+            const eResume = document.getElementById("editResume");
+            if (eResume) eResume.addEventListener("change", loadResume);
+
+            const dPic = document.getElementById("directProfilePic");
+            if (dPic) dPic.addEventListener("change", loadImage);
+
+            const dResume = document.getElementById("directResume");
+            if (dResume) dResume.addEventListener("change", loadResume);
+        });
     </script>
 </body>
 </html>
