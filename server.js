@@ -722,6 +722,7 @@ const upload = multer({ storage: storage });
         }
     });
 
+
     app.get('/rec-app', async (req, res) => {
         if (!req.session.user || req.session.user.role !== 'recruiter') {
             return res.redirect('/login');
@@ -785,6 +786,54 @@ const upload = multer({ storage: storage });
         } catch (err) {
             console.error('Error in /rec-app route:', err.message);
             res.redirect('/recruiter-home?error=Failed to load applications');
+        }
+    });
+
+    // Recruiter notifications page
+    app.get('/rec-not', async (req, res) => {
+        if (!req.session.user || req.session.user.role !== 'recruiter') {
+            return res.redirect('/login');
+        }
+
+        const recruiterId = req.session.user.id;
+
+        try {
+            // Fetch notifications for this recruiter (customize as needed)
+            const notifications = await Notification.find({ user_id: recruiterId })
+                .sort({ createdAt: -1 })
+                .lean();
+
+            const recruiterNav = {
+                homeUrl: '/recruiter-home',
+                navLinks: [
+                    { name: 'Home', href: '/recruiter-home' },
+                    {
+                        name: 'Applications',
+                        href: '/rec-app',
+                        submenu: [
+                            { name: 'Applications', href: '/rec-app' },
+                            { name: 'Notifications', href: '/rec-not' }
+                        ]
+                    },
+                    {
+                        name: 'Profile',
+                        href: '/recruiter-dashboard',
+                        submenu: [
+                            { name: 'Dashboard', href: '/recruiter-dashboard' }
+                        ]
+                    }
+                ]
+            };
+
+            res.render('rec-not', {
+                user: req.session.user,
+                homeUrl: recruiterNav.homeUrl,
+                navLinks: recruiterNav.navLinks,
+                notifications
+            });
+        } catch (err) {
+            console.error('Error in /rec-not route:', err.message);
+            res.redirect('/recruiter-home?error=Failed to load notifications');
         }
     });
 
@@ -886,6 +935,15 @@ const upload = multer({ storage: storage });
                 // Update the status if approved
                 application.status = status;
                 await application.save();
+                // Notify the student about being hired with recruiter email
+                const recruiter = await User.findById(recruiterId).select('email name').lean();
+                const approvedAt = new Date();
+                await Notification.create({
+                    user_id: application.user_id, // student
+                    message: `You got hired for "${application.job_title}" on ${approvedAt.toLocaleDateString()}. Recruiter email: ${recruiter?.email || 'N/A'}.`,
+                    type: 'job_hired',
+                    is_read: false
+                });
                 res.json({ success: true });
             }
         } catch (err) {
@@ -904,7 +962,8 @@ const upload = multer({ storage: storage });
         const companyName = req.session.user.name;
 
         try {
-            await JobApplication.create({
+            const createdAt = new Date();
+            const jobDoc = await JobApplication.create({
                 posted_by: recruiterId,
                 job_title: jobTitle,
                 company_name: companyName,
@@ -912,6 +971,13 @@ const upload = multer({ storage: storage });
                 description,
                 skills,
                 active: 1
+            });
+            // Notify recruiter about job creation
+            await Notification.create({
+                user_id: recruiterId,
+                message: `You created a job "${jobTitle}" on ${createdAt.toLocaleDateString()}.`,
+                type: 'job_created',
+                is_read: false
             });
             res.json({ success: true });
         } catch (err) {
@@ -929,10 +995,20 @@ const upload = multer({ storage: storage });
         const recruiterId = req.session.user.id;
 
         try {
+            const job = await JobApplication.findOne({ _id: jobId, posted_by: recruiterId }).lean();
             const result = await JobApplication.deleteOne({ _id: jobId, posted_by: recruiterId });
             if (result.deletedCount === 0) {
                 return res.status(404).json({ success: false, error: "Job not found or not authorized to delete" });
             }
+            // Notify recruiter about job deletion
+            const deletedAt = new Date();
+            const title = job?.job_title || 'your job';
+            await Notification.create({
+                user_id: recruiterId,
+                message: `You deleted the job "${title}" on ${deletedAt.toLocaleDateString()}.`,
+                type: 'job_deleted',
+                is_read: false
+            });
             res.json({ success: true });
         } catch (err) {
             console.error("Error deleting job:", err.message);
@@ -1235,35 +1311,31 @@ app.get('/stud', async (req, res) => {
             return res.redirect('/login?error=Please log in to view jobs');
         }
 
-        try {
+    try {
             const user = await User.findById(req.session.user.id).lean();
             if (!user) {
                 console.error('User not found for ID:', req.session.user.id);
                 return res.redirect('/login?error=User not found');
             }
 
-            const userApplications = await JobApplication.find({
-                user_id: req.session.user.id
-            }).select('job_title').lean();
-
-            const appliedJobTitles = userApplications.map(app => app.job_title);
-
+            // Show all active listings (not yet applied by anyone): user_id is null or missing, active true/1
             const jobs = await JobApplication.find({
-                active: true, // Use boolean true instead of 1
-                user_id: null,
-                job_title: { $nin: appliedJobTitles }
+                $and: [
+                    { $or: [ { user_id: null }, { user_id: { $exists: false } } ] },
+                    { $or: [ { active: true }, { active: 1 } ] }
+                ]
             })
                 .select('_id job_title company_name salary_range description skills')
                 .lean();
 
             console.log('Fetched jobs for /apply:', jobs);
 
-            res.render('applyjobs', {
+        res.render('applyjobs', {
                 user: req.session.user,
                 homeUrl: userNav.homeUrl,
                 navLinks: userNav.navLinks,
                 jobs: jobs.map(job => ({
-                    id: job._id,
+            id: job._id,
                     job_title: job.job_title,
                     company_name: job.company_name,
                     salary_range: job.salary_range,
@@ -1338,6 +1410,20 @@ app.get('/stud', async (req, res) => {
                 date_applied: new Date()
             });
 
+            // Notify recruiter of new application (use applicant name)
+            let applicantName = req.session.user?.name;
+            if (!applicantName) {
+                const applicant = await User.findById(userId).select('name').lean();
+                applicantName = applicant?.name || String(userId);
+            }
+            const appliedAt = new Date();
+            await Notification.create({
+                user_id: job.posted_by,
+                message: `You have received a new application for your job posting: "${job.job_title}" from ${applicantName} on ${appliedAt.toLocaleDateString()}.`,
+                type: 'job_application',
+                is_read: false
+            });
+
             await UserMetrics.findOneAndUpdate(
                 { user_id: userId },
                 { $inc: { job_applications: 1 } },
@@ -1358,12 +1444,17 @@ app.get('/stud', async (req, res) => {
         const userId = req.session.user.id;
 
         try {
-            const applications = await JobApplication.find({ user_id: userId, status: 'Waiting' })
-                .select('job_title company_name salary_range description skills date_applied status')
+            const applications = await JobApplication.find({ 
+                    user_id: userId, 
+                    status: { $in: ['Waiting', 'Approved'] }
+                })
+                .select('job_title company_name salary_range description skills date_applied status posted_by')
+                .populate('posted_by', 'email name')
                 .lean();
 
             const formattedApplications = applications.map(app => ({
                 ...app,
+                recruiter_email: app.posted_by && app.posted_by.email ? app.posted_by.email : null,
                 date_applied: app.date_applied ? new Date(app.date_applied) : new Date() // Fallback to current date
             }));
 
