@@ -130,7 +130,7 @@ const notificationSchema = new mongoose.Schema({
   task_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
   type: {
       type: String,
-      enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'other', 'task_assignment', 'task_accepted', 'task_rejected'],
+  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired'],
       default: 'task'
   },
   is_read: { type: Boolean, default: false }
@@ -161,3 +161,75 @@ module.exports = {
   Task,
   Notification
 };
+
+// ---------------------------
+// JobApplication Notifications
+// ---------------------------
+// Notify recruiter when an applicant applies with a resume.
+// Covers both create/save and findOneAndUpdate flows.
+
+// Helper: create notification
+async function createJobApplicationNotification(doc) {
+  try {
+    if (!doc || !doc.posted_by) return;
+    // Only notify if resume buffer exists
+    if (!doc.resume || !doc.resume.data) return;
+
+    // Try to fetch applicant name (best-effort)
+    let applicantName = 'a candidate';
+    if (doc.user_id) {
+      const applicant = await User.findById(doc.user_id).select('name').lean();
+      if (applicant && applicant.name) applicantName = applicant.name;
+    }
+
+    const jobTitle = doc.job_title || 'a job';
+    await Notification.create({
+      user_id: doc.posted_by, // recruiter
+      type: 'job_application',
+      message: `New application for ${jobTitle} from ${applicantName}.`
+    });
+  } catch (err) {
+    // Silent catch: don't block main flow on notification error
+    console.error('Notification error (job application):', err.message);
+  }
+}
+
+// post-save: fires on create/save
+jobApplicationSchema.post('save', async function (doc, next) {
+  try {
+    // When creating a new application with resume
+    if (doc && doc.resume && doc.resume.data) {
+      await createJobApplicationNotification(doc);
+    }
+    next();
+  } catch (e) {
+    next();
+  }
+});
+
+// post findOneAndUpdate: handle resume added via updates
+jobApplicationSchema.post('findOneAndUpdate', async function (res, next) {
+  try {
+    // res is the updated document when 'new: true' is used; otherwise null.
+    // To be resilient, re-fetch the doc by _id from the query.
+    let doc = res;
+    if (!doc) {
+      const q = this.getQuery();
+      if (q && q._id) {
+        doc = await JobApplication.findById(q._id).lean(false);
+      }
+    }
+    if (doc && doc.resume && doc.resume.data) {
+      // Determine if resume was newly added in this update
+      const prev = await JobApplication.findById(doc._id).select('resume').lean();
+      // If previous doc had no resume data, treat as newly added
+      const hadPrevResume = prev && prev.resume && prev.resume.data;
+      if (!hadPrevResume) {
+        await createJobApplicationNotification(doc);
+      }
+    }
+    next();
+  } catch (e) {
+    next();
+  }
+});
