@@ -411,6 +411,15 @@
         const { title, description, capacity, topic, deadline } = req.body;
         const userId = req.session.user.id;
 
+         // Count projects owned by this user (use ObjectId for exact match)
+        const userProjectCount = await Project.countDocuments({ user_id: new mongoose.Types.ObjectId(userId) });
+        // Interpret paid flag (accept boolean true or string 'true'/'1')
+        const paidFlag = req.body && (req.body.paid === true || req.body.paid === 'true' || req.body.paid === '1');
+        if (userProjectCount >= 3 && !paidFlag) {
+            // If user has reached the free limit and hasn't paid, ask for payment
+            return res.json({ requirePayment: true });
+        }
+
         if (!title || !description || !capacity || !topic || !deadline) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
