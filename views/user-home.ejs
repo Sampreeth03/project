@@ -142,7 +142,7 @@
                     </li>
                 <% }) %>
             </ul>
-            <input type="text" placeholder="Search" class="search-box">
+            <input type="text" placeholder="Search topics..." class="search-box" id="topicSearchBar">
         </div>
     </header>
     
@@ -154,7 +154,7 @@
 
     <!-- Topics Section -->
     <div class="topics-anxtion-container">
-        <div class="topics">
+        <div class="topics" id="topicsContainer">
             <% const topics = [
                 { name: "Web Development", description: "Learn front-end & back-end development to create responsive and dynamic websites.", joinLink: "/web-dev" },
                 { name: "Cyber Security", description: "Understand ethical hacking, encryption, and security protocols to protect data.", joinLink: "/cyb" },
@@ -225,13 +225,13 @@
     <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Carousel logic
             const carousel = document.querySelector(".carousel");
             const testimonials = document.querySelectorAll(".testimonial");
             const dotsContainer = document.querySelector(".dots");
             let index = 0;
             const totalSlides = testimonials.length;
             let interval;
-
             for (let i = 0; i < totalSlides; i++) {
                 const dot = document.createElement("span");
                 dot.classList.add("dot");
@@ -239,7 +239,6 @@
                 dotsContainer.appendChild(dot);
             }
             const dots = document.querySelectorAll(".dot");
-
             function updateCarousel() {
                 carousel.style.transform = `translateX(-${index * 100}%)`;
                 dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
@@ -263,6 +262,23 @@
                 });
             });
             startAutoSlide();
+
+            // Search bar filter logic for topics
+            const searchBar = document.getElementById('topicSearchBar');
+            const topicsContainer = document.getElementById('topicsContainer');
+            searchBar.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const topicDivs = topicsContainer.querySelectorAll('.topic');
+                topicDivs.forEach(div => {
+                    const name = div.querySelector('.topic-name').textContent.toLowerCase();
+                    const desc = div.querySelector('.topic-desc').textContent.toLowerCase();
+                    if (name.includes(query) || desc.includes(query)) {
+                        div.style.display = '';
+                    } else {
+                        div.style.display = 'none';
+                    }
+                });
+            });
         });
     </script>
 </body>
