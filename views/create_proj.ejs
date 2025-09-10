@@ -476,6 +476,32 @@
         projectForm.classList.toggle('active');
     });
 
+    // Minimal toast (bottom-right)
+    function showToastBR(message, type = 'success') {
+        let el = document.getElementById('toast-br');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'toast-br';
+            el.style.position = 'fixed';
+            el.style.right = '20px';
+            el.style.bottom = '20px';
+            el.style.padding = '10px 16px';
+            el.style.borderRadius = '6px';
+            el.style.color = '#fff';
+            el.style.fontWeight = '600';
+            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
+            el.style.zIndex = '10000';
+            el.style.transform = 'translateY(120%)';
+            el.style.transition = 'transform .25s ease, opacity .25s ease';
+            document.body.appendChild(el);
+        }
+        el.style.background = type === 'error' ? '#F44336' : '#0688FF';
+        el.textContent = message;
+        el.style.opacity = '1';
+        requestAnimationFrame(() => { el.style.transform = 'translateY(0)'; });
+        setTimeout(() => { el.style.transform = 'translateY(120%)'; el.style.opacity = '0.9'; }, 2200);
+    }
+
     document.getElementById('new-project-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -512,7 +538,7 @@
                     });
                     const paidResult = await paidResp.json();
                     if (paidResult.success) {
-                        alert('Project created after payment!');
+                        showToastBR('Project created after payment!');
                         const newProject = {
                             id: paidResult.projectId,
                             title: projectData.title,
@@ -525,17 +551,17 @@
                         addProject(newProject);
                         document.getElementById('new-project-form').reset();
                         projectForm.classList.remove('active');
-                        window.location.href = paidResult.redirect || '/dashboard';
+                        // small delay so toast is visible
+                        setTimeout(() => { window.location.href = paidResult.redirect || '/dashboard'; }, 800);
                     } else {
-                        alert('Payment failed: ' + (paidResult.error || paidResult.message || 'Unknown error'));
+                        showToastBR('Payment failed: ' + (paidResult.error || paidResult.message || 'Unknown error'), 'error');
                     }
                 } catch (err) {
                     console.error('Payment request failed:', err);
-                    alert('Payment request failed');
+                    showToastBR('Payment request failed', 'error');
                 }
             } else if (data.success) {
-            } else if (data.success) {
-                alert('Project created successfully!');
+                showToastBR('Project created successfully!');
                 const newProject = {
                     id: data.projectId,
                     title: projectData.title,
@@ -548,13 +574,13 @@
                 addProject(newProject);
                 document.getElementById('new-project-form').reset();
                 projectForm.classList.remove('active');
-                window.location.href = data.redirect || '/dashboard';
+                setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 800);
             } else {
-                alert('Error creating project: ' + (data.error || data.message || 'Unknown error'));
+                showToastBR('Error creating project: ' + (data.error || data.message || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Failed to create project');
+            showToastBR('Failed to create project', 'error');
         }
     });
 
