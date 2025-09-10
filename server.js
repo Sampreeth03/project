@@ -1764,9 +1764,13 @@ app.get('/stud', async (req, res) => {
                 return res.json({ success: false, message: "Doubt not found" });
             }
 
-            
-            if (doubt.user_id && doubt.user_id.toString() === req.session.user.id) {
-                return res.json({ success: false, message: "You cannot reply to your own doubt" });
+            // New rule: doubt owner can only reply AFTER at least one other user has replied.
+            const isOwner = doubt.user_id && doubt.user_id.toString() === req.session.user.id;
+            if (isOwner) {
+                const otherReplyExists = await Reply.exists({ doubt_id: doubtId, user_id: { $ne: doubt.user_id } });
+                if (!otherReplyExists) {
+                    return res.json({ success: false, message: "Wait for another user to reply before you add a follow-up." });
+                }
             }
 
             const reply = await Reply.create({
@@ -1778,11 +1782,14 @@ app.get('/stud', async (req, res) => {
                 visible_to_all: !isPrivate
             });
             await Doubt.findByIdAndUpdate(doubtId, { $push: { replies: reply._id } });
-            await UserMetrics.findOneAndUpdate(
-                { user_id: req.session.user.id },
-                { $inc: { solutions_provided: 1 } },
-                { upsert: true }
-            );
+            // Only count as a solution if the replier is NOT the original asker
+            if (!isOwner) {
+                await UserMetrics.findOneAndUpdate(
+                    { user_id: req.session.user.id },
+                    { $inc: { solutions_provided: 1 } },
+                    { upsert: true }
+                );
+            }
             res.json({ 
                 success: true, 
                 reply: { 
