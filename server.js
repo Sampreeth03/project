@@ -1752,6 +1752,7 @@ app.get('/stud', async (req, res) => {
         }
     });
 
+   
     app.post("/reply", express.json(), async (req, res) => {
         const { doubtId, text, isPrivate } = req.body;
         if (!req.session.user) {
@@ -1762,6 +1763,12 @@ app.get('/stud', async (req, res) => {
             if (!doubt) {
                 return res.json({ success: false, message: "Doubt not found" });
             }
+
+            
+            if (doubt.user_id && doubt.user_id.toString() === req.session.user.id) {
+                return res.json({ success: false, message: "You cannot reply to your own doubt" });
+            }
+
             const reply = await Reply.create({
                 doubt_id: doubtId,
                 author: req.session.user.name,
@@ -1791,6 +1798,7 @@ app.get('/stud', async (req, res) => {
             res.json({ success: false, message: "Failed to save reply" });
         }
     });
+
 
     app.get('/project', async (req, res) => {
         if (!req.session.user) {
