@@ -1805,6 +1805,16 @@ app.get('/stud', async (req, res) => {
             res.json({ success: false, message: "Failed to save reply" });
         }
     });
+    app.get('/job_not', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    res.render('job_notiffinal', {
+        user: req.session.user,
+        navLinks: (typeof getNavLinks === 'function') ? getNavLinks(req.session.user) : (navData.navLinks || []),
+        homeUrl: navData.homeUrl || '/home'
+    });
+});
 
 
     app.get('/project', async (req, res) => {
