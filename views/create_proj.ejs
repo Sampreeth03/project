@@ -467,206 +467,199 @@
 
     
         <script>
+           // Toast notification styles and element
+           const toast = document.createElement('div');
+           toast.id = 'toast-notification';
+           toast.style.position = 'fixed';
+           toast.style.bottom = '32px';
+           toast.style.right = '32px';
+           toast.style.background = 'var(--blue)';
+           toast.style.color = 'white';
+           toast.style.padding = '16px 28px';
+           toast.style.borderRadius = '8px';
+           toast.style.fontSize = '16px';
+           toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.18)';
+           toast.style.zIndex = '9999';
+           toast.style.display = 'none';
+           document.body.appendChild(toast);
+
+           function showToast(message) {
+               toast.textContent = message;
+               toast.style.display = 'block';
+               setTimeout(() => {
+                   toast.style.display = 'none';
+               }, 3000);
+           }
+
            document.addEventListener('DOMContentLoaded', function() {
-    const newProjectBtn = document.getElementById('new-project-btn');
-    const projectForm = document.getElementById('project-form');
-    const projectsContainer = document.getElementById('projects-container');
+               const newProjectBtn = document.getElementById('new-project-btn');
+               const projectForm = document.getElementById('project-form');
+               const projectsContainer = document.getElementById('projects-container');
 
-    newProjectBtn.addEventListener('click', function() {
-        projectForm.classList.toggle('active');
-    });
+               newProjectBtn.addEventListener('click', function() {
+                   projectForm.classList.toggle('active');
+               });
 
-    // Minimal toast (bottom-right)
-    function showToastBR(message, type = 'success') {
-        let el = document.getElementById('toast-br');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'toast-br';
-            el.style.position = 'fixed';
-            el.style.right = '20px';
-            el.style.bottom = '20px';
-            el.style.padding = '10px 16px';
-            el.style.borderRadius = '6px';
-            el.style.color = '#fff';
-            el.style.fontWeight = '600';
-            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
-            el.style.zIndex = '10000';
-            el.style.transform = 'translateY(120%)';
-            el.style.transition = 'transform .25s ease, opacity .25s ease';
-            document.body.appendChild(el);
-        }
-        el.style.background = type === 'error' ? '#F44336' : '#0688FF';
-        el.textContent = message;
-        el.style.opacity = '1';
-        requestAnimationFrame(() => { el.style.transform = 'translateY(0)'; });
-        setTimeout(() => { el.style.transform = 'translateY(120%)'; el.style.opacity = '0.9'; }, 2200);
-    }
+               document.getElementById('new-project-form').addEventListener('submit', async function(e) {
+                   e.preventDefault();
 
-    document.getElementById('new-project-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
+                   const projectData = {
+                       title: document.getElementById('project-title').value,
+                       description: document.getElementById('project-description').value,
+                       capacity: parseInt(document.getElementById('project-capacity').value, 10),
+                       topic: document.getElementById('project-topic').value,
+                       deadline: document.getElementById('project-deadline').value
+                   };
 
-        const projectData = {
-            title: document.getElementById('project-title').value,
-            description: document.getElementById('project-description').value,
-            capacity: parseInt(document.getElementById('project-capacity').value, 10),
-            topic: document.getElementById('project-topic').value,
-            deadline: document.getElementById('project-deadline').value
-        };
+                   try {
+                       // First attempt without payment flag
+                       const resp = await fetch('/create-project', {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json' },
+                           body: JSON.stringify(projectData)
+                       });
+                       const data = await resp.json();
 
-        try {
-            // First attempt without payment flag
-            const resp = await fetch('/create-project', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(projectData)
-            });
-            const data = await resp.json();
+                       if (data.requirePayment) {
+                           const confirmPay = window.confirm('You have reached the free project limit. Pay ₹500 to create more projects? Click OK to pay.');
+                           if (!confirmPay) return;
 
-            if (data.requirePayment) {
-                // Use a simple browser confirm (alert-style) for payment consent
-                const confirmPay = window.confirm('You have reached the free project limit. Pay ₹500 to create more projects? Click OK to pay.');
-                if (!confirmPay) {
-                    // User cancelled — do nothing
-                    return;
-                }
+                           try {
+                               const paidResp = await fetch('/create-project', {
+                                   method: 'POST',
+                                   headers: { 'Content-Type': 'application/json' },
+                                   body: JSON.stringify({ ...projectData, paid: true })
+                               });
+                               const paidResult = await paidResp.json();
+                               if (paidResult.success) {
+                                   showToast('Project created after payment!');
+                                   const newProject = {
+                                       id: paidResult.projectId,
+                                       title: projectData.title,
+                                       description: projectData.description,
+                                       capacity: projectData.capacity,
+                                       memberCount: 0,
+                                       topic: projectData.topic,
+                                       deadline: projectData.deadline
+                                   };
+                                   addProject(newProject);
+                                   document.getElementById('new-project-form').reset();
+                                   projectForm.classList.remove('active');
+                                   // Stay on page, no redirect
+                               } else {
+                                   showToast('Payment failed: ' + (paidResult.error || paidResult.message || 'Unknown error'));
+                               }
+                           } catch (err) {
+                               console.error('Payment request failed:', err);
+                               showToast('Payment request failed');
+                           }
+                       } else if (data.success) {
+                           showToast('Project created successfully!');
+                           const newProject = {
+                               id: data.projectId,
+                               title: projectData.title,
+                               description: projectData.description,
+                               capacity: projectData.capacity,
+                               memberCount: 0,
+                               topic: projectData.topic,
+                               deadline: projectData.deadline
+                           };
+                           addProject(newProject);
+                           document.getElementById('new-project-form').reset();
+                           projectForm.classList.remove('active');
+                           // Stay on page, no redirect
+                       } else {
+                           showToast('Error creating project: ' + (data.error || data.message || 'Unknown error'));
+                       }
+                   } catch (error) {
+                       console.error('Error:', error);
+                       showToast('Failed to create project');
+                   }
+               });
 
-                try {
-                    const paidResp = await fetch('/create-project', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...projectData, paid: true })
-                    });
-                    const paidResult = await paidResp.json();
-                    if (paidResult.success) {
-                        showToastBR('Project created after payment!');
-                        const newProject = {
-                            id: paidResult.projectId,
-                            title: projectData.title,
-                            description: projectData.description,
-                            capacity: projectData.capacity,
-                            memberCount: 0,
-                            topic: projectData.topic,
-                            deadline: projectData.deadline
-                        };
-                        addProject(newProject);
-                        document.getElementById('new-project-form').reset();
-                        projectForm.classList.remove('active');
-                        // small delay so toast is visible
-                        setTimeout(() => { window.location.href = paidResult.redirect || '/dashboard'; }, 800);
-                    } else {
-                        showToastBR('Payment failed: ' + (paidResult.error || paidResult.message || 'Unknown error'), 'error');
-                    }
-                } catch (err) {
-                    console.error('Payment request failed:', err);
-                    showToastBR('Payment request failed', 'error');
-                }
-            } else if (data.success) {
-                showToastBR('Project created successfully!');
-                const newProject = {
-                    id: data.projectId,
-                    title: projectData.title,
-                    description: projectData.description,
-                    capacity: projectData.capacity,
-                    memberCount: 0,
-                    topic: projectData.topic,
-                    deadline: projectData.deadline
-                };
-                addProject(newProject);
-                document.getElementById('new-project-form').reset();
-                projectForm.classList.remove('active');
-                setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 800);
-            } else {
-                showToastBR('Error creating project: ' + (data.error || data.message || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showToastBR('Failed to create project', 'error');
-        }
-    });
+               projectsContainer.addEventListener('click', function(e) {
+                   if (e.target.classList.contains('view-btn')) {
+                       const projectId = e.target.closest('.project-card').dataset.id;
+                       if (projectId && projectId !== 'undefined') {
+                           window.location.href = `/project/${projectId}`;
+                       } else {
+                           showToast('Invalid project ID. Please try again.');
+                       }
+                   } else if (e.target.classList.contains('delete-btn')) {
+                       e.stopPropagation();
+                       const projectCard = e.target.closest('.project-card');
+                       const projectId = projectCard.dataset.id;
+                       const projectTitle = projectCard.querySelector('.project-title').textContent;
+                       if (confirm(`Are you sure you want to delete "${projectTitle}"?`)) {
+                           deleteProject(projectId);
+                       }
+                   }
+               });
 
-    projectsContainer.addEventListener('click', function(e) {
-        if (e.target.classList.contains('view-btn')) {
-            const projectId = e.target.closest('.project-card').dataset.id;
-            if (projectId && projectId !== 'undefined') {
-                window.location.href = `/project/${projectId}`;
-            } else {
-                alert('Invalid project ID. Please try again.');
-            }
-        } else if (e.target.classList.contains('delete-btn')) {
-            e.stopPropagation();
-            const projectCard = e.target.closest('.project-card');
-            const projectId = projectCard.dataset.id;
-            const projectTitle = projectCard.querySelector('.project-title').textContent;
-            if (confirm(`Are you sure you want to delete "${projectTitle}"?`)) {
-                deleteProject(projectId);
-            }
-        }
-    });
+               function addProject(project) {
+                   const projectsContainer = document.getElementById('projects-container');
+                   const noProjects = projectsContainer.querySelector('.no-projects');
+                   if (noProjects) noProjects.remove();
 
-    function addProject(project) {
-        const projectsContainer = document.getElementById('projects-container');
-        const noProjects = projectsContainer.querySelector('.no-projects');
-        if (noProjects) noProjects.remove();
+                   const projectCard = document.createElement('div');
+                   projectCard.className = 'project-card';
+                   projectCard.dataset.id = project.id;
+                   projectCard.innerHTML = `
+                       <div class="project-content">
+                           <div class="project-header">
+                               <h3 class="project-title">${project.title}</h3>
+                               <button class="delete-btn" title="Delete Project">×</button>
+                           </div>
+                           <p class="project-description">${project.description}</p>
+                           <div class="project-meta">
+                               <span>Posted by: YOU</span>
+                               <span>Capacity: ${project.memberCount}/${project.capacity}</span>
+                           </div>
+                           <div class="project-meta">
+                               <span>Deadline: ${project.deadline}</span>
+                               <span>Topic: ${project.topic}</span>
+                           </div>
+                       </div>
+                       <div class="view-btn">View Project</div>
+                   `;
+                   projectsContainer.prepend(projectCard);
+               }
 
-        const projectCard = document.createElement('div');
-        projectCard.className = 'project-card';
-        projectCard.dataset.id = project.id;
-        projectCard.innerHTML = `
-            <div class="project-content">
-                <div class="project-header">
-                    <h3 class="project-title">${project.title}</h3>
-                    <button class="delete-btn" title="Delete Project">×</button>
-                </div>
-                <p class="project-description">${project.description}</p>
-                <div class="project-meta">
-                    <span>Posted by: YOU</span>
-                    <span>Capacity: ${project.memberCount}/${project.capacity}</span>
-                </div>
-                <div class="project-meta">
-                    <span>Deadline: ${project.deadline}</span>
-                    <span>Topic: ${project.topic}</span>
-                </div>
-            </div>
-            <div class="view-btn">View Project</div>
-        `;
-        projectsContainer.prepend(projectCard);
-    }
-
-    function deleteProject(projectId) {
-        console.log(`Attempting to delete project with ID: ${projectId}`);
-        fetch('/delete-project', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId })
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-            if (data.success) {
-                const projectCard = document.querySelector(`.project-card[data-id="${projectId}"]`);
-                if (projectCard) {
-                    projectCard.classList.add('deleting');
-                    setTimeout(() => {
-                        projectCard.remove();
-                        const projectsContainer = document.getElementById('projects-container');
-                        if (projectsContainer.children.length === 0) {
-                            projectsContainer.innerHTML = '<div class="no-projects">No projects available. Create a new project to get started!</div>';
-                        }
-                    }, 300);
-                }
-            } else {
-                alert('Error deleting project: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            alert('Failed to delete project');
-        });
-    }
-});
+               function deleteProject(projectId) {
+                   console.log(`Attempting to delete project with ID: ${projectId}`);
+                   fetch('/delete-project', {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify({ projectId })
+                   })
+                   .then(response => {
+                       console.log('Response status:', response.status);
+                       return response.json();
+                   })
+                   .then(data => {
+                       console.log('Response data:', data);
+                       if (data.success) {
+                           const projectCard = document.querySelector(`.project-card[data-id="${projectId}"]`);
+                           if (projectCard) {
+                               projectCard.classList.add('deleting');
+                               setTimeout(() => {
+                                   projectCard.remove();
+                                   const projectsContainer = document.getElementById('projects-container');
+                                   if (projectsContainer.children.length === 0) {
+                                       projectsContainer.innerHTML = '<div class="no-projects">No projects available. Create a new project to get started!</div>';
+                                   }
+                               }, 300);
+                           }
+                       } else {
+                           showToast('Error deleting project: ' + (data.error || 'Unknown error'));
+                       }
+                   })
+                   .catch(error => {
+                       console.error('Fetch error:', error);
+                       showToast('Failed to delete project');
+                   });
+               }
+           });
 
     // Removed duplicate handler for createProjectForm — using single handler bound to #new-project-form above
 

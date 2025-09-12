@@ -15,7 +15,7 @@
     const fs = require('fs');
 
     const app = express();
-    const PORT = 3001;
+    const PORT = 3000;
 
     app.use(express.json());
     app.set('view engine', 'ejs');
@@ -2781,5 +2781,5 @@ app.get('/profile-data/:id', async (req, res) => {
 
 
     app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
     });
