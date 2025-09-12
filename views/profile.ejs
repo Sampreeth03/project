@@ -294,8 +294,6 @@
                         document.getElementById("displayEmail").textContent = "Email: " + (u.email || '');
                         document.getElementById("displayAbout").innerText = u.about || '';
                         document.getElementById("questionsAnswered").textContent = u.questionsAnswered || 0;
-                        document.getElementById("thumbsUp").textContent = u.thumbsUp || 0;
-                        document.getElementById("thumbsDown").textContent = u.thumbsDown || 0;
 
                         const skillsContainer = document.getElementById("skillsContainer");
                         if (skillsContainer) {
@@ -339,7 +337,7 @@
                     }
                 }).catch(err => {
                     console.error(err);
-                    alert("Error saving profile.");
+                    alert(err);
                 });
             };
 
