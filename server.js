@@ -1311,13 +1311,31 @@ app.get('/stud', async (req, res) => {
             const projects = await Project.find().lean();
     
             // Fetch member counts for each project
+            const now = new Date();
             const projectData = await Promise.all(projects.map(async (project) => {
                 const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
+                // derive status: completed if marked completed, expired if deadline passed and not completed, active otherwise
+                let derivedStatus = project.status || 'active';
+                if ((derivedStatus === 'completed' || (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed'))) {
+                    derivedStatus = 'completed';
+                } else {
+                    if (project.deadline) {
+                        const dl = new Date(project.deadline);
+                        if (dl.getTime() < now.getTime()) {
+                            derivedStatus = 'expired';
+                        } else {
+                            derivedStatus = 'active';
+                        }
+                    } else {
+                        derivedStatus = 'active';
+                    }
+                }
+
                 return {
                     id: project._id.toString(),
                     title: project.title,
-                    topic: project.topic, // Use topic as category
-                    status: project.status,
+                    category: project.topic || project.category || 'General',
+                    status: derivedStatus,
                     description: project.description,
                     deadline: project.deadline,
                     members: memberCount

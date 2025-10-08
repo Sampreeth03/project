@@ -190,6 +190,7 @@
         }
       }
     </script>
+     <!--E1-->
     <script>
       (function() {
         const emailInput = document.getElementById('email');
@@ -267,7 +268,6 @@
         emailInput.addEventListener('blur', onEmailBlur);
         passwordInput.addEventListener('blur', onPasswordBlur);
 
-        // Restore placeholder on focus and clear error state
         emailInput.addEventListener('focus', function() {
           clearInlinePlaceholderError(emailInput, emailError, originalEmailPlaceholder);
         });
@@ -275,7 +275,6 @@
           clearInlinePlaceholderError(passwordInput, passwordError, originalPasswordPlaceholder);
         });
 
-        // Also update state on input to be responsive
         emailInput.addEventListener('input', function() {
           clearInlinePlaceholderError(emailInput, emailError, originalEmailPlaceholder);
           updateButtonState();
@@ -285,7 +284,6 @@
           updateButtonState();
         });
 
-        // Initial check (in case browser auto-fills)
         document.addEventListener('DOMContentLoaded', updateButtonState);
       })();
     </script>
