@@ -1120,28 +1120,64 @@ const upload = multer({ storage: storage });
         }
     
         try {
-            const studentCount = await User.countDocuments({ role: "user" });
-            const recruiterCount = await User.countDocuments({ role: "recruiter" });
-            const projectCount = await Project.countDocuments();
-            const doubtCount = await Doubt.countDocuments();
-    
-            const dashboardData = {
-                currentPage: "dashboard",
-                adminName: req.session.user.name,
-                adminRole: "Super Admin",
-                dashboardCards: [
-                    { title: "Students", icon: "user-graduate", stat: studentCount, colorClass: "primary", change: 12 },
-                    { title: "Recruiters", icon: "building", stat: recruiterCount, colorClass: "success", change: 8 },
-                    { title: "Projects", icon: "lightbulb", stat: projectCount, colorClass: "warning", change: 23 },
-                    { title: "Doubts Asked", icon: "question-circle", stat: doubtCount, colorClass: "danger", change: 15 },
-                ],
-            };
-    
-            res.render('admin', { activePage: 'dashboard', dashboardData });
-        } catch (err) {
-            console.error("Error fetching dashboard data:", err.message);
-            res.status(500).send("Server Error");
-        }
+                // compute counts for current 30-day window and previous 30-day window
+                const now = new Date();
+                const periodDays = 30;
+                const periodMs = periodDays * 24 * 60 * 60 * 1000;
+                const periodStart = new Date(now.getTime() - periodMs); // last 30 days
+                const prevStart = new Date(now.getTime() - 2 * periodMs); // 60 days ago
+                const prevEnd = periodStart; // previous window end
+
+                // parallel counts
+                const [
+                    usersCurr, usersPrev,
+                    recCurr, recPrev,
+                    projCurr, projPrev,
+                    doubtCurr, doubtPrev,
+                    totalUsers, totalRecruiters, totalProjects, totalDoubts
+                ] = await Promise.all([
+                    User.countDocuments({ role: 'user', createdAt: { $gte: periodStart, $lt: now } }),
+                    User.countDocuments({ role: 'user', createdAt: { $gte: prevStart, $lt: prevEnd } }),
+                    User.countDocuments({ role: 'recruiter', createdAt: { $gte: periodStart, $lt: now } }),
+                    User.countDocuments({ role: 'recruiter', createdAt: { $gte: prevStart, $lt: prevEnd } }),
+                    Project.countDocuments({ createdAt: { $gte: periodStart, $lt: now } }),
+                    Project.countDocuments({ createdAt: { $gte: prevStart, $lt: prevEnd } }),
+                    Doubt.countDocuments({ createdAt: { $gte: periodStart, $lt: now } }),
+                    Doubt.countDocuments({ createdAt: { $gte: prevStart, $lt: prevEnd } }),
+                    User.countDocuments({ role: 'user' }),
+                    User.countDocuments({ role: 'recruiter' }),
+                    Project.countDocuments({}),
+                    Doubt.countDocuments({})
+                ]);
+
+                function computeSignedPercent(curr, prev) {
+                    if (!prev) {
+                        if (!curr) return 0; // no change
+                        return 100; // previous 0, some new => show 100% increase
+                    }
+                    const diff = curr - prev;
+                    const raw = (diff / prev) * 100;
+                    return Math.round(raw); // signed integer (+/-)
+                }
+
+                const dashboardData = {
+                    currentPage: "dashboard",
+                    adminName: req.session.user.name,
+                    adminRole: "Super Admin",
+                    dashboardCards: [
+                        { title: "Students", icon: "user-graduate", stat: totalUsers, colorClass: "primary", change: computeSignedPercent(usersCurr, usersPrev) },
+                        { title: "Recruiters", icon: "building", stat: totalRecruiters, colorClass: "success", change: computeSignedPercent(recCurr, recPrev) },
+                        { title: "Projects", icon: "lightbulb", stat: totalProjects, colorClass: "warning", change: computeSignedPercent(projCurr, projPrev) },
+                        { title: "Doubts Asked", icon: "question-circle", stat: totalDoubts, colorClass: "danger", change: computeSignedPercent(doubtCurr, doubtPrev) },
+                    ],
+                    period: `${periodDays} days`
+                };
+
+                res.render('admin', { activePage: 'dashboard', dashboardData });
+            } catch (err) {
+                console.error("Error fetching dashboard data:", err.message);
+                res.status(500).send("Server Error");
+            }
     });
 
     
