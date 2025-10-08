@@ -163,8 +163,8 @@
             aria-describedby="password-error"
           />
           <span
+            id="toggle-password-btn"
             class="toggle-password"
-            onclick="togglePassword('password', this)"
             style="color: blue;"
             >Show</span
           >
@@ -198,6 +198,7 @@
         const emailError = document.getElementById('email-error');
         const passwordError = document.getElementById('password-error');
         const loginBtn = document.getElementById('login-btn');
+        const toggleBtn = document.getElementById('toggle-password-btn');
 
         function validateEmail(value) {
           if (!value) return 'Email is required.';
@@ -284,7 +285,39 @@
           updateButtonState();
         });
 
-        document.addEventListener('DOMContentLoaded', updateButtonState);
+        // wire toggle password control
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function() {
+            togglePassword('password', this);
+          });
+        }
+
+        updateButtonState();
+
+        const form = document.querySelector('.login-form');
+        if (form) {
+          form.addEventListener('submit', function (e) {
+            const emailMsg = validateEmail(emailInput.value.trim());
+            const passMsg = validatePassword(passwordInput.value);
+            if (emailMsg || passMsg) {
+              e.preventDefault();
+              if (emailMsg) {
+                applyInlinePlaceholderError(emailInput, emailError, emailMsg, originalEmailPlaceholder);
+                emailInput.focus();
+              }
+              if (!emailMsg && passMsg) {
+                applyInlinePlaceholderError(passwordInput, passwordError, passMsg, originalPasswordPlaceholder);
+                passwordInput.focus();
+              }
+              updateButtonState();
+              return false;
+            }
+            loginBtn.setAttribute('disabled', '');
+            loginBtn.setAttribute('aria-disabled', 'true');
+            loginBtn.textContent = 'Signing in...';
+            return true;
+          });
+        }
       })();
     </script>
   </body>
