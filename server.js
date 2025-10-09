@@ -13,7 +13,6 @@
         return regex.test(password);
     };
     const fs = require('fs');
-
     const app = express();
     const PORT = 3000;
 
