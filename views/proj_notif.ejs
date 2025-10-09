@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Developer note: shiva -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -623,10 +624,9 @@
                   </div>
 
                   <div class="notification-footer" id="footer-<%= request.id %>">
-                    <% if (request.status === 'pending') { %>
+                      <% if (request.status === 'pending') { %>
                       <button class="view-review-btn" type="button" onclick="viewProfile('<%= request.user_id %>')" title="View requester profile">View Profile</button>
 
-                      <!-- pass event so handler can disable the clicked button and update UI inline -->
                       <button class="view-review-btn approve" onclick="approveRequest('<%= request.id %>', event)" aria-label="Approve Request">Approve</button>
                       <button class="view-review-btn reject" onclick="rejectRequest('<%= request.id %>', event)" aria-label="Reject Request">Reject</button>
                     <% } else { %>
@@ -663,16 +663,23 @@
   </footer>
 
   <script>
-    // Store button states to prevent multiple clicks
+    // shiva: Store button states to prevent multiple clicks
     const buttonStates = new Map();
 
-    // shiva: AJAX approve handler — updates UI instantly without reload
     function approveRequest(requestId, evt) {
-      const button = evt ? evt.target : event.target;
+      const button = evt ? evt.target : (event && event.target);
+      if (!button) return;
       if (buttonStates.get(requestId)) return; // Prevent multiple clicks
       buttonStates.set(requestId, true);
       button.disabled = true;
       button.textContent = 'Approving...';
+
+      // Optimistic UI: remove the card immediately but keep a reference to restore if needed
+      const card = button.closest('.notification-card');
+      const parent = card && card.parentNode;
+      const nextSibling = card && card.nextSibling;
+      if (card) card.remove();
+      updateLeaderBadge();
 
       fetch('/approve-join-request', {
         method: 'POST',
@@ -681,49 +688,52 @@
       })
         .then(response => response.json())
         .then(data => {
-          if (data.success) {
-            // Remove the request card from the DOM immediately
-            const card = document.querySelector(`.notification-card[data-id="${requestId}"]`);
-            if (card) card.remove();
+          // Treat backend 'already processed' as already handled: keep card removed and show info
+          const msg = (data && data.message) || '';
+          const lower = msg.toLowerCase();
+          if (data && data.success) {
+            showToast(msg || 'Request approved successfully');
             updateLeaderBadge();
-            showToast('Request approved');
+            // nothing else to do — card already removed
+          } else if (lower.includes('already') || lower.includes('processed')) {
+            // Already processed by someone else — remove from UI and inform
+            showToast(msg || 'Request already processed', 'success');
+            updateLeaderBadge();
+          } else if (lower.includes('full') || (data && data.code === 'PROJECT_FULL')) {
+            // Project full — restore the card and show an error
+            showToast(msg || 'Project is full. Could not approve the request.', 'error');
+            if (parent) parent.insertBefore(card, nextSibling);
+            updateLeaderBadge();
           } else {
-            // Graceful handling of known server-side business responses
-            if (data.code === 'already_processed') {
-              showToast(data.message || 'Request was already processed', 'error');
-              // Replace footer to reflect processed state
-              const footer = document.getElementById(`footer-${requestId}`);
-              if (footer) footer.innerHTML = `\n                <button class="view-review-btn info" disabled aria-label="Request Status">Request ${data.status || 'processed'}</button>\n                <button class="delete-btn" onclick="deleteRequest('${requestId}')" aria-label="Delete Request">✕</button>\n              `;
-            } else if (data.code === 'project_full') {
-              showToast(data.message || 'Project is full, cannot approve', 'error');
-              // keep the row so leader can take other actions
-              button.disabled = false;
-              button.textContent = 'Approve';
-            } else {
-              showToast(data.message || 'Failed to approve request', 'error');
-              button.disabled = false;
-              button.textContent = 'Approve';
-            }
+            // General failure — restore and show error
+            showToast(msg || 'Failed to approve request', 'error');
+            if (parent) parent.insertBefore(card, nextSibling);
           }
         })
         .catch(error => {
           console.error('Error:', error);
           showToast('An error occurred while approving the request', 'error');
-          button.disabled = false;
-          button.textContent = 'Approve';
+          if (parent) parent.insertBefore(card, nextSibling);
         })
         .finally(() => {
           buttonStates.delete(requestId);
         });
     }
 
-    // shiva: AJAX reject handler — updates UI instantly without reload
     function rejectRequest(requestId, evt) {
-      const button = evt ? evt.target : event.target;
+      const button = evt ? evt.target : (event && event.target);
+      if (!button) return;
       if (buttonStates.get(requestId)) return; // Prevent multiple clicks
       buttonStates.set(requestId, true);
       button.disabled = true;
       button.textContent = 'Rejecting...';
+
+      // Optimistic UI: remove card immediately, restore on failure
+      const card = button.closest('.notification-card');
+      const parent = card && card.parentNode;
+      const nextSibling = card && card.nextSibling;
+      if (card) card.remove();
+      updateLeaderBadge();
 
       fetch('/reject-join-request', {
         method: 'POST',
@@ -732,29 +742,26 @@
       })
         .then(response => response.json())
         .then(data => {
-          if (data.success) {
-            // Remove the request card from the DOM immediately
-            const card = document.querySelector(`.notification-card[data-id="${requestId}"]`);
-            if (card) card.remove();
+          const msg = (data && data.message) || '';
+          const lower = msg.toLowerCase();
+          if (data && data.success) {
+            showToast(msg || 'Request rejected successfully');
             updateLeaderBadge();
-            showToast('Request rejected');
+          } else if (lower.includes('already') || lower.includes('processed')) {
+            // Already processed — keep removed and inform
+            showToast(msg || 'Request already processed', 'success');
+            updateLeaderBadge();
           } else {
-            if (data.code === 'already_processed') {
-              showToast(data.message || 'Request was already processed', 'error');
-              const footer = document.getElementById(`footer-${requestId}`);
-              if (footer) footer.innerHTML = `\n                <button class="view-review-btn info" disabled aria-label="Request Status">Request ${data.status || 'processed'}</button>\n                <button class="delete-btn" onclick="deleteRequest('${requestId}')" aria-label="Delete Request">✕</button>\n              `;
-            } else {
-              showToast(data.message || 'Failed to reject request', 'error');
-              button.disabled = false;
-              button.textContent = 'Reject';
-            }
+            // Failure — restore
+            showToast(msg || 'Failed to reject request', 'error');
+            if (parent) parent.insertBefore(card, nextSibling);
+            updateLeaderBadge();
           }
         })
         .catch(error => {
           console.error('Error:', error);
           showToast('An error occurred while rejecting the request', 'error');
-          button.disabled = false;
-          button.textContent = 'Reject';
+          if (parent) parent.insertBefore(card, nextSibling);
         })
         .finally(() => {
           buttonStates.delete(requestId);
