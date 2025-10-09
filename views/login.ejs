@@ -39,21 +39,47 @@
       }
       .input-group {
         position: relative;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
+        width: 100%;
       }
 
       .input-group input {
+        display: block;
         width: 100%;
-        padding: 15px;
-        padding-right: 50px; 
+        height: 48px;
+        box-sizing: border-box;
+        padding: 0 60px 0 15px; /* Right padding for Show button */
         border: 1px solid #1079e9;
         border-radius: 5px;
         background-color: transparent;
         color: #ffffff;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        line-height: 48px;      
         outline: none;
+        transition: none;       
+        letter-spacing: 0;      
+        word-spacing: 0;
       }
+
+      .input-group input.input-error::placeholder {
+        color: #ff4d4d;
+        opacity: 1;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        line-height: 48px;
+        letter-spacing: 0;
+        word-spacing: 0;
+      }
+
+      /* allow input groups to expand when inline error messages appear */
+      .input-group { /* container for input + inline error */
+        width: 100%;
+      }
+      .input-group input {
+        height: 48px;
+      }
+
+
       .login-btn {
         width: 100%;
         background-color: #0068ff;
@@ -83,19 +109,38 @@
 
       .toggle-password {
         position: absolute;
-        top: 25px;
+        top: 12px; /* Fixed position from top */
         right: 15px;
-        transform: translateY(-50%);
         cursor: pointer;
-        color: #ffffff;
+        color: #0068ff;
         font-size: 14px;
         font-weight: bold;
         background: none;
         border: none;
+        user-select: none;
+        pointer-events: auto;
+        z-index: 10;
       }
 
       .toggle-password:hover {
-        color: #0068ff;
+        color: #1f5bb4;
+      }
+      .field-error {
+        color: #ff6b6b;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        min-height: 18px;
+        display: none; /* hide by default, show when needed */
+      }
+
+      .login-btn[disabled], .login-btn[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(10%);
+      }
+      input.input-error::placeholder {
+        color: #ff6b6b;
+        opacity: 1; 
       }
     </style>
   </head>
@@ -109,8 +154,9 @@
         <% } %>
 
         <div class="input-group">
-          <input type="email" name="email" placeholder="Email" required />
-        </div>
+          <input id="email" type="email" name="email" placeholder="Email" required aria-describedby="email-error" />
+          <div id="email-error" class="field-error" aria-live="polite"></div>
+        </div><br>
         <div class="input-group">
           <input
             type="password"
@@ -118,15 +164,17 @@
             name="password"
             placeholder="Password"
             required
+            aria-describedby="password-error"
           />
           <span
+            id="toggle-password-btn"
             class="toggle-password"
-            onclick="togglePassword('password', this)"
             >Show</span
           >
+          <div id="password-error" class="field-error" aria-live="polite"></div>
         </div>
 
-        <button type="submit" class="login-btn">Login</button>
+        <button type="submit" id="login-btn" class="login-btn" aria-disabled="true" disabled>Login</button>
 
         <p class="signup-text">
           Don't have an account? <a href="/signup">Sign Up</a>
@@ -144,6 +192,140 @@
           element.textContent = "Show";
         }
       }
+    </script>
+     <!--E1-->
+    <script>
+      (function() {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const emailError = document.getElementById('email-error');
+        const passwordError = document.getElementById('password-error');
+        const loginBtn = document.getElementById('login-btn');
+        const toggleBtn = document.getElementById('toggle-password-btn');
+
+        function validateEmail(value) {
+          if (!value) return 'Email is required.';
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return re.test(value) ? '' : 'Enter a valid email address.';
+        }
+
+        function validatePassword(value) {
+          if (!value) return 'Password is required.';
+          const re = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+          return re.test(value) ? '' : 'Password must satisfy criteria.';
+        }
+
+        function updateButtonState() {
+          const emailValid = !validateEmail(emailInput.value);
+          const passValid = !validatePassword(passwordInput.value);
+          if (emailValid && passValid) {
+            loginBtn.removeAttribute('disabled');
+            loginBtn.setAttribute('aria-disabled', 'false');
+          } else {
+            loginBtn.setAttribute('disabled', '');
+            loginBtn.setAttribute('aria-disabled', 'true');
+          }
+        }
+
+        const originalEmailPlaceholder = emailInput.getAttribute('placeholder') || '';
+        const originalPasswordPlaceholder = passwordInput.getAttribute('placeholder') || '';
+
+        function applyInlinePlaceholderError(inputEl, errorEl, message, originalPlaceholder) {
+          if (!message) {
+            inputEl.classList.remove('input-error');
+            inputEl.setAttribute('placeholder', originalPlaceholder);
+            errorEl.textContent = '';
+            return;
+          }
+          inputEl.classList.add('input-error');
+          inputEl.value = '';
+          inputEl.setAttribute('placeholder', message);
+          // For password criteria failures show a visible detailed message under the field
+          if (errorEl && errorEl.id === 'password-error' && /password/i.test(message)) {
+            errorEl.textContent = 'Password must be at least 6 characters and include one uppercase letter and one special character.';
+            // show as normal block so it pushes content down
+            errorEl.style.display = 'block';
+          } else {
+            // keep the placeholder-style inline error for other fields (hidden summary)
+            errorEl.textContent = message;
+            errorEl.style.display = 'none';
+          }
+        }
+
+        function clearInlinePlaceholderError(inputEl, errorEl, originalPlaceholder) {
+          inputEl.classList.remove('input-error');
+          if (inputEl.getAttribute('placeholder') !== originalPlaceholder) {
+            inputEl.setAttribute('placeholder', originalPlaceholder);
+          }
+          errorEl.textContent = '';
+          errorEl.style.display = 'none';
+        }
+
+        function onEmailBlur() {
+          const msg = validateEmail(emailInput.value.trim());
+          applyInlinePlaceholderError(emailInput, emailError, msg, originalEmailPlaceholder);
+          updateButtonState();
+        }
+
+        function onPasswordBlur() {
+          const msg = validatePassword(passwordInput.value);
+          applyInlinePlaceholderError(passwordInput, passwordError, msg, originalPasswordPlaceholder);
+          updateButtonState();
+        }
+
+        emailInput.addEventListener('blur', onEmailBlur);
+        passwordInput.addEventListener('blur', onPasswordBlur);
+
+        emailInput.addEventListener('focus', function() {
+          clearInlinePlaceholderError(emailInput, emailError, originalEmailPlaceholder);
+        });
+        passwordInput.addEventListener('focus', function() {
+          clearInlinePlaceholderError(passwordInput, passwordError, originalPasswordPlaceholder);
+        });
+
+        emailInput.addEventListener('input', function() {
+          clearInlinePlaceholderError(emailInput, emailError, originalEmailPlaceholder);
+          updateButtonState();
+        });
+        passwordInput.addEventListener('input', function() {
+          clearInlinePlaceholderError(passwordInput, passwordError, originalPasswordPlaceholder);
+          updateButtonState();
+        });
+
+        // wire toggle password control
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function() {
+            togglePassword('password', this);
+          });
+        }
+
+        updateButtonState();
+
+        const form = document.querySelector('.login-form');
+        if (form) {
+          form.addEventListener('submit', function (e) {
+            const emailMsg = validateEmail(emailInput.value.trim());
+            const passMsg = validatePassword(passwordInput.value);
+            if (emailMsg || passMsg) {
+              e.preventDefault();
+              if (emailMsg) {
+                applyInlinePlaceholderError(emailInput, emailError, emailMsg, originalEmailPlaceholder);
+                emailInput.focus();
+              }
+              if (!emailMsg && passMsg) {
+                applyInlinePlaceholderError(passwordInput, passwordError, passMsg, originalPasswordPlaceholder);
+                passwordInput.focus();
+              }
+              updateButtonState();
+              return false;
+            }
+            loginBtn.setAttribute('disabled', '');
+            loginBtn.setAttribute('aria-disabled', 'true');
+            loginBtn.textContent = 'Signing in...';
+            return true;
+          });
+        }
+      })();
     </script>
   </body>
 </html>

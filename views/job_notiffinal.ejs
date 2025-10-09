@@ -6,19 +6,20 @@
   <title>Jobs Notification Dashboard</title>
   <style>
     :root {
-      --primary-color: #6200ee;
-      --primary-light: #b180ff;
+      /* Align palette and elevations to rec-not.ejs */
+      --primary-color: #0688FF;
+      --primary-light: #3DA8FF;
       --secondary-color: #03dac6;
-      --danger-color: #cf6679;
-      --background: #121212;
-      --surface: #1e1e1e;
-      --surface-variant: #2d2d2d;
-      --on-surface: #e0e0e0;
-      --on-surface-medium: #a0a0a0;
-      --on-surface-disabled: #6c6c6c;
-      --border: #3d3d3d;
-      --elevation-1: 0 1px 3px rgba(0,0,0,0.24);
-      --elevation-2: 0 3px 6px rgba(0,0,0,0.26);
+      --danger-color: #F44336;
+      --background: #121212;   /* page background */
+      --surface: #333333;      /* card background */
+      --surface-variant: #222222; /* subtle blocks */
+      --on-surface: #FFFFFF;   /* primary text */
+      --on-surface-medium: #CCCCCC; /* secondary text */
+      --on-surface-disabled: #888888;
+      --border: #555555;       /* dividers */
+      --elevation-1: 0 5px 15px rgba(0, 0, 0, 0.3);
+      --elevation-2: 0 8px 24px rgba(0, 0, 0, 0.35);
       --border-radius: 12px;
       --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -44,24 +45,18 @@
 
 
     body {
-      font-family: 'Roboto', 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: var(--background);
       color: var(--on-surface);
       line-height: 1.6;
-      
+      min-height: 100vh;
     }
 
     header {
-      padding: 1.5rem 2rem;
-      background-color: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      box-shadow: var(--elevation-1);
+      /* Keep only navbar visible like rec-not; navbar itself is fixed */
+      background: transparent;
+      border: 0;
+      box-shadow: none;
     }
 
     .logo-container {
@@ -116,9 +111,10 @@
     }
 
     .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      margin-top: 80px; /* account for fixed navbar */
     }
 
     .header-content {
@@ -162,8 +158,8 @@
     .job-card {
       background-color: var(--surface);
       border-radius: var(--border-radius);
-      padding: 1.5rem;
-      margin-bottom: 1rem;
+      padding: 15px;
+      margin-bottom: 15px;
       border: 1px solid var(--border);
       box-shadow: var(--elevation-1);
       transition: var(--transition);
@@ -171,7 +167,7 @@
     }
 
     .job-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       box-shadow: var(--elevation-2);
       border-color: var(--primary-color);
     }
@@ -182,16 +178,23 @@
     }
 
     .job-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
     }
 
     .job-card-title {
-      font-size: 1.2rem;
-      font-weight: 500;
+      font-size: 1.1rem;
+      font-weight: 600;
       margin-bottom: 0.5rem;
-      color: var(--on-surface);
+      color: var(--primary-color);
+    }
+
+    .job-card-header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
     }
 
     .job-card-date {
@@ -202,30 +205,12 @@
       border-radius: 4px;
     }
 
-    .job-card-company {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-
-    .company-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background-color: var(--primary-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--on-surface);
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-
     .company-name {
       font-size: 0.95rem;
       font-weight: 500;
       color: var(--on-surface);
+      opacity: 0.9;
+      margin-top: -4px;
     }
 
     .job-card-content {
@@ -240,22 +225,22 @@
 
     .job-description {
       background-color: var(--surface-variant);
-      padding: 1rem;
+      padding: 12px;
       border-radius: 8px;
-      margin: 0.75rem 0;
+      margin: 10px 0;
       color: var(--on-surface-medium);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
 
     .job-pay {
-      background-color: rgba(98, 0, 238, 0.1);
-      color: var(--primary-color);
-      padding: 0.5rem 1rem;
+      background-color: rgba(76, 175, 80, 0.12); /* success tint like rec-not */
+      color: #4CAF50;
+      padding: 6px 12px;
       border-radius: 50px;
       font-size: 0.9rem;
-      font-weight: 500;
+      font-weight: 600;
       display: inline-block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 8px;
     }
 
     .resume-link {
@@ -281,24 +266,25 @@
 
     .btn {
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 50px;
+      padding: 6px 14px;
+      border-radius: 4px;
       font-size: 0.9rem;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 8px;
     }
 
     .btn-primary {
       background-color: var(--primary-color);
-      color: white;
+      color: #fff;
     }
 
     .btn-primary:hover {
       background-color: var(--primary-light);
+      transform: scale(1.05);
     }
 
     .btn-secondary {
@@ -318,7 +304,7 @@
     }
 
     .btn-danger:hover {
-      background-color: rgba(207, 102, 121, 0.1);
+      background-color: rgba(244, 67, 54, 0.12);
     }
 
     .btn-icon {
@@ -332,33 +318,33 @@
 
     .empty-state {
       text-align: center;
-      padding: 3rem;
+      padding: 50px 0;
       color: var(--on-surface-disabled);
     }
 
     .toast {
       position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      background-color: var(--primary-color);
-      color: white;
-      font-weight: 500;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--surface);
+      color: var(--on-surface);
+      padding: 10px 20px;
+      border-radius: 4px;
       box-shadow: var(--elevation-2);
+      transition: all 0.3s ease;
+      transform: translateY(100px);
       opacity: 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-      z-index: 100;
+      z-index: 1000;
+      border-left: 4px solid var(--primary-color);
     }
 
     .toast.show {
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(0);
       opacity: 1;
     }
 
     .toast.error {
-      background-color: var(--danger-color);
+      border-left-color: var(--danger-color);
     }
 
     @keyframes fadeIn {
@@ -385,7 +371,7 @@
     }
 
     .job-type-shortlisted {
-      background-color: rgba(98, 0, 238, 0.1);
+      background-color: rgba(6, 136, 255, 0.12);
       color: var(--primary-color);
     }
   </style>
@@ -501,9 +487,7 @@
         return new Date(date).toLocaleDateString('en-US', { month: 'short', day: "numeric", year: "numeric" });
       }
   
-      function getCompanyInitials(companyName) {
-        return companyName.split(' ').map(word => word[0]).join('').toUpperCase();
-      }
+  // Removed initials icon; no helper needed
   
       function renderNotifications() {
         const container = document.getElementById('jobs-notifications');
@@ -525,12 +509,13 @@
             <div class="job-card-header">
               <div>
                 <h3 class="job-card-title">${notification.title}</h3>
-                <span class="job-type ${jobTypeClass}">${jobTypeLabel}</span>
               </div>
-              <span class="job-card-date">${formatDate(notification.date)}</span>
+              <div class="job-card-header-right">
+                <span class="job-type ${jobTypeClass}">${jobTypeLabel}</span>
+                <span class="job-card-date">${formatDate(notification.date)}</span>
+              </div>
             </div>
             <div class="job-card-company">
-              <div class="company-logo">${getCompanyInitials(notification.company)}</div>
               <span class="company-name">${notification.company}</span>
             </div>
             <div class="job-card-content">

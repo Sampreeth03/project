@@ -321,7 +321,12 @@
       <ul class="nav-links">
         <% navLinks.forEach(link => { %>
           <li>
-            <a href="<%= link.href %>"><%= link.name %></a>
+            <a href="<%= link.href %>">
+              <%= link.name %>
+              <% if (link.name === 'Notifications' && typeof unreadNotifCount !== 'undefined' && unreadNotifCount > 0) { %>
+                <span class="notif-badge show" id="notif-badge"><%= unreadNotifCount %></span>
+              <% } %>
+            </a>
             <% if (link.submenu) { %>
               <ul class="dropdown">
                 <% link.submenu.forEach(sublink => { %>
