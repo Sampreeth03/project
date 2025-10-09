@@ -34,12 +34,14 @@
       .input-group,
       .password-group {
         margin-bottom: 8px; 
+        position: relative; /* positioning context for absolute children */
       }
 
       .input-group input,
       .password-group input {
         width: 100%;
         padding: 10px; 
+        padding-right: 60px; /* space for Show button */
         height: 40px;
         box-sizing: border-box;
         border: 1px solid #1079e9;
@@ -48,6 +50,9 @@
         color: #ffffff;
         outline: none;
       }
+
+      /* allow the input group container to grow when error messages are visible */
+      .input-group { width: 100%; }
 
       .input-group input:focus,
       .password-group input:focus {
@@ -60,17 +65,19 @@
 
       .toggle-password {
         position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
+        right: 15px;
+        top: 10px; /* Fixed position from top of input */
         cursor: pointer;
-        color: #ffffff;
+        color: #0068ff;
         font-size: 14px;
         font-weight: bold;
+        user-select: none;
+        pointer-events: auto;
+        z-index: 10;
       }
 
       .toggle-password:hover {
-        color: #0068ff;
+        color: #1f5bb4;
       }
 
       .checkbox-group {
@@ -102,6 +109,12 @@
         background-color: #144289;
       }
 
+      .signup-btn[disabled], .signup-btn[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(10%);
+      }
+
       .signin-text {
         text-align: center;
         margin-top: 10px;
@@ -122,6 +135,7 @@
         font-size: 0.85rem;
         margin-top: 4px;
         min-height: 14px;
+        display: none;
       }
 
       input.input-error::placeholder {
@@ -160,7 +174,6 @@
           <span
             id="toggle-password-btn"
             class="toggle-password"
-            style="color: blue;"
             >Show</span
           >
           <div id="password-error" class="field-error" aria-live="polite"></div>
@@ -177,7 +190,6 @@
           <span
             id="toggle-confirm-btn"
             class="toggle-password"
-            style="color: blue;"
             >Show</span
           >
           <div id="confirm-error" class="field-error" aria-live="polite"></div>
@@ -256,10 +268,13 @@
           inputEl.classList.add('input-error');
           inputEl.value = '';
           inputEl.setAttribute('placeholder', message);
-          errorEl.textContent = message;
-          errorEl.style.height = '0';
-          errorEl.style.overflow = 'hidden';
-          errorEl.style.opacity = '0';
+          if (errorEl && errorEl.id === 'password-error' && /password/i.test(message)) {
+            errorEl.textContent = 'Password must be at least 6 characters and include one uppercase letter and one special character.';
+            errorEl.style.display = 'block';
+          } else {
+            errorEl.textContent = message;
+            errorEl.style.display = 'none';
+          }
         }
 
         function clearInlinePlaceholderError(inputEl, errorEl, originalPlaceholder) {
@@ -268,9 +283,7 @@
             inputEl.setAttribute('placeholder', originalPlaceholder);
           }
           errorEl.textContent = '';
-          errorEl.style.height = '';
-          errorEl.style.overflow = '';
-          errorEl.style.opacity = '';
+          errorEl.style.display = 'none';
         }
 
         function updateButtonState() {
@@ -327,11 +340,6 @@
         }
 
         updateButtonState();
-
-        if (signupBtn) {
-          signupBtn.setAttribute('disabled', '');
-          signupBtn.setAttribute('aria-disabled', 'true');
-        }
 
         // defensive click guard: block direct clicks when invalid
         if (signupBtn) {
@@ -396,7 +404,6 @@
           });
         }
       })();
-    </script>
-    </script>
+  </script>
   </body>
 </html>

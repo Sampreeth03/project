@@ -1940,6 +1940,7 @@ app.get('/stud', async (req, res) => {
 
         try {
             // Fetch projects that the user has joined
+            const userObjectId = new mongoose.Types.ObjectId(userId);
             const projects = await Project.aggregate([
                 {
                     $lookup: {
@@ -1951,8 +1952,12 @@ app.get('/stud', async (req, res) => {
                 },
                 {
                     $match: {
-                        'members.user_id': new mongoose.Types.ObjectId(userId),
-                        user_id: { $ne: new mongoose.Types.ObjectId(userId) }
+                        $expr: {
+                            $and: [
+                                { $in: [userObjectId, '$members.user_id'] },
+                                { $ne: ['$user_id', userObjectId] }
+                            ]
+                        }
                     }
                 },
                 {
@@ -2405,6 +2410,10 @@ app.get('/stud', async (req, res) => {
     });
 
     app.get('/not', async (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
+
         const userId = req.session.user.id;
         const navLinks = getNavLinks(req.session.user);
 

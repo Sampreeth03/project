@@ -47,7 +47,7 @@
         width: 100%;
         height: 48px;
         box-sizing: border-box;
-        padding: 0 50px 0 15px;
+        padding: 0 60px 0 15px; /* Right padding for Show button */
         border: 1px solid #1079e9;
         border-radius: 5px;
         background-color: transparent;
@@ -71,11 +71,12 @@
         word-spacing: 0;
       }
 
-      .input-group,
-      .input-group input,
-      .input-group input.input-error {
-        min-height: 48px;
-        max-height: 48px;
+      /* allow input groups to expand when inline error messages appear */
+      .input-group { /* container for input + inline error */
+        width: 100%;
+      }
+      .input-group input {
+        height: 48px;
       }
 
 
@@ -108,25 +109,28 @@
 
       .toggle-password {
         position: absolute;
-        top: 25px;
+        top: 12px; /* Fixed position from top */
         right: 15px;
-        transform: translateY(-50%);
         cursor: pointer;
-        color: #ffffff;
+        color: #0068ff;
         font-size: 14px;
         font-weight: bold;
         background: none;
         border: none;
+        user-select: none;
+        pointer-events: auto;
+        z-index: 10;
       }
 
       .toggle-password:hover {
-        color: #0068ff;
+        color: #1f5bb4;
       }
       .field-error {
         color: #ff6b6b;
         font-size: 0.85rem;
         margin-top: 6px;
         min-height: 18px;
+        display: none; /* hide by default, show when needed */
       }
 
       .login-btn[disabled], .login-btn[aria-disabled="true"] {
@@ -165,7 +169,6 @@
           <span
             id="toggle-password-btn"
             class="toggle-password"
-            style="color: blue;"
             >Show</span
           >
           <div id="password-error" class="field-error" aria-live="polite"></div>
@@ -237,10 +240,16 @@
           inputEl.classList.add('input-error');
           inputEl.value = '';
           inputEl.setAttribute('placeholder', message);
-          errorEl.textContent = message;
-          errorEl.style.height = '0';
-          errorEl.style.overflow = 'hidden';
-          errorEl.style.opacity = '0';
+          // For password criteria failures show a visible detailed message under the field
+          if (errorEl && errorEl.id === 'password-error' && /password/i.test(message)) {
+            errorEl.textContent = 'Password must be at least 6 characters and include one uppercase letter and one special character.';
+            // show as normal block so it pushes content down
+            errorEl.style.display = 'block';
+          } else {
+            // keep the placeholder-style inline error for other fields (hidden summary)
+            errorEl.textContent = message;
+            errorEl.style.display = 'none';
+          }
         }
 
         function clearInlinePlaceholderError(inputEl, errorEl, originalPlaceholder) {
@@ -249,9 +258,7 @@
             inputEl.setAttribute('placeholder', originalPlaceholder);
           }
           errorEl.textContent = '';
-          errorEl.style.height = '';
-          errorEl.style.overflow = '';
-          errorEl.style.opacity = '';
+          errorEl.style.display = 'none';
         }
 
         function onEmailBlur() {
