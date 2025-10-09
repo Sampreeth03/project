@@ -154,6 +154,142 @@
         color: #ff6b6b;
         opacity: 1;
       }
+
+      /* Password Strength Meter */
+      .password-strength-container {
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
+
+      .password-strength-bar {
+        height: 4px;
+        background-color: #333;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 4px;
+      }
+
+      .password-strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease, background-color 0.3s ease;
+        border-radius: 2px;
+      }
+
+      .password-strength-fill.weak {
+        width: 33.33%;
+        background-color: #ff4444;
+      }
+
+      .password-strength-fill.medium {
+        width: 66.66%;
+        background-color: #ffa500;
+      }
+
+      .password-strength-fill.strong {
+        width: 100%;
+        background-color: #00ff00;
+      }
+
+      .password-strength-text {
+        font-size: 0.8rem;
+        color: #aaa;
+        text-align: right;
+      }
+
+      .password-strength-text.weak {
+        color: #ff4444;
+      }
+
+      .password-strength-text.medium {
+        color: #ffa500;
+      }
+
+      .password-strength-text.strong {
+        color: #00ff00;
+      }
+
+      /* Password Match Indicator */
+      .password-match-indicator {
+        font-size: 0.85rem;
+        margin-top: 4px;
+        min-height: 14px;
+        display: none;
+      }
+
+      .password-match-indicator.match {
+        color: #00ff00;
+        display: block;
+      }
+
+      .password-match-indicator.no-match {
+        color: #ff4444;
+        display: block;
+      }
+
+      /* Form Progress Indicator */
+      .form-progress {
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .progress-text {
+        font-size: 0.85rem;
+        color: #aaa;
+        margin-bottom: 5px;
+      }
+
+      .progress-bar-container {
+        height: 6px;
+        background-color: #333;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #0068ff, #00d4ff);
+        transition: width 0.3s ease;
+        border-radius: 3px;
+      }
+
+      /* Shake Animation */
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+
+      .shake {
+        animation: shake 0.5s;
+      }
+
+      /* Focus Glow Effect */
+      .input-group.focused,
+      .password-group.focused {
+        position: relative;
+      }
+
+      .input-group.focused::before,
+      .password-group.focused::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(90deg, #0068ff, #00d4ff, #0068ff);
+        border-radius: 7px;
+        z-index: -1;
+        opacity: 0.5;
+        animation: glow 2s infinite;
+      }
+
+      @keyframes glow {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.6; }
+      }
     </style>
   </head>
   <body>
@@ -165,17 +301,27 @@
         <p class="error"><%= error %></p>
         <% } %>
 
+        <!-- Form Progress Indicator -->
+        <div class="form-progress">
+          <div class="progress-text">
+            <span id="progress-text">Step <span id="progress-count">0</span> of 4 completed</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+          </div>
+        </div>
+
         <div id="signup-summary" class="field-error" aria-live="polite"></div>
 
-        <div class="input-group">
+        <div class="input-group" id="name-group">
           <input id="name" type="text" name="Name" placeholder="Name" required aria-describedby="name-error" />
           <div id="name-error" class="field-error" aria-live="polite"></div>
         </div>
-        <div class="input-group">
+        <div class="input-group" id="email-group">
           <input id="email" type="email" name="email" placeholder="Email" required aria-describedby="email-error" />
           <div id="email-error" class="field-error" aria-live="polite"></div>
         </div>
-        <div class="password-group">
+        <div class="password-group" id="password-group">
           <input
             type="password"
             id="password"
@@ -189,8 +335,15 @@
             >Show</span
           >
           <div id="password-error" class="field-error" aria-live="polite"></div>
+          <!-- Password Strength Meter -->
+          <div class="password-strength-container" id="password-strength-container" style="display: none;">
+            <div class="password-strength-bar">
+              <div class="password-strength-fill" id="password-strength-fill"></div>
+            </div>
+            <div class="password-strength-text" id="password-strength-text"></div>
+          </div>
         </div>
-        <div class="password-group">
+        <div class="password-group" id="confirm-group">
           <input
             type="password"
             id="confirmPassword"
@@ -204,6 +357,8 @@
             >Show</span
           >
           <div id="confirm-error" class="field-error" aria-live="polite"></div>
+          <!-- Password Match Indicator -->
+          <div class="password-match-indicator" id="password-match-indicator"></div>
         </div>
 
         <div class="file-group">
@@ -251,6 +406,144 @@
         const signupBtn = document.getElementById('signup-btn');
         const toggleBtn = document.getElementById('toggle-password-btn');
         const toggleConfirm = document.getElementById('toggle-confirm-btn');
+
+        // Advanced feature elements
+        const nameGroup = document.getElementById('name-group');
+        const emailGroup = document.getElementById('email-group');
+        const passwordGroup = document.getElementById('password-group');
+        const confirmGroup = document.getElementById('confirm-group');
+        
+        const progressBar = document.getElementById('progress-bar');
+        const progressCount = document.getElementById('progress-count');
+        
+        const passwordStrengthContainer = document.getElementById('password-strength-container');
+        const passwordStrengthFill = document.getElementById('password-strength-fill');
+        const passwordStrengthText = document.getElementById('password-strength-text');
+        
+        const passwordMatchIndicator = document.getElementById('password-match-indicator');
+
+        // Shake animation function
+        function shakeElement(element) {
+          element.classList.add('shake');
+          setTimeout(() => {
+            element.classList.remove('shake');
+          }, 500);
+        }
+
+        // Password strength calculation
+        function calculatePasswordStrength(password) {
+          if (!password) return { strength: '', score: 0 };
+          
+          let score = 0;
+          
+          // Length check
+          if (password.length >= 6) score++;
+          if (password.length >= 10) score++;
+          
+          // Uppercase check
+          if (/[A-Z]/.test(password)) score++;
+          
+          // Lowercase check
+          if (/[a-z]/.test(password)) score++;
+          
+          // Number check
+          if (/\d/.test(password)) score++;
+          
+          // Special character check
+          if (/[!@#$%^&*]/.test(password)) score++;
+          
+          // Determine strength
+          if (score <= 2) return { strength: 'weak', score: score };
+          if (score <= 4) return { strength: 'medium', score: score };
+          return { strength: 'strong', score: score };
+        }
+
+        // Update password strength meter
+        function updatePasswordStrength(password) {
+          if (!password) {
+            passwordStrengthContainer.style.display = 'none';
+            return;
+          }
+          
+          passwordStrengthContainer.style.display = 'block';
+          const { strength, score } = calculatePasswordStrength(password);
+          
+          passwordStrengthFill.className = 'password-strength-fill ' + strength;
+          passwordStrengthText.className = 'password-strength-text ' + strength;
+          
+          if (strength === 'weak') {
+            passwordStrengthText.textContent = 'Weak password';
+          } else if (strength === 'medium') {
+            passwordStrengthText.textContent = 'Medium strength';
+          } else {
+            passwordStrengthText.textContent = 'Strong password';
+          }
+        }
+
+        // Update password match indicator
+        function updatePasswordMatch() {
+          const password = passwordInput.value;
+          const confirm = confirmInput.value;
+          
+          if (!confirm) {
+            passwordMatchIndicator.style.display = 'none';
+            return;
+          }
+          
+          if (password === confirm) {
+            passwordMatchIndicator.className = 'password-match-indicator match';
+            passwordMatchIndicator.textContent = '✓ Passwords match';
+          } else {
+            passwordMatchIndicator.className = 'password-match-indicator no-match';
+            passwordMatchIndicator.textContent = '✗ Passwords do not match';
+          }
+        }
+
+        // Update form progress
+        function updateFormProgress() {
+          let completedFields = 0;
+          const totalFields = 4;
+          
+          if (nameInput.value.trim() && !validateName(nameInput.value)) completedFields++;
+          if (emailInput.value.trim() && !validateEmail(emailInput.value)) completedFields++;
+          if (passwordInput.value && !validatePassword(passwordInput.value)) completedFields++;
+          if (confirmInput.value && !validateConfirm(confirmInput.value, passwordInput.value)) completedFields++;
+          
+          const percentage = (completedFields / totalFields) * 100;
+          progressBar.style.width = percentage + '%';
+          progressCount.textContent = completedFields;
+        }
+
+        // Focus glow effects
+        [nameInput, emailInput, passwordInput, confirmInput].forEach((input, index) => {
+          const groups = [nameGroup, emailGroup, passwordGroup, confirmGroup];
+          const group = groups[index];
+          
+          input.addEventListener('focus', function() {
+            group.classList.add('focused');
+          });
+          
+          input.addEventListener('blur', function() {
+            group.classList.remove('focused');
+          });
+        });
+
+        // Password input listener for strength meter
+        passwordInput.addEventListener('input', function() {
+          updatePasswordStrength(this.value);
+          updatePasswordMatch();
+          updateFormProgress();
+        });
+
+        // Confirm password input listener
+        confirmInput.addEventListener('input', function() {
+          updatePasswordMatch();
+          updateFormProgress();
+        });
+
+        // Name and email input listeners for progress
+        nameInput.addEventListener('input', updateFormProgress);
+        emailInput.addEventListener('input', updateFormProgress);
 
         function validateName(v) {
           if (!v || !v.trim()) return 'Name is required.';
@@ -331,21 +624,25 @@
         nameInput.addEventListener('blur', function() {
           const msg = validateName(nameInput.value);
           applyInlinePlaceholderError(nameInput, nameError, msg, originalNamePlaceholder);
+          if (msg) shakeElement(nameGroup);
           updateButtonState();
         });
         emailInput.addEventListener('blur', function() {
           const msg = validateEmail(emailInput.value.trim());
           applyInlinePlaceholderError(emailInput, emailError, msg, originalEmailPlaceholder);
+          if (msg) shakeElement(emailGroup);
           updateButtonState();
         });
         passwordInput.addEventListener('blur', function() {
           const msg = validatePassword(passwordInput.value);
           applyInlinePlaceholderError(passwordInput, passwordError, msg, originalPasswordPlaceholder);
+          if (msg) shakeElement(passwordGroup);
           updateButtonState();
         });
         confirmInput.addEventListener('blur', function() {
           const msg = validateConfirm(confirmInput.value, passwordInput.value);
           applyInlinePlaceholderError(confirmInput, confirmError, msg, originalConfirmPlaceholder);
+          if (msg) shakeElement(confirmGroup);
           updateButtonState();
         });
 
@@ -377,10 +674,10 @@
             if (nameMsg || emailMsg || passMsg || confMsg) {
               ev.preventDefault();
               const msgs = [];
-              if (nameMsg) msgs.push(nameMsg);
-              if (emailMsg) msgs.push(emailMsg);
-              if (passMsg) msgs.push(passMsg);
-              if (confMsg) msgs.push(confMsg);
+              if (nameMsg) { msgs.push(nameMsg); shakeElement(nameGroup); }
+              if (emailMsg) { msgs.push(emailMsg); shakeElement(emailGroup); }
+              if (passMsg) { msgs.push(passMsg); shakeElement(passwordGroup); }
+              if (confMsg) { msgs.push(confMsg); shakeElement(confirmGroup); }
               summary.textContent = msgs.join(' ');
               if (nameMsg) { applyInlinePlaceholderError(nameInput, nameError, nameMsg, originalNamePlaceholder); nameInput.focus(); }
               else if (emailMsg) { applyInlinePlaceholderError(emailInput, emailError, emailMsg, originalEmailPlaceholder); emailInput.focus(); }
@@ -404,7 +701,10 @@
             if (nameMsg || emailMsg || passMsg || confMsg) {
               e.preventDefault();
               const msgs = [];
-              if (nameMsg) msgs.push(nameMsg);
+              if (nameMsg) { msgs.push(nameMsg); shakeElement(nameGroup); }
+              if (emailMsg) { msgs.push(emailMsg); shakeElement(emailGroup); }
+              if (passMsg) { msgs.push(passMsg); shakeElement(passwordGroup); }
+              if (confMsg) { msgs.push(confMsg); shakeElement(confirmGroup); }
               if (emailMsg) msgs.push(emailMsg);
               if (passMsg) msgs.push(passMsg);
               if (confMsg) msgs.push(confMsg);
