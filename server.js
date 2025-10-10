@@ -1192,9 +1192,24 @@ app.get("/admin/dashboard-data", async (req, res) => {
 
     
     // Students List
-app.get('/stud', async (req, res) => {
+// server.js
+
+// Students management page
+app.get('/stud', (req, res) => {
     if (!req.session.user || req.session.user.role !== "admin") {
         return res.redirect("/login");
+    }
+
+    res.render('admin-stud', {
+        activePage: 'dashboard',
+        adminName: req.session.user.name
+    });
+});
+
+// API endpoint for AJAX
+app.get('/api/students', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        return res.status(403).json({ error: "Unauthorized" });
     }
 
     try {
@@ -1207,6 +1222,7 @@ app.get('/stud', async (req, res) => {
                 .select('completed_tasks')
                 .lean();
             const hostedProjects = await Project.countDocuments({ user_id: student._id });
+
             return {
                 id: student._id.toString(),
                 name: student.name,
@@ -1216,16 +1232,13 @@ app.get('/stud', async (req, res) => {
             };
         }));
 
-        res.render('admin-stud', {
-            activePage: 'dashboard',
-            adminName: req.session.user.name,
-            studentsData
-        });
+        res.json(studentsData);
     } catch (err) {
         console.error("Error fetching students data:", err.message);
-        res.status(500).send("Server Error");
+        res.status(500).json({ error: "Server Error" });
     }
 });
+
 
     app.get('/admin-doubts', async (req, res) => {
         if (!req.session.user || req.session.user.role !== "admin") {
