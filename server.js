@@ -1381,7 +1381,7 @@ app.get('/stud', async (req, res) => {
                 .select('_id job_title company_name salary_range description skills')
                 .lean();
 
-            // Build set of jobs (title+company) the current user has already applied for
+            // #srihesh1 Build set of jobs (title+company) the current user has already applied for
             const userApplications = await JobApplication.find({ user_id: req.session.user.id })
                 .select('job_title company_name')
                 .lean();
@@ -1402,7 +1402,7 @@ app.get('/stud', async (req, res) => {
                     salary_range: job.salary_range,
                     description: job.description,
                     skills: job.skills,
-                    hasApplied: appliedKeySet.has(`${job.job_title}||${job.company_name}`)
+                    hasApplied: appliedKeySet.has(`${job.job_title}||${job.company_name}`) // #srihesh2
                 }))
             });
         } catch (err) {

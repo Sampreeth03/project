@@ -132,9 +132,9 @@
           <div class="job-desc"><%= job.description %></div>
           <div class="resume-upload">
             <label>Resume</label>
-            <input type="file" name="resume" accept=".pdf,.doc,.docx" id="resume<%= index %>" onchange="enableApply('apply<%= index %>', this)" placeholder="resume" <%= job.hasApplied ? 'disabled' : '' %> /> 
+            <input type="file" name="resume" accept=".pdf,.doc,.docx" id="resume<%= index %>" onchange="enableApply('apply<%= index %>', this)" placeholder="resume" <%= job.hasApplied ? 'disabled' : '' %> /> <!-- #srihesh1 -->
           </div>
-          <button class="apply-btn <%= job.hasApplied ? 'applied' : '' %>" id="apply<%= index %>" data-job-id="<%= job.id %>" onclick="apply(this)" <%= job.hasApplied ? 'disabled' : '' %>><%= job.hasApplied ? 'Applied' : 'Apply' %></button>
+          <button class="apply-btn <%= job.hasApplied ? 'applied' : '' %>" id="apply<%= index %>" data-job-id="<%= job.id %>" onclick="apply(this)" <%= job.hasApplied ? 'disabled' : '' %>><%= job.hasApplied ? 'Applied' : 'Apply' %></button> <!-- #srihesh1 -->
         </div>
       <% }) %>
       <% if (jobs.length === 0) { %>
@@ -145,7 +145,7 @@
     <script>
       function enableApply(buttonId, fileInput) {
         const button = document.getElementById(buttonId);
-        // #srihesh1
+  // #srihesh1
         const isValid = fileInput.files.length && isAllowedResume(fileInput.files[0]);
         button.disabled = !isValid;
         if (fileInput.files.length && !isValid) {
@@ -154,7 +154,7 @@
         }
       }
       
-      function isAllowedResume(file) { // #srihesh1
+  function isAllowedResume(file) { // #srihesh1
         if (!file) return false;
         const allowedExt = ['pdf', 'doc', 'docx'];
         const name = file.name || '';
@@ -165,7 +165,7 @@
       function apply(button) {
         const resumeInput = button.previousElementSibling.querySelector('input[type="file"]');
         if (!resumeInput.files.length) return;
-        if (!isAllowedResume(resumeInput.files[0])) { // # sriesh2
+  if (!isAllowedResume(resumeInput.files[0])) { // #srihesh2
           alert('Please upload a valid resume file (PDF, DOC, or DOCX).');
           resumeInput.value = '';
           button.disabled = true;
@@ -184,7 +184,7 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            // # sriesh2
+            // #srihesh2
             button.innerText = 'Applied';
             button.classList.add('applied');
             button.disabled = true;

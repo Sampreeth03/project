@@ -415,7 +415,7 @@
                         <div class="notification-time"><%= new Date(notification.createdAt || notification.created_at).toLocaleString() %></div>
                         <div class="notification-footer">
                             <span class="notification-badge">Job Post</span>
-                            <div class="notification-buttons">
+                            <div class="notification-buttons"> <!-- #srihesh1 -->
                                 <button class="btn btn-secondary" onclick="markAsRead('<%= notification._id %>')">Mark as read</button>
                                 <button class="btn btn-secondary" onclick="deleteNotification('<%= notification._id %>')">Delete</button>
                             </div>
@@ -447,7 +447,7 @@
             document.getElementById('notification-count').textContent = unreadCount;
         }
 
-        function markAsRead(notificationId) {
+    function markAsRead(notificationId) { // #srihesh2
             fetch('/mark-notification-read', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -469,7 +469,7 @@
             });
         }
 
-        function deleteNotification(notificationId) {
+    function deleteNotification(notificationId) { // #srihesh2
             fetch('/delete-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
