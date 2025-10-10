@@ -132,9 +132,9 @@
           <div class="job-desc"><%= job.description %></div>
           <div class="resume-upload">
             <label>Resume</label>
-            <input type="file" accept=".pdf,.doc,.docx" id="resume<%= index %>" onchange="enableApply('apply<%= index %>', this)" placeholder="resume" /> 
+            <input type="file" name="resume" accept=".pdf,.doc,.docx" id="resume<%= index %>" onchange="enableApply('apply<%= index %>', this)" placeholder="resume" <%= job.hasApplied ? 'disabled' : '' %> /> 
           </div>
-          <button class="apply-btn" id="apply<%= index %>" data-job-id="<%= job.id %>" onclick="apply(this)" disabled>Apply</button>
+          <button class="apply-btn <%= job.hasApplied ? 'applied' : '' %>" id="apply<%= index %>" data-job-id="<%= job.id %>" onclick="apply(this)" <%= job.hasApplied ? 'disabled' : '' %>><%= job.hasApplied ? 'Applied' : 'Apply' %></button>
         </div>
       <% }) %>
       <% if (jobs.length === 0) { %>
@@ -145,12 +145,32 @@
     <script>
       function enableApply(buttonId, fileInput) {
         const button = document.getElementById(buttonId);
-        button.disabled = !fileInput.files.length;
+        // #srihesh1
+        const isValid = fileInput.files.length && isAllowedResume(fileInput.files[0]);
+        button.disabled = !isValid;
+        if (fileInput.files.length && !isValid) {
+          alert('Please upload a valid resume file (PDF, DOC, or DOCX).');
+          fileInput.value = '';
+        }
+      }
+      
+      function isAllowedResume(file) { // #srihesh1
+        if (!file) return false;
+        const allowedExt = ['pdf', 'doc', 'docx'];
+        const name = file.name || '';
+        const ext = name.split('.').pop().toLowerCase();
+        return allowedExt.includes(ext);
       }
       
       function apply(button) {
         const resumeInput = button.previousElementSibling.querySelector('input[type="file"]');
         if (!resumeInput.files.length) return;
+        if (!isAllowedResume(resumeInput.files[0])) { // # sriesh2
+          alert('Please upload a valid resume file (PDF, DOC, or DOCX).');
+          resumeInput.value = '';
+          button.disabled = true;
+          return;
+        }
   
         const jobId = button.getAttribute('data-job-id');
         const formData = new FormData();
@@ -164,11 +184,21 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            button.innerText = "Application Sent";
-            button.classList.add("applied");
+            // # sriesh2
+            button.innerText = 'Applied';
+            button.classList.add('applied');
             button.disabled = true;
+            resumeInput.value = '';
             resumeInput.disabled = true;
-            button.closest('.job-card').remove();
+            const card = button.closest('.job-card');
+            if (card && !card.querySelector('.applied-badge')) {
+              const badge = document.createElement('div');
+              badge.className = 'applied-badge';
+              badge.style.cssText = 'position:absolute;top:12px;right:12px;background:#2e7d32;color:#fff;padding:4px 8px;border-radius:12px;font-size:12px;';
+              badge.textContent = 'Applied';
+              card.style.position = 'relative';
+              card.appendChild(badge);
+            }
           } else {
             alert(data.error || "Failed to apply");
           }

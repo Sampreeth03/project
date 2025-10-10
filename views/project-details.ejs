@@ -806,9 +806,9 @@
                 <p class="task-feedback"><strong>Feedback:</strong> <%= task.feedback %></p>
               <% } %>
               <div class="task-actions">
-                <button class="task-btn check-status-btn" onclick="openStatusModal('<%= task.github_link || '#' %>')">Check Status</button>
+                <button class="task-btn check-status-btn" data-link="<%= task.github_link || '#' %>" onclick="openStatusModalFromEl(this)">Check Status</button>
                 <% if (user.id === project.user_id.toString()) { %>
-                  <button class="task-btn extend-deadline-btn" onclick="extendDeadline('<%= task.title %>', '<%= project._id %>')">Extend Deadline</button>
+                  <button class="task-btn extend-deadline-btn" data-project="<%= project._id %>" onclick="extendDeadlineFromEl(this)">Extend Deadline</button>
                   <% if (task.status === 'Review') { %>
                     <button class="task-btn accept-btn" onclick="openReviewModal('<%= task._id %>', '<%= project._id %>', 'accept')">Accept</button>
                     <button class="task-btn reject-btn" onclick="openReviewModal('<%= task._id %>', '<%= project._id %>', 'reject')">Reject</button>
@@ -834,7 +834,7 @@
                 <div class="member-role"><%= member.user_id.email || 'No Email' %></div>
               </div>
               <% if (user.id === project.user_id.toString() && member.user_id._id && user.id !== member.user_id._id.toString()) { %>
-                <button class="remove-member-btn" onclick="removeMember('<%= member.user_id.name || 'Unknown' %>', '<%= member.user_id._id %>', '<%= project._id %>')">Remove</button>
+                <button class="remove-member-btn" data-id="<%= member.user_id._id %>" data-project="<%= project._id %>" onclick="removeMemberFromEl(this)">Remove</button>
               <% } %>
             </div>
           <% } %>
@@ -1063,6 +1063,12 @@
         githubLinkElement.textContent = githubLink;
         modal.style.display = 'block';
       }
+      
+      // #srihesh1
+      function openStatusModalFromEl(el) {
+        const link = el.getAttribute('data-link') || '#';
+        openStatusModal(link);
+      }
   
       function closeStatusModal() {
         document.getElementById('statusModal').style.display = 'none';
@@ -1073,7 +1079,7 @@
         const title = document.getElementById('reviewModalTitle');
         const confirmBtn = document.getElementById('confirmReviewBtn');
         title.textContent = action === 'accept' ? 'Accept Submission' : 'Reject Submission';
-        confirmBtn.onclick = () => reviewSubmission(taskId, projectId, action);
+        confirmBtn.onclick = () => reviewSubmission(taskId, projectId, action); // #srihesh1
         document.getElementById('reviewFeedback').value = '';
         modal.style.display = 'block';
       }
@@ -1083,7 +1089,7 @@
         document.getElementById('reviewFeedback').value = '';
       }
   
-      function reviewSubmission(taskId, projectId, action) {
+      function reviewSubmission(taskId, projectId, action) { // # sriesh2
         const feedback = document.getElementById('reviewFeedback').value.trim();
         if (!feedback) {
           showNotification('Feedback or rejection reason is required', 'error');
@@ -1105,14 +1111,13 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            // Update the task card
+            // # sriesh2
             const taskCard = document.getElementById(`task-${taskId}`);
             if (taskCard) {
               const statusLabel = taskCard.querySelector('.status-label');
               statusLabel.textContent = data.task.status;
               statusLabel.className = `status-label ${data.task.status.toLowerCase().replace(' ', '-')}`;
               
-              // Update GitHub link
               const existingLink = taskCard.querySelector('.task-link');
               if (existingLink) {
                 existingLink.remove();
@@ -1126,7 +1131,6 @@
                 taskCard.querySelector('.task-description').after(linkElement);
               }
 
-              // Update feedback
               let feedbackElement = taskCard.querySelector('.task-feedback');
               if (!feedbackElement) {
                 feedbackElement = document.createElement('p');
@@ -1135,7 +1139,6 @@
               }
               feedbackElement.innerHTML = `<strong>Feedback:</strong> ${data.task.feedback}`;
 
-              // Remove accept/reject buttons
               const acceptBtn = taskCard.querySelector('.accept-btn');
               const rejectBtn = taskCard.querySelector('.reject-btn');
               if (acceptBtn) acceptBtn.remove();
@@ -1178,6 +1181,16 @@
           showNotification('Error removing member', 'error');
         });
       }
+      
+      // # sriesh2
+      function removeMemberFromEl(el) {
+        const memberEl = el.closest('.member');
+        const memberName = memberEl?.querySelector('.member-name')?.textContent || 'Unknown';
+        const memberId = el.getAttribute('data-id');
+        const projectId = el.getAttribute('data-project');
+        if (!memberId || !projectId) return;
+        removeMember(memberName, memberId, projectId);
+      }
   
       function extendDeadline(taskTitle, projectId) {
         const newDueDate = prompt('Enter new due date (YYYY-MM-DD):');
@@ -1203,6 +1216,15 @@
           console.error('Error extending deadline:', error);
           showNotification('Error extending deadline', 'error');
         });
+      }
+      
+      // #srihesh1
+      function extendDeadlineFromEl(el) {
+        const taskCard = el.closest('.task-card');
+        const taskTitle = taskCard?.querySelector('.task-title')?.textContent || '';
+        const projectId = el.getAttribute('data-project');
+        if (!taskTitle || !projectId) return;
+        extendDeadline(taskTitle, projectId);
       }
   
       function joinProject(button, projectId) {

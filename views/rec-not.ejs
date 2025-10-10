@@ -415,7 +415,10 @@
                         <div class="notification-time"><%= new Date(notification.createdAt || notification.created_at).toLocaleString() %></div>
                         <div class="notification-footer">
                             <span class="notification-badge">Job Post</span>
-                            
+                            <div class="notification-buttons">
+                                <button class="btn btn-secondary" onclick="markAsRead('<%= notification._id %>')">Mark as read</button>
+                                <button class="btn btn-secondary" onclick="deleteNotification('<%= notification._id %>')">Delete</button>
+                            </div>
                         </div>
                     </div>
                 <% }) %>
@@ -462,6 +465,29 @@
             })
             .catch(error => {
                 console.error('Error marking notification as read:', error);
+                showToast('An error occurred');
+            });
+        }
+
+        function deleteNotification(notificationId) {
+            fetch('/delete-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notificationId })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const el = document.querySelector(`.notification[data-id="${notificationId}"]`);
+                    if (el) el.remove();
+                    updateNotificationCount();
+                    showToast('Notification deleted');
+                } else {
+                    showToast('Failed to delete');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting notification:', error);
                 showToast('An error occurred');
             });
         }
