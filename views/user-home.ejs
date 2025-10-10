@@ -91,10 +91,52 @@
 .navbar {
     min-height: 60px;
 }
-        .welcome-section { position: relative; padding: 200px; text-align: center; border-radius: 20px; background-image: url("./pug.jpg"); }
-        .banner-content { font-size: 500%; font-family: "Montserrat", sans-serif; font-weight: 50px; }
-        .banner-para { font-size: 30px; font-family: "Doto", sans-serif; margin-top: 50px; }
-        #logout-btn { position: absolute; top: 20px; right: 20px; background-color: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
+        .welcome-section { 
+            position: relative; 
+            padding: 200px; 
+            text-align: center; 
+            border-radius: 20px; 
+            background: linear-gradient(135deg, #0A0A0B 0%, #1A1A1B 100%);
+            overflow: hidden;
+        }
+        
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 60% 60%, rgba(0, 104, 255, 0.2) 20%, transparent 100%);
+            z-index: 1;
+        }
+
+        .welcome-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            
+            z-index: 0;
+        }
+        
+        .banner-content { 
+            font-size: 500%; 
+            font-family: "Montserrat", sans-serif; 
+            font-weight: 50px; 
+            position: relative;
+            z-index: 2;
+        }
+        .banner-para { 
+            font-size: 30px; 
+            font-family: "Doto", sans-serif; 
+            margin-top: 50px; 
+            position: relative;
+            z-index: 2;
+        }
+    #logout-btn { position: absolute; top: 20px; right: 20px; background-color: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; z-index: 1002; }
         #logout-btn:hover { background-color: #ff1a1a; }
         .topics { display: grid; grid-template-rows: 1.5fr 2fr; grid-template-columns: 1fr 1fr 1fr; grid-gap: 155px; margin: 30px; margin-left: 120px; }
         .topic { position: relative; width: 300px; height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #0068FF; border-radius: 15px; background-color: #1E1E1E; text-align: center; font-weight: bold; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; padding: 10px; }
@@ -105,13 +147,119 @@
         .topic:hover .options { opacity: 1; background-color: #1E1E1E; }
         button { background-color: white; color: #0068FF; border: none; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
         button:hover { background-color: #FFD700; color: black; }
-        .features-section { text-align: center; padding: 80px 5%; background: url('/features-background.jpg') no-repeat center center/cover; position: relative; color: white; }
-        .features-section::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 0; }
-        .features-title { color: rgb(235, 215, 0); }
-        .features-container { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; max-width: 1200px; margin: auto; position: relative; z-index: 1; flex-wrap: wrap; }
-        .feature-box { flex: 1 1 calc(25% - 20px); text-align: center; font-size: 18px; font-weight: bold; color: #fff; padding: 20px; }
-        .feature-box h3 { font-size: 22px; color: #0068FF; margin-bottom: 10px; }
-        .feature-box p { font-size: 16px; color: #ddd; max-width: 90%; margin: auto; }
+        .features-section { 
+            text-align: center; 
+            padding: 80px 5%; 
+                background: #000;
+            position: relative; 
+            color: white; 
+            overflow: hidden;
+        }
+        
+        .features-section::before { 
+            content: ""; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            
+        }
+        
+        .features-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            
+            z-index: 1;
+        }
+        
+        .features-title { 
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+                color: #FFD700;
+                font-size: 1.5rem;
+                margin-bottom: 32px;
+        }
+        
+        .features-container { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            gap: 30px; 
+            max-width: 1200px; 
+            margin: auto; 
+            position: relative; 
+            z-index: 2; 
+            flex-wrap: wrap; 
+        }
+        
+        .feature-box { 
+            flex: 1 1 calc(25% - 30px); 
+            text-align: center; 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #fff; 
+            padding: 30px 20px;
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(0, 104, 255, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 104, 255, 0.1) 0%, rgba(138, 43, 226, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+        
+        .feature-box:hover::before {
+            opacity: 1;
+        }
+        
+        .feature-box:hover {
+            transform: translateY(-5px);
+            border-color: #0068FF;
+            box-shadow: 0 10px 30px rgba(0, 104, 255, 0.3);
+        }
+        
+        .feature-box h3 { 
+            font-size: 20px; 
+            background: linear-gradient(45deg, #0068FF, #8A2BE2);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px; 
+            position: relative;
+            z-index: 1;
+        }
+        
+        .feature-box p { 
+            font-size: 15px; 
+            color: #ccc; 
+            max-width: 90%; 
+            margin: auto; 
+            line-height: 1.5;
+            position: relative;
+            z-index: 1;
+        }
         .carousel-container { width: 60%; overflow: hidden; position: relative; border-radius: 15px; box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2); margin: 20px auto; }
         .carousel { height: 300px; width: 100%; display: flex; transition: transform 0.5s ease-in-out; }
         .testimonial { flex: 0 0 100%; text-align: center; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; }
@@ -125,26 +273,27 @@
     </style>
 </head>
 <body>
-    <header>
-        <div class="navbar">
-            <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
-            <ul class="nav-links">
-                <% navLinks.forEach(link => { %>
-                    <li>
-                        <a href="<%= link.href %>"><%= link.name %></a>
-                        <% if (link.submenu) { %>
-                            <ul class="dropdown">
-                                <% link.submenu.forEach(sublink => { %>
-                                    <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
-                                <% }) %>
-                            </ul>
-                        <% } %>
-                    </li>
-                <% }) %>
-            </ul>
-            <input type="text" placeholder="Search topics..." class="search-box" id="topicSearchBar">
-        </div>
-    </header>
+
+<header>
+    <div class="navbar">
+        <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+        <ul class="nav-links">
+            <% navLinks.forEach(link => { %>
+                <li>
+                    <a href="<%= link.href %>"><%= link.name %></a>
+                    <% if (link.submenu) { %>
+                        <ul class="dropdown">
+                            <% link.submenu.forEach(sublink => { %>
+                                <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                            <% }) %>
+                        </ul>
+                    <% } %>
+                </li>
+            <% }) %>
+        </ul>
+        <input type="text" placeholder="Search topics..." class="search-box" id="topicSearchBar">
+    </div>
+</header>
     
     <section class="welcome-section">
         <button id="logout-btn"><a style="text-decoration: none; color:white;" href="/logout">Logout</a></button>
@@ -222,7 +371,6 @@
         <a href="https://youtube.com">YouTube</a>
     </footer>
 
-    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // Carousel logic
@@ -272,7 +420,7 @@
                 topicDivs.forEach(div => {
                     const name = div.querySelector('.topic-name').textContent.toLowerCase();
                     const desc = div.querySelector('.topic-desc').textContent.toLowerCase();
-                    if (name.includes(query) || desc.includes(query)) {
+                    if (name.includes(query) ) {
                         div.style.display = '';
                     } else {
                         div.style.display = 'none';

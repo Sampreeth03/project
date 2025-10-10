@@ -137,29 +137,6 @@
             transform: translateY(-50%);
             color: var(--gray-text);
         }
-        .search-results {
-            position: absolute;
-            top: 110%;
-            left: 0;
-            right: 0;
-            background: var(--darker);
-            border: 1px solid var(--gray-dark);
-            border-radius: 8px;
-            padding: 6px 0;
-            display: none;
-            z-index: 50;
-            max-height: 280px;
-            overflow-y: auto;
-        }
-        .search-item {
-            padding: 10px 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .search-item:hover { background: rgba(255,255,255,0.06); }
-        .search-type { color: var(--gray-text); font-size: 12px; }
         .admin-profile {
             display: flex;
             align-items: center;
@@ -266,7 +243,6 @@
                     <div class="search-box">
                         <input id="admin-search" type="text" placeholder="Search..." autocomplete="off">
                         <i class="fas fa-search"></i>
-                        <div id="search-results" class="search-results"></div>
                     </div>
                     <div class="admin-profile">
                         <div class="admin-avatar">
@@ -280,89 +256,118 @@
                 </div>
             </div>
 
-            <!-- Dashboard Cards Container -->
-            <div class="dashboard-cards">
-                <% dashboardData.dashboardCards.forEach(card => { %>
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title"><%= card.title %></div>
-                            <div class="card-icon bg-<%= card.colorClass %>">
-                                <i class="fas fa-<%= card.icon %>"></i>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="stat"><%= card.stat %></div>
-                            <div class="stat-desc">
-                                <% const changeNum = Number(card.change) || 0; %>
-                                <% if (changeNum > 0) { %>
-                                    <span class="stat-up">
-                                        <i class="fas fa-arrow-up"></i>
-                                        <%= Math.abs(changeNum) %>%
-                                    </span>
-                                <% } else if (changeNum < 0) { %>
-                                    <span class="stat-down">
-                                        <i class="fas fa-arrow-down"></i>
-                                        <%= Math.abs(changeNum) %>%
-                                    </span>
-                                <% } else { %>
-                                    <span style="color:var(--gray-text)">0%</span>
-                                <% } %>
-                                since last <%= dashboardData.period %>
-                            </div>
-                        </div>
-                    </div>
-                <% }) %>
+            <!-- Dashboard Cards Container (client-rendered) -->
+            <div class="dashboard-cards" id="dashboardCardsContainer" data-cards="<%= encodeURIComponent(JSON.stringify(dashboardData.dashboardCards || [])) %>">
+                <!-- Cards will be rendered by client JS -->
             </div>
+
+            <script>
+                (function(){
+                    const container = document.getElementById('dashboardCardsContainer');
+                    const raw = container ? container.getAttribute('data-cards') : '[]';
+                    let dashboardCards = [];
+                    try { dashboardCards = JSON.parse(decodeURIComponent(raw || '[]')); } catch (e) { dashboardCards = []; }
+                    const periodText = '<%= dashboardData.period %>' || 'period';
+
+                    function escapeHtml(str){
+                        if (str === undefined || str === null) return '';
+                        return String(str)
+                          .replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#39;');
+                    }
+
+                    function renderChangeSpan(change){
+                        const num = Number(change) || 0;
+                        if (num > 0) return `<span class="stat-up"><i class="fas fa-arrow-up"></i>${Math.abs(num)}%</span>`;
+                        if (num < 0) return `<span class="stat-down"><i class="fas fa-arrow-down"></i>${Math.abs(num)}%</span>`;
+                        return `<span style="color:var(--gray-text)">0%</span>`;
+                    }
+
+                    function createCard(card, i){
+                        const el = document.createElement('div');
+                        el.className = 'card';
+                        el.setAttribute('role','article');
+                        el.setAttribute('tabindex','0');
+                        el.setAttribute('aria-label', `${card.title}: ${card.stat} since last ${periodText}`);
+                        // data attributes used for client-side search/filter
+                        el.dataset.title = (card.title || '').toLowerCase();
+                        el.dataset.type = (card.type || '').toLowerCase();
+                        el.dataset.tags = (card.tags && Array.isArray(card.tags)) ? card.tags.join(',').toLowerCase() : '';
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateY(12px)';
+                        el.innerHTML = `
+                            <div class="card-header">
+                                <div class="card-title">${escapeHtml(card.title)}</div>
+                                <div class="card-icon bg-${escapeHtml(card.colorClass || 'primary')}">
+                                    <i class="fas fa-${escapeHtml(card.icon || 'chart-line')}"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="stat">${escapeHtml(card.stat)}</div>
+                                <div class="stat-desc">
+                                    ${renderChangeSpan(card.change)}
+                                    since last ${escapeHtml(periodText)}
+                                </div>
+                            </div>
+                        `;
+
+                        setTimeout(() => {
+                            el.style.transition = 'all 350ms';
+                            el.style.opacity = '1';
+                            el.style.transform = 'translateY(0)';
+                        }, 80 * i);
+
+                        return el;
+                    }
+
+                    if (Array.isArray(dashboardCards) && dashboardCards.length){
+                        dashboardCards.forEach((c, idx) => container.appendChild(createCard(c, idx)));
+                    } else {
+                        container.innerHTML = '<div class="card"><div class="card-body">No dashboard data available.</div></div>';
+                    }
+                })();
+            </script>
         </div>
     </div>
     <script>
         (function(){
             const input = document.getElementById('admin-search');
-            const resultsBox = document.getElementById('search-results');
-            let abortCtrl = null;
+            const container = document.getElementById('dashboardCardsContainer');
+            const cardsSelector = '.card';
 
-            function clearResults(){
-                resultsBox.innerHTML = '';
-                resultsBox.style.display = 'none';
+            function normalize(s){ return (s||'').toLowerCase(); }
+
+            function filterCards(query){
+                const q = normalize(query);
+                const cards = container.querySelectorAll(cardsSelector);
+                let visibleCount = 0;
+                cards.forEach(card => {
+                    if (!q) {
+                        card.style.display = '';
+                        visibleCount++;
+                        return;
+                    }
+                    const title = card.dataset.title || '';
+                    const type = card.dataset.type || '';
+                    const tags = card.dataset.tags || '';
+                    const matches = title.includes(q) || type.includes(q) || tags.includes(q);
+                    card.style.display = matches ? '' : 'none';
+                    if (matches) visibleCount++;
+                });
+                // Optionally, announce or show a small message if no results
+                // (could add ARIA live announcements here)
             }
 
-            function renderResults(items){
-                if (!items || !items.length){ clearResults(); return; }
-                resultsBox.innerHTML = items.map(item => `
-                    <div class="search-item" data-href="${item.href}">
-                        <span class="search-type">${item.type}</span>
-                        <span>${item.label}</span>
-                    </div>
-                `).join('');
-                resultsBox.style.display = 'block';
-            }
-
-            resultsBox.addEventListener('click', (e) => {
-                const item = e.target.closest('.search-item');
-                if (!item) return;
-                const href = item.getAttribute('data-href');
-                if (href) window.location.href = href;
+            input.addEventListener('input', function(){
+                const q = this.value.trim();
+                filterCards(q);
             });
 
-            input.addEventListener('input', async () => {
-                const q = input.value.trim();
-                if (!q || q.length < 2){ clearResults(); return; }
-                try {
-                    if (abortCtrl) abortCtrl.abort();
-                    abortCtrl = new AbortController();
-                    const res = await fetch(`/admin/search?q=${encodeURIComponent(q)}`, { signal: abortCtrl.signal });
-                    const data = await res.json();
-                    renderResults(data.results || []);
-                } catch (e) {
-                    // ignore abort errors
-                }
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!resultsBox.contains(e.target) && !input.contains(e.target)){
-                    clearResults();
-                }
-            });
+            // initialize: show all
+            filterCards('');
         })();
     </script>
 </body>
