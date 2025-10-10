@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Hub</title>
+    <!-- ============================================
+         ESWAR4 - CREATE_PROJ.EJS DOM VALIDATION
+         Features Implemented by Eswar (GET /e):
+         1. Title validation (at least 3 characters)
+         2. Capacity validation (3-20 range)
+         3. Topic required validation
+         4. Deadline future date validation
+         5. Inline error area with field highlighting
+         6. Disable Create button until all valid
+         7. Character counter with color coding (green/yellow/red)
+         8. Visual validation checkmarks (✓)
+         9. Contextual hints on focus 
+         10. Auto-save to localStorage with 24hr expiry
+         11. Interactive +/- capacity buttons
+         12. Draft restoration on page reload
+         13. Focus glow effects
+         14. Shake animation on errors
+         ============================================ -->
     <style>
         :root {
             --blue: #3a86ff;
@@ -771,7 +789,12 @@
                    }
                });
 
-               // Validation functions
+               // ============================================
+               // ESWAR4 - CREATE_PROJ VALIDATION FUNCTIONS START
+               // All validation logic below implemented by Eswar
+               // ============================================
+               
+               // ESWAR4: Validation functions
                function validateTitle(value) {
                    if (!value || value.trim().length < 3) {
                        return 'Title must be at least 3 characters';
@@ -1221,9 +1244,9 @@
 
     // Removed duplicate handler for createProjectForm — using single handler bound to #new-project-form above
 
-
-
-
+        // ============================================
+        // ESWAR4 - CREATE_PROJ VALIDATION JAVASCRIPT END
+        // ============================================
 
 
 
