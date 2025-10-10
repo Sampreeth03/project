@@ -137,6 +137,29 @@
             transform: translateY(-50%);
             color: var(--gray-text);
         }
+        .search-results {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            right: 0;
+            background: var(--darker);
+            border: 1px solid var(--gray-dark);
+            border-radius: 8px;
+            padding: 6px 0;
+            display: none;
+            z-index: 50;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .search-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-item:hover { background: rgba(255,255,255,0.06); }
+        .search-type { color: var(--gray-text); font-size: 12px; }
         .admin-profile {
             display: flex;
             align-items: center;
@@ -241,8 +264,9 @@
                 </div>
                 <div class="admin-controls">
                     <div class="search-box">
-                        <input type="text" placeholder="Search...">
+                        <input id="admin-search" type="text" placeholder="Search..." autocomplete="off">
                         <i class="fas fa-search"></i>
+                        <div id="search-results" class="search-results"></div>
                     </div>
                     <div class="admin-profile">
                         <div class="admin-avatar">
@@ -269,7 +293,21 @@
                         <div class="card-body">
                             <div class="stat"><%= card.stat %></div>
                             <div class="stat-desc">
-                                <span class="stat-up"><i class="fas fa-arrow-up"></i> <%= card.change %>%</span> since last month
+                                <% const changeNum = Number(card.change) || 0; %>
+                                <% if (changeNum > 0) { %>
+                                    <span class="stat-up">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <%= Math.abs(changeNum) %>%
+                                    </span>
+                                <% } else if (changeNum < 0) { %>
+                                    <span class="stat-down">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <%= Math.abs(changeNum) %>%
+                                    </span>
+                                <% } else { %>
+                                    <span style="color:var(--gray-text)">0%</span>
+                                <% } %>
+                                since last <%= dashboardData.period %>
                             </div>
                         </div>
                     </div>
@@ -277,5 +315,55 @@
             </div>
         </div>
     </div>
+    <script>
+        (function(){
+            const input = document.getElementById('admin-search');
+            const resultsBox = document.getElementById('search-results');
+            let abortCtrl = null;
+
+            function clearResults(){
+                resultsBox.innerHTML = '';
+                resultsBox.style.display = 'none';
+            }
+
+            function renderResults(items){
+                if (!items || !items.length){ clearResults(); return; }
+                resultsBox.innerHTML = items.map(item => `
+                    <div class="search-item" data-href="${item.href}">
+                        <span class="search-type">${item.type}</span>
+                        <span>${item.label}</span>
+                    </div>
+                `).join('');
+                resultsBox.style.display = 'block';
+            }
+
+            resultsBox.addEventListener('click', (e) => {
+                const item = e.target.closest('.search-item');
+                if (!item) return;
+                const href = item.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+
+            input.addEventListener('input', async () => {
+                const q = input.value.trim();
+                if (!q || q.length < 2){ clearResults(); return; }
+                try {
+                    if (abortCtrl) abortCtrl.abort();
+                    abortCtrl = new AbortController();
+                    const res = await fetch(`/admin/search?q=${encodeURIComponent(q)}`, { signal: abortCtrl.signal });
+                    const data = await res.json();
+                    renderResults(data.results || []);
+                } catch (e) {
+                    // ignore abort errors
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!resultsBox.contains(e.target) && !input.contains(e.target)){
+                    clearResults();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

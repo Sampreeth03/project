@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recruiter Signup</title>
+    <!-- ============================================
+         ESWAR3 - SIGNUPFORREC.EJS DOM VALIDATION
+         Features Implemented by Eswar:
+         1. Name required validation
+         2. Email format validation
+         3. Password policy (6+ chars, uppercase, special)
+         4. Confirm password match validation
+         5. Live per-field feedback (blur/focus/input)
+         6. Small summary if submit blocked
+         7. Disable Sign Up button until all fields valid
+         8. Password strength meter (weak/medium/strong)
+         9. Password match indicator (✓/✗)
+         10. Form progress indicator (Step X of 4)
+         11. Focus glow effects on all fields
+         12. Shake animation on validation errors
+         Note: Same features as signup.ejs for recruiter form
+         ============================================ -->
     <style>
       body {
         background-color: #121212;
@@ -34,13 +51,17 @@
       .input-group,
       .password-group,
       .file-group {
-        margin-bottom: 15px;
+        margin-bottom: 8px; 
+        position: relative; 
       }
 
       .input-group input,
       .password-group input {
-        width: 93%;
-        padding: 12px;
+        width: 100%;
+        padding: 10px;
+        padding-right: 60px; 
+        height: 40px;
+        box-sizing: border-box;
         border: 1px solid #1079e9;
         border-radius: 5px;
         background-color: transparent;
@@ -60,16 +81,18 @@
       .toggle-password {
         position: absolute;
         right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
+        top: 10px; 
         cursor: pointer;
-        color: #ffffff;
+        color: #0068ff;
         font-size: 14px;
         font-weight: bold;
+        user-select: none;
+        pointer-events: auto;
+        z-index: 10;
       }
 
       .toggle-password:hover {
-        color: #0068ff;
+        color: #1f5bb4;
       }
 
       .file-group {
@@ -84,7 +107,7 @@
         border-radius: 5px;
         background-color: transparent;
         color: #ffffff;
-        padding: 10px;
+        padding: 8px;
       }
 
       .checkbox-group {
@@ -115,6 +138,12 @@
         background-color: #1f5bb4;
       }
 
+      .signup-btn[disabled], .signup-btn[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(10%);
+      }
+
       .signin-text {
         text-align: center;
         margin-top: 10px;
@@ -128,26 +157,188 @@
       .error {
         color: #ff4d4d;
         text-align: center;
+        margin-bottom: 12px;
+      }
+      .field-error {
+        color: #ff6b6b;
+        font-size: 0.85rem;
+        margin-top: 4px;
+        min-height: 14px;
+        display: none;
+      }
+
+      input.input-error::placeholder {
+        color: #ff6b6b;
+        opacity: 1;
+      }
+
+      /* Password Strength Meter */
+      .password-strength-container {
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
+
+      .password-strength-bar {
+        height: 4px;
+        background-color: #333;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 4px;
+      }
+
+      .password-strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease, background-color 0.3s ease;
+        border-radius: 2px;
+      }
+
+      .password-strength-fill.weak {
+        width: 33.33%;
+        background-color: #ff4444;
+      }
+
+      .password-strength-fill.medium {
+        width: 66.66%;
+        background-color: #ffa500;
+      }
+
+      .password-strength-fill.strong {
+        width: 100%;
+        background-color: #00ff00;
+      }
+
+      .password-strength-text {
+        font-size: 0.8rem;
+        color: #aaa;
+        text-align: right;
+      }
+
+      .password-strength-text.weak {
+        color: #ff4444;
+      }
+
+      .password-strength-text.medium {
+        color: #ffa500;
+      }
+
+      .password-strength-text.strong {
+        color: #00ff00;
+      }
+
+      /* Password Match Indicator */
+      .password-match-indicator {
+        font-size: 0.85rem;
+        margin-top: 4px;
+        min-height: 14px;
+        display: none;
+      }
+
+      .password-match-indicator.match {
+        color: #00ff00;
+        display: block;
+      }
+
+      .password-match-indicator.no-match {
+        color: #ff4444;
+        display: block;
+      }
+
+      /* Form Progress Indicator */
+      .form-progress {
         margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .progress-text {
+        font-size: 0.85rem;
+        color: #aaa;
+        margin-bottom: 5px;
+      }
+
+      .progress-bar-container {
+        height: 6px;
+        background-color: #333;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #0068ff, #00d4ff);
+        transition: width 0.3s ease;
+        border-radius: 3px;
+      }
+
+      /* Shake Animation */
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+
+      .shake {
+        animation: shake 0.5s;
+      }
+
+      /* Focus Glow Effect */
+      .input-group.focused,
+      .password-group.focused {
+        position: relative;
+      }
+
+      .input-group.focused::before,
+      .password-group.focused::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(90deg, #0068ff, #00d4ff, #0068ff);
+        border-radius: 7px;
+        z-index: -1;
+        opacity: 0.5;
+        animation: glow 2s infinite;
+      }
+
+      @keyframes glow {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.6; }
       }
     </style>
   </head>
   <body>
     <div class="signup-container">
-      <form class="signup-form" action="/recruiter-signup" method="POST" enctype="multipart/form-data" onsubmit="return validateForm(event)">
+      <form class="signup-form" action="/recruiter-signup" method="POST" enctype="multipart/form-data">
         <h2>Recruiter Sign Up</h2>
         
         <% if (error) { %>
         <p class="error"><%= error %></p>
         <% } %>
 
-        <div class="input-group">
-          <input type="text" name="Name" placeholder="Name" required />
+        <!-- Form Progress Indicator -->
+        <div class="form-progress">
+          <div class="progress-text">
+            <span id="progress-text">Step <span id="progress-count">0</span> of 4 completed</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+          </div>
         </div>
-        <div class="input-group">
-          <input type="email" name="email" placeholder="Email" required />
+
+        <div id="signup-summary" class="field-error" aria-live="polite"></div>
+
+        <div class="input-group" id="name-group">
+          <input id="name" type="text" name="Name" placeholder="Name" required aria-describedby="name-error" />
+          <div id="name-error" class="field-error" aria-live="polite"></div>
         </div>
-        <div class="password-group">
+        <div class="input-group" id="email-group">
+          <input id="email" type="email" name="email" placeholder="Email" required aria-describedby="email-error" />
+          <div id="email-error" class="field-error" aria-live="polite"></div>
+        </div>
+        <div class="password-group" id="password-group">
           <input
             type="password"
             id="password"
@@ -156,12 +347,20 @@
             required
           />
           <span
+            id="toggle-password-btn"
             class="toggle-password"
-            onclick="togglePassword('password', this)"
             >Show</span
           >
+          <div id="password-error" class="field-error" aria-live="polite"></div>
+          <!-- Password Strength Meter -->
+          <div class="password-strength-container" id="password-strength-container" style="display: none;">
+            <div class="password-strength-bar">
+              <div class="password-strength-fill" id="password-strength-fill"></div>
+            </div>
+            <div class="password-strength-text" id="password-strength-text"></div>
+          </div>
         </div>
-        <div class="password-group">
+        <div class="password-group" id="confirm-group">
           <input
             type="password"
             id="confirmPassword"
@@ -170,10 +369,13 @@
             required
           />
           <span
+            id="toggle-confirm-btn"
             class="toggle-password"
-            onclick="togglePassword('confirmPassword', this)"
             >Show</span
           >
+          <div id="confirm-error" class="field-error" aria-live="polite"></div>
+          <!-- Password Match Indicator -->
+          <div class="password-match-indicator" id="password-match-indicator"></div>
         </div>
 
         <div class="file-group">
@@ -186,7 +388,7 @@
           />
         </div>
 
-        <button type="submit" class="signup-btn">Sign Up</button>
+        <button type="submit" id="signup-btn" class="signup-btn" aria-disabled="true" disabled>Sign Up</button>
         <p class="signin-text">
           Already have an account? <a href="/login">Sign In</a>
         </p>
@@ -204,39 +406,349 @@
           element.textContent = "Show";
         }
       }
-      
-      function validateForm(event) {
-        var password = document.getElementById("password").value;
-        var confirmPassword = document.getElementById("confirmPassword").value;
+    </script>
 
-        if (password !== confirmPassword) {
-          alert("Passwords do not match!");
-          event.preventDefault(); 
-          return false;
+    <!-- ============================================
+         ESWAR3 - SIGNUPFORREC VALIDATION JAVASCRIPT START
+         All validation logic below implemented by Eswar
+         ============================================ -->
+    <script>
+      (function() {
+        // ESWAR3: Element references for validation and advanced features
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirmPassword');
+
+        const nameError = document.getElementById('name-error');
+        const emailError = document.getElementById('email-error');
+        const passwordError = document.getElementById('password-error');
+        const confirmError = document.getElementById('confirm-error');
+        const summary = document.getElementById('signup-summary');
+        const signupBtn = document.getElementById('signup-btn');
+        const toggleBtn = document.getElementById('toggle-password-btn');
+        const toggleConfirm = document.getElementById('toggle-confirm-btn');
+
+        // Advanced feature elements
+        const nameGroup = document.getElementById('name-group');
+        const emailGroup = document.getElementById('email-group');
+        const passwordGroup = document.getElementById('password-group');
+        const confirmGroup = document.getElementById('confirm-group');
+        
+        const progressBar = document.getElementById('progress-bar');
+        const progressCount = document.getElementById('progress-count');
+        
+        const passwordStrengthContainer = document.getElementById('password-strength-container');
+        const passwordStrengthFill = document.getElementById('password-strength-fill');
+        const passwordStrengthText = document.getElementById('password-strength-text');
+        
+        const passwordMatchIndicator = document.getElementById('password-match-indicator');
+
+        // Shake animation function
+        function shakeElement(element) {
+          element.classList.add('shake');
+          setTimeout(() => {
+            element.classList.remove('shake');
+          }, 500);
         }
-        return true;
-      }
 
-     
-  document.getElementById("signupForm").addEventListener("submit", function (e) {
-    let password = document.getElementById("password").value;
-    let confirmPassword = document.getElementById("confirmPassword").value;
-    let passwordRegex = /^(?=.[A-Z])(?=.[\W_]).{8,}$/; // At least 1 uppercase, 1 special char, 8+ chars
+        // Password strength calculation
+        function calculatePasswordStrength(password) {
+          if (!password) return { strength: '', score: 0 };
+          
+          let score = 0;
+          
+          // Length check
+          if (password.length >= 6) score++;
+          if (password.length >= 10) score++;
+          
+          // Uppercase check
+          if (/[A-Z]/.test(password)) score++;
+          
+          // Lowercase check
+          if (/[a-z]/.test(password)) score++;
+          
+          // Number check
+          if (/\d/.test(password)) score++;
+          
+          // Special character check
+          if (/[!@#$%^&*]/.test(password)) score++;
+          
+          // Determine strength
+          if (score <= 2) return { strength: 'weak', score: score };
+          if (score <= 4) return { strength: 'medium', score: score };
+          return { strength: 'strong', score: score };
+        }
 
-    if (!passwordRegex.test(password)) {
-      alert("Password must contain at least one uppercase letter, one special character, and be at least 8 characters long.");
-      e.preventDefault(); // Stop form submission
-    }
+        // Update password strength meter
+        function updatePasswordStrength(password) {
+          if (!password) {
+            passwordStrengthContainer.style.display = 'none';
+            return;
+          }
+          
+          passwordStrengthContainer.style.display = 'block';
+          const { strength, score } = calculatePasswordStrength(password);
+          
+          passwordStrengthFill.className = 'password-strength-fill ' + strength;
+          passwordStrengthText.className = 'password-strength-text ' + strength;
+          
+          if (strength === 'weak') {
+            passwordStrengthText.textContent = 'Weak password';
+          } else if (strength === 'medium') {
+            passwordStrengthText.textContent = 'Medium strength';
+          } else {
+            passwordStrengthText.textContent = 'Strong password';
+          }
+        }
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match.");
-      e.preventDefault();
-    }
-  });
+        // Update password match indicator
+        function updatePasswordMatch() {
+          const password = passwordInput.value;
+          const confirm = confirmInput.value;
+          
+          if (!confirm) {
+            passwordMatchIndicator.style.display = 'none';
+            return;
+          }
+          
+          if (password === confirm) {
+            passwordMatchIndicator.className = 'password-match-indicator match';
+            passwordMatchIndicator.textContent = '✓ Passwords match';
+          } else {
+            passwordMatchIndicator.className = 'password-match-indicator no-match';
+            passwordMatchIndicator.textContent = '✗ Passwords do not match';
+          }
+        }
 
+        // Update form progress
+        function updateFormProgress() {
+          let completedFields = 0;
+          const totalFields = 4;
+          
+          if (nameInput.value.trim() && !validateName(nameInput.value)) completedFields++;
+          if (emailInput.value.trim() && !validateEmail(emailInput.value)) completedFields++;
+          if (passwordInput.value && !validatePassword(passwordInput.value)) completedFields++;
+          if (confirmInput.value && !validateConfirm(confirmInput.value, passwordInput.value)) completedFields++;
+          
+          const percentage = (completedFields / totalFields) * 100;
+          progressBar.style.width = percentage + '%';
+          progressCount.textContent = completedFields;
+        }
 
+        // Focus glow effects
+        [nameInput, emailInput, passwordInput, confirmInput].forEach((input, index) => {
+          const groups = [nameGroup, emailGroup, passwordGroup, confirmGroup];
+          const group = groups[index];
+          
+          input.addEventListener('focus', function() {
+            group.classList.add('focused');
+          });
+          
+          input.addEventListener('blur', function() {
+            group.classList.remove('focused');
+          });
+        });
 
+        // Password input listener for strength meter
+        passwordInput.addEventListener('input', function() {
+          updatePasswordStrength(this.value);
+          updatePasswordMatch();
+          updateFormProgress();
+        });
 
+        // Confirm password input listener
+        confirmInput.addEventListener('input', function() {
+          updatePasswordMatch();
+          updateFormProgress();
+        });
+
+        // Name and email input listeners for progress
+        nameInput.addEventListener('input', updateFormProgress);
+        emailInput.addEventListener('input', updateFormProgress);
+
+        function validateName(v) {
+          if (!v || !v.trim()) return 'Name is required.';
+          return '';
+        }
+
+        function validateEmail(v) {
+          if (!v) return 'Email is required.';
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return re.test(v) ? '' : 'Enter a valid email address.';
+        }
+
+        function validatePassword(v) {
+          if (!v) return 'Password is required.';
+          const re = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+          return re.test(v) ? '' : 'Password must be ≥6 chars, include an uppercase and a special character.';
+        }
+
+        function validateConfirm(v, pw) {
+          if (!v) return 'Please confirm your password.';
+          return v === pw ? '' : 'Passwords do not match.';
+        }
+
+        const originalNamePlaceholder = nameInput.getAttribute('placeholder') || '';
+        const originalEmailPlaceholder = emailInput.getAttribute('placeholder') || '';
+        const originalPasswordPlaceholder = passwordInput.getAttribute('placeholder') || '';
+        const originalConfirmPlaceholder = confirmInput.getAttribute('placeholder') || '';
+
+        function applyInlinePlaceholderError(inputEl, errorEl, message, originalPlaceholder) {
+          if (!message) {
+            inputEl.classList.remove('input-error');
+            inputEl.setAttribute('placeholder', originalPlaceholder);
+            if (errorEl) {
+              errorEl.textContent = '';
+              errorEl.style.display = 'none';
+            }
+            return;
+          }
+          inputEl.classList.add('input-error');
+          inputEl.value = '';
+          inputEl.setAttribute('placeholder', message);
+          if (errorEl && errorEl.id === 'password-error' && /password/i.test(message)) {
+            errorEl.textContent = 'Password must be at least 6 characters and include one uppercase letter and one special character.';
+            errorEl.style.display = 'block';
+          } else if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'none';
+          }
+        }
+
+        function clearInlinePlaceholderError(inputEl, errorEl, originalPlaceholder) {
+          inputEl.classList.remove('input-error');
+          if (inputEl.getAttribute('placeholder') !== originalPlaceholder) {
+            inputEl.setAttribute('placeholder', originalPlaceholder);
+          }
+          if (errorEl) {
+            errorEl.textContent = '';
+            errorEl.style.display = 'none';
+          }
+        }
+
+        function updateButtonState() {
+          const nameOk = !validateName(nameInput.value);
+          const emailOk = !validateEmail(emailInput.value.trim());
+          const passOk = !validatePassword(passwordInput.value);
+          const confirmOk = !validateConfirm(confirmInput.value, passwordInput.value);
+
+          if (nameOk && emailOk && passOk && confirmOk) {
+            signupBtn.removeAttribute('disabled');
+            signupBtn.setAttribute('aria-disabled', 'false');
+            summary.textContent = '';
+          } else {
+            signupBtn.setAttribute('disabled', '');
+            signupBtn.setAttribute('aria-disabled', 'true');
+          }
+        }
+
+        nameInput.addEventListener('blur', function() {
+          const msg = validateName(nameInput.value);
+          applyInlinePlaceholderError(nameInput, nameError, msg, originalNamePlaceholder);
+          if (msg) shakeElement(nameGroup);
+          updateButtonState();
+        });
+        emailInput.addEventListener('blur', function() {
+          const msg = validateEmail(emailInput.value.trim());
+          applyInlinePlaceholderError(emailInput, emailError, msg, originalEmailPlaceholder);
+          if (msg) shakeElement(emailGroup);
+          updateButtonState();
+        });
+        passwordInput.addEventListener('blur', function() {
+          const msg = validatePassword(passwordInput.value);
+          applyInlinePlaceholderError(passwordInput, passwordError, msg, originalPasswordPlaceholder);
+          if (msg) shakeElement(passwordGroup);
+          updateButtonState();
+        });
+        confirmInput.addEventListener('blur', function() {
+          const msg = validateConfirm(confirmInput.value, passwordInput.value);
+          applyInlinePlaceholderError(confirmInput, confirmError, msg, originalConfirmPlaceholder);
+          if (msg) shakeElement(confirmGroup);
+          updateButtonState();
+        });
+
+        nameInput.addEventListener('focus', function() { clearInlinePlaceholderError(nameInput, nameError, originalNamePlaceholder); });
+        emailInput.addEventListener('focus', function() { clearInlinePlaceholderError(emailInput, emailError, originalEmailPlaceholder); });
+        passwordInput.addEventListener('focus', function() { clearInlinePlaceholderError(passwordInput, passwordError, originalPasswordPlaceholder); });
+        confirmInput.addEventListener('focus', function() { clearInlinePlaceholderError(confirmInput, confirmError, originalConfirmPlaceholder); });
+
+        nameInput.addEventListener('input', function() { clearInlinePlaceholderError(nameInput, nameError, originalNamePlaceholder); updateButtonState(); });
+        emailInput.addEventListener('input', function() { clearInlinePlaceholderError(emailInput, emailError, originalEmailPlaceholder); updateButtonState(); });
+        passwordInput.addEventListener('input', function() { clearInlinePlaceholderError(passwordInput, passwordError, originalPasswordPlaceholder); updateButtonState(); });
+        confirmInput.addEventListener('input', function() { clearInlinePlaceholderError(confirmInput, confirmError, originalConfirmPlaceholder); updateButtonState(); });
+
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function() { togglePassword('password', this); });
+        }
+        if (toggleConfirm) {
+          toggleConfirm.addEventListener('click', function() { togglePassword('confirmPassword', this); });
+        }
+
+        updateButtonState();
+
+        if (signupBtn) {
+          signupBtn.addEventListener('click', function (ev) {
+            const nameMsg = validateName(nameInput.value);
+            const emailMsg = validateEmail(emailInput.value.trim());
+            const passMsg = validatePassword(passwordInput.value);
+            const confMsg = validateConfirm(confirmInput.value, passwordInput.value);
+            if (nameMsg || emailMsg || passMsg || confMsg) {
+              ev.preventDefault();
+              const msgs = [];
+              if (nameMsg) { msgs.push(nameMsg); shakeElement(nameGroup); }
+              if (emailMsg) { msgs.push(emailMsg); shakeElement(emailGroup); }
+              if (passMsg) { msgs.push(passMsg); shakeElement(passwordGroup); }
+              if (confMsg) { msgs.push(confMsg); shakeElement(confirmGroup); }
+              summary.textContent = msgs.join(' ');
+              if (nameMsg) { applyInlinePlaceholderError(nameInput, nameError, nameMsg, originalNamePlaceholder); nameInput.focus(); }
+              else if (emailMsg) { applyInlinePlaceholderError(emailInput, emailError, emailMsg, originalEmailPlaceholder); emailInput.focus(); }
+              else if (passMsg) { applyInlinePlaceholderError(passwordInput, passwordError, passMsg, originalPasswordPlaceholder); passwordInput.focus(); }
+              else if (confMsg) { applyInlinePlaceholderError(confirmInput, confirmError, confMsg, originalConfirmPlaceholder); confirmInput.focus(); }
+              updateButtonState();
+              return false;
+            }
+            return true;
+          });
+        }
+
+        const form = document.querySelector('.signup-form');
+        if (form) {
+          form.addEventListener('submit', function(e) {
+            const nameMsg = validateName(nameInput.value);
+            const emailMsg = validateEmail(emailInput.value.trim());
+            const passMsg = validatePassword(passwordInput.value);
+            const confMsg = validateConfirm(confirmInput.value, passwordInput.value);
+
+            if (nameMsg || emailMsg || passMsg || confMsg) {
+              e.preventDefault();
+              const msgs = [];
+              if (nameMsg) { msgs.push(nameMsg); shakeElement(nameGroup); }
+              if (emailMsg) { msgs.push(emailMsg); shakeElement(emailGroup); }
+              if (passMsg) { msgs.push(passMsg); shakeElement(passwordGroup); }
+              if (confMsg) { msgs.push(confMsg); shakeElement(confirmGroup); }
+              if (emailMsg) msgs.push(emailMsg);
+              if (passMsg) msgs.push(passMsg);
+              if (confMsg) msgs.push(confMsg);
+              summary.textContent = msgs.join(' ');
+              if (nameMsg) { applyInlinePlaceholderError(nameInput, nameError, nameMsg, originalNamePlaceholder); nameInput.focus(); }
+              else if (emailMsg) { applyInlinePlaceholderError(emailInput, emailError, emailMsg, originalEmailPlaceholder); emailInput.focus(); }
+              else if (passMsg) { applyInlinePlaceholderError(passwordInput, passwordError, passMsg, originalPasswordPlaceholder); passwordInput.focus(); }
+              else if (confMsg) { applyInlinePlaceholderError(confirmInput, confirmError, confMsg, originalConfirmPlaceholder); confirmInput.focus(); }
+              updateButtonState();
+              return false;
+            }
+
+            signupBtn.setAttribute('disabled', '');
+            signupBtn.setAttribute('aria-disabled', 'true');
+            signupBtn.textContent = 'Signing up...';
+            return true;
+          });
+        }
+      })();
+      // ============================================
+      // ESWAR3 - SIGNUPFORREC VALIDATION JAVASCRIPT END
+      // ============================================
     </script>
   </body>
 </html>

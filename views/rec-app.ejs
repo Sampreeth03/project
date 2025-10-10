@@ -437,9 +437,7 @@
             <div class="tab" data-tab="approved">Approved</div>
         </div>
 
-        <div class="applications" id="applications-container">
-            <!-- Application items will be added here dynamically -->
-        </div>
+    <div class="applications" id="applications-container"></div> <!-- #srihesh1 -->
 
         <div class="empty-state" id="empty-state">
             <img src="/api/placeholder/100/100" alt="No applications">
@@ -452,7 +450,7 @@
 
     <script>
         // Use the applications data passed from the server
-        let applicationsData = <%- JSON.stringify(applications) %>;
+                            let applicationsData = <%- JSON.stringify(applications) %>;
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -491,14 +489,19 @@
                 applicationElement.setAttribute('data-id', application.id);
 
                 let actionButtons = '';
-                if (application.status === 'approved') {
+                if (application.status === 'approved') { // #srihesh1
                     actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary">View Resume</a>
                                    <span class="status-badge approved">Approved</span>`;
+                } else if (application.status === 'pending') { // #srihesh1
+                    actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary">View Resume</a>
+                                   <span class="status-badge pending">Pending</span>
+                                   <button class="btn btn-success" data-action="approve">Approve</button>
+                                   <button class="btn btn-danger" data-action="reject">Reject</button>`;
                 } else {
                     actionButtons = `
                         <a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary">View Resume</a>
-                        <button class="btn btn-success">Approve</button>
-                        <button class="btn btn-danger">Reject</button>`;
+                        <button class="btn btn-success" data-action="approve">Approve</button>
+                        <button class="btn btn-danger" data-action="reject">Reject</button>`; // #srihesh1
                 }
 
                 let applicationHTML = `
@@ -525,14 +528,15 @@
 
             document.querySelectorAll('.application').forEach(element => {
                 element.addEventListener('click', async function(e) {
-                    if (e.target.tagName === 'BUTTON') {
+                    if (e.target.tagName === 'BUTTON') { // #srihesh2
                         e.stopPropagation();
                         
                         const applicationId = this.getAttribute('data-id');
                         const application = applicationsData.find(n => n.id === applicationId);
                         
                         if (application) {
-                            if (e.target.textContent === 'Approve') {
+                            const action = e.target.getAttribute('data-action'); // #srihesh2
+                            if (action === 'approve') { // #srihesh2
                                 try {
                                     const response = await fetch(`/update-application-status/${applicationId}`, {
                                         method: 'PATCH',
@@ -554,7 +558,7 @@
                                 } catch (err) {
                                     showToast('Error approving application', 'danger');
                                 }
-                            } else if (e.target.textContent === 'Reject') {
+                            } else if (action === 'reject') { // #srihesh2
                                 try {
                                     const response = await fetch(`/update-application-status/${applicationId}`, {
                                         method: 'PATCH',

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Hub</title>
+    <!-- ESWAR4 - CREATE_PROJ.EJS DOM VALIDATION -->
     <style>
         :root {
             --blue: #3a86ff;
@@ -222,6 +223,134 @@
             background-color: #4c90ff;
         }
 
+        button[type="submit"][disabled] {
+            background-color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .field-error {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 4px;
+            display: none;
+            min-height: 18px;
+        }
+
+        .form-group input.invalid,
+        .form-group textarea.invalid,
+        .form-group select.invalid {
+            border-color: #ff6b6b;
+            background-color: rgba(255, 107, 107, 0.05);
+        }
+
+        /* Advanced DOM Features */
+        .char-counter {
+            font-size: 12px;
+            color: #888;
+            text-align: right;
+            margin-top: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .char-counter.warning {
+            color: #ffa500;
+        }
+
+        .char-counter.danger {
+            color: #ff4444;
+        }
+
+        .char-counter.good {
+            color: #00ff00;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .form-hint.show {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+
+        .capacity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .capacity-btn {
+            background: var(--blue);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .capacity-btn:hover {
+            background: #4c90ff;
+        }
+
+        .capacity-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 9999;
+        }
+
+        .auto-save-indicator.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .field-valid-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #28a745;
+            font-size: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .field-valid-icon.show {
+            opacity: 1;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
         /* Projects Section */
         .projects-section {
             flex: 1;
@@ -397,11 +526,19 @@
                     <form id="new-project-form">
                         <div class="form-group">
                             <label for="project-title">Project Title</label>
-                            <input type="text" id="project-title" name="title" required autocomplete="off">
+                            <input type="text" id="project-title" name="title" required autocomplete="off" maxlength="100">
+                            <span class="field-valid-icon" id="title-valid">✓</span>
+                            <div class="char-counter" id="title-counter">0/100</div>
+                            <div class="form-hint" id="title-hint">💡 Use a clear, descriptive title for your project</div>
+                            <div class="field-error" id="title-error"></div>
                         </div>
                         <div class="form-group">
                             <label for="project-description">Project Description</label>
-                            <textarea id="project-description" name="description" rows="3" required autocomplete="off"></textarea>
+                            <textarea id="project-description" name="description" rows="3" required autocomplete="off" maxlength="500"></textarea>
+                            <span class="field-valid-icon" id="description-valid" style="top: 30px;">✓</span>
+                            <div class="char-counter" id="description-counter">0/500</div>
+                            <div class="form-hint" id="description-hint">💡 Explain what your project is about and its goals</div>
+                            <div class="field-error" id="description-error"></div>
                         </div>
                         <div class="form-group n">
                             <label for="project-topic">Project Topic</label>
@@ -414,19 +551,35 @@
                                 <option value="deep learning" style="background-color: #252525;">Deep Learning</option>
                                 <option value="data science" style="background-color: #252525;">Data Science</option>
                             </select>
-                         
+                            <span class="field-valid-icon" id="topic-valid">✓</span>
+                            <div class="form-hint" id="topic-hint">💡 Choose the category that best fits your project</div>
+                            <div class="field-error" id="topic-error"></div>
                         </div>
                         <div class="form-group">
                             <label for="project-capacity">Number of Members</label>
-                            <input type="number" id="project-capacity" name="capacity" min="1" value="1" required autocomplete="off">
+                            <div class="capacity-control">
+                                <button type="button" class="capacity-btn" id="capacity-minus">−</button>
+                                <input type="number" id="project-capacity" name="capacity" min="3" max="20" value="3" required autocomplete="off" style="width: 100px; text-align: center;">
+                                <button type="button" class="capacity-btn" id="capacity-plus">+</button>
+                            </div>
+                            <span class="field-valid-icon" id="capacity-valid">✓</span>
+                            <div class="form-hint" id="capacity-hint">💡 Choose between 3-20 team members</div>
+                            <div class="field-error" id="capacity-error"></div>
                         </div>
                         <div class="form-group">
                             <label for="project-deadline">Deadline</label>
                             <input type="date" id="project-deadline" name="deadline" required autocomplete="off">
+                            <span class="field-valid-icon" id="deadline-valid">✓</span>
+                            <div class="field-error" id="deadline-error"></div>
                         </div>
-                        <button type="submit">Create Project</button>
+                        <button type="submit" id="create-project-btn" aria-disabled="true" disabled>Create Project</button>
                     </form>
                 </div>
+            </div>
+
+            <!-- Auto-save indicator -->
+            <div class="auto-save-indicator" id="auto-save-indicator">
+                💾 Draft saved
             </div>
     
             <div class="projects-section">
@@ -496,12 +649,389 @@
                const projectForm = document.getElementById('project-form');
                const projectsContainer = document.getElementById('projects-container');
 
+               // Form validation
+               const titleInput = document.getElementById('project-title');
+               const descriptionInput = document.getElementById('project-description');
+               const topicSelect = document.getElementById('project-topic');
+               const capacityInput = document.getElementById('project-capacity');
+               const deadlineInput = document.getElementById('project-deadline');
+               const createBtn = document.getElementById('create-project-btn');
+
+               const titleError = document.getElementById('title-error');
+               const descriptionError = document.getElementById('description-error');
+               const topicError = document.getElementById('topic-error');
+               const capacityError = document.getElementById('capacity-error');
+               const deadlineError = document.getElementById('deadline-error');
+
+               // Advanced DOM elements
+               const titleCounter = document.getElementById('title-counter');
+               const descriptionCounter = document.getElementById('description-counter');
+               const titleHint = document.getElementById('title-hint');
+               const descriptionHint = document.getElementById('description-hint');
+               const topicHint = document.getElementById('topic-hint');
+               const capacityHint = document.getElementById('capacity-hint');
+               const deadlineHint = document.getElementById('deadline-hint');
+               const autoSaveIndicator = document.getElementById('auto-save-indicator');
+               const capacityMinus = document.getElementById('capacity-minus');
+               const capacityPlus = document.getElementById('capacity-plus');
+
+               // Valid icons
+               const titleValid = document.getElementById('title-valid');
+               const descriptionValid = document.getElementById('description-valid');
+               const topicValid = document.getElementById('topic-valid');
+               const capacityValid = document.getElementById('capacity-valid');
+               const deadlineValid = document.getElementById('deadline-valid');
+
+               // Auto-save functionality
+               let autoSaveTimeout;
+               function saveFormDraft() {
+                   const formData = {
+                       title: titleInput.value,
+                       description: descriptionInput.value,
+                       topic: topicSelect.value,
+                       capacity: capacityInput.value,
+                       deadline: deadlineInput.value,
+                       timestamp: Date.now()
+                   };
+                   localStorage.setItem('projectFormDraft', JSON.stringify(formData));
+                   
+                   // Show save indicator
+                   autoSaveIndicator.classList.add('show');
+                   setTimeout(() => {
+                       autoSaveIndicator.classList.remove('show');
+                   }, 2000);
+               }
+
+               function autoSave() {
+                   clearTimeout(autoSaveTimeout);
+                   autoSaveTimeout = setTimeout(saveFormDraft, 1000);
+               }
+
+               // Load saved draft
+               function loadFormDraft() {
+                   const saved = localStorage.getItem('projectFormDraft');
+                   if (saved) {
+                       const data = JSON.parse(saved);
+                       // Only load if saved within last 24 hours
+                       if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                           titleInput.value = data.title || '';
+                           descriptionInput.value = data.description || '';
+                           topicSelect.value = data.topic || '';
+                           capacityInput.value = data.capacity || '3';
+                           deadlineInput.value = data.deadline || '';
+                           
+                           // Update counters
+                           updateCharCounter(titleInput, titleCounter, 100);
+                           updateCharCounter(descriptionInput, descriptionCounter, 500);
+                           updateButtonState();
+                       }
+                   }
+               }
+
+               // Character counter with visual feedback
+               function updateCharCounter(input, counter, max) {
+                   const length = input.value.length;
+                   counter.textContent = `${length}/${max}`;
+                   
+                   // Color coding
+                   counter.classList.remove('good', 'warning', 'danger');
+                   if (length === 0) {
+                       counter.style.color = '#888';
+                   } else if (length < max * 0.5) {
+                       counter.classList.add('good');
+                   } else if (length < max * 0.8) {
+                       counter.classList.add('warning');
+                   } else {
+                       counter.classList.add('danger');
+                   }
+               }
+
+               // Show/hide valid icons
+               function showValidIcon(icon, isValid) {
+                   if (isValid) {
+                       icon.classList.add('show');
+                   } else {
+                       icon.classList.remove('show');
+                   }
+               }
+
+               // Capacity +/- buttons
+               capacityMinus.addEventListener('click', function() {
+                   let val = parseInt(capacityInput.value) || 3;
+                   if (val > 3) {
+                       capacityInput.value = val - 1;
+                       capacityInput.dispatchEvent(new Event('input'));
+                   }
+               });
+
+               capacityPlus.addEventListener('click', function() {
+                   let val = parseInt(capacityInput.value) || 3;
+                   if (val < 20) {
+                       capacityInput.value = val + 1;
+                       capacityInput.dispatchEvent(new Event('input'));
+                   }
+               });
+
+               // ============================================
+               // ESWAR4 - CREATE_PROJ VALIDATION FUNCTIONS START
+               // All validation logic below implemented by Eswar
+               // ============================================
+               
+               // ESWAR4: Validation functions
+               function validateTitle(value) {
+                   if (!value || value.trim().length < 3) {
+                       return 'Title must be at least 3 characters';
+                   }
+                   return '';
+               }
+
+               function validateDescription(value) {
+                   if (!value || value.trim().length === 0) {
+                       return 'Description is required';
+                   }
+                   return '';
+               }
+
+               function validateTopic(value) {
+                   if (!value) {
+                       return 'Please select a topic';
+                   }
+                   return '';
+               }
+
+               function validateCapacity(value) {
+                   const num = parseInt(value, 10);
+                   if (isNaN(num) || num < 3) {
+                       return 'Capacity must be at least 3';
+                   }
+                   if (num > 20) {
+                       return 'Capacity cannot exceed 20';
+                   }
+                   return '';
+               }
+
+               function validateDeadline(value) {
+                   if (!value) {
+                       return 'Deadline is required';
+                   }
+                   const selectedDate = new Date(value);
+                   const today = new Date();
+                   today.setHours(0, 0, 0, 0);
+                   if (selectedDate <= today) {
+                       return 'Deadline must be a future date';
+                   }
+                   return '';
+               }
+
+               // Show/hide error and highlight field
+               function showError(inputEl, errorEl, message) {
+                   errorEl.textContent = message;
+                   errorEl.style.display = 'block';
+                   inputEl.classList.add('invalid');
+               }
+
+               function clearError(inputEl, errorEl) {
+                   errorEl.textContent = '';
+                   errorEl.style.display = 'none';
+                   inputEl.classList.remove('invalid');
+               }
+
+               // Update button state
+               function updateButtonState() {
+                   const titleValid = validateTitle(titleInput.value) === '';
+                   const descriptionValid = validateDescription(descriptionInput.value) === '';
+                   const topicValid = validateTopic(topicSelect.value) === '';
+                   const capacityValid = validateCapacity(capacityInput.value) === '';
+                   const deadlineValid = validateDeadline(deadlineInput.value) === '';
+
+                   if (titleValid && descriptionValid && topicValid && capacityValid && deadlineValid) {
+                       createBtn.removeAttribute('disabled');
+                       createBtn.setAttribute('aria-disabled', 'false');
+                   } else {
+                       createBtn.setAttribute('disabled', '');
+                       createBtn.setAttribute('aria-disabled', 'true');
+                   }
+               }
+
+               // Blur event handlers
+               titleInput.addEventListener('blur', function() {
+                   const error = validateTitle(this.value);
+                   if (error) {
+                       showError(titleInput, titleError, error);
+                       showValidIcon(titleValid, false);
+                   } else {
+                       showValidIcon(titleValid, true);
+                   }
+                   titleHint.classList.remove('show');
+                   updateButtonState();
+               });
+
+               descriptionInput.addEventListener('blur', function() {
+                   const error = validateDescription(this.value);
+                   if (error) {
+                       showError(descriptionInput, descriptionError, error);
+                       showValidIcon(descriptionValid, false);
+                   } else {
+                       showValidIcon(descriptionValid, true);
+                   }
+                   descriptionHint.classList.remove('show');
+                   updateButtonState();
+               });
+
+               topicSelect.addEventListener('blur', function() {
+                   const error = validateTopic(this.value);
+                   if (error) {
+                       showError(topicSelect, topicError, error);
+                       showValidIcon(topicValid, false);
+                   } else {
+                       showValidIcon(topicValid, true);
+                   }
+                   topicHint.classList.remove('show');
+                   updateButtonState();
+               });
+
+               capacityInput.addEventListener('blur', function() {
+                   const error = validateCapacity(this.value);
+                   if (error) {
+                       showError(capacityInput, capacityError, error);
+                       showValidIcon(capacityValid, false);
+                   } else {
+                       showValidIcon(capacityValid, true);
+                   }
+                   capacityHint.classList.remove('show');
+                   updateButtonState();
+               });
+
+               deadlineInput.addEventListener('blur', function() {
+                   const error = validateDeadline(this.value);
+                   if (error) {
+                       showError(deadlineInput, deadlineError, error);
+                       showValidIcon(deadlineValid, false);
+                   } else {
+                       showValidIcon(deadlineValid, true);
+                   }
+                   deadlineHint.classList.remove('show');
+                   updateButtonState();
+               });
+
+               // Focus event handlers (clear errors on focus + show hints)
+               titleInput.addEventListener('focus', function() {
+                   clearError(titleInput, titleError);
+                   titleHint.classList.add('show');
+               });
+
+               descriptionInput.addEventListener('focus', function() {
+                   clearError(descriptionInput, descriptionError);
+                   descriptionHint.classList.add('show');
+               });
+
+               topicSelect.addEventListener('focus', function() {
+                   clearError(topicSelect, topicError);
+                   topicHint.classList.add('show');
+               });
+
+               capacityInput.addEventListener('focus', function() {
+                   clearError(capacityInput, capacityError);
+                   capacityHint.classList.add('show');
+               });
+
+               deadlineInput.addEventListener('focus', function() {
+                   clearError(deadlineInput, deadlineError);
+                   deadlineHint.classList.add('show');
+               });
+
+               // Input event handlers (clear errors while typing + auto-save + char counter)
+               titleInput.addEventListener('input', function() {
+                   clearError(titleInput, titleError);
+                   updateCharCounter(titleInput, titleCounter, 100);
+                   updateButtonState();
+                   autoSave();
+               });
+
+               descriptionInput.addEventListener('input', function() {
+                   clearError(descriptionInput, descriptionError);
+                   updateCharCounter(descriptionInput, descriptionCounter, 500);
+                   updateButtonState();
+                   autoSave();
+               });
+
+               topicSelect.addEventListener('change', function() {
+                   clearError(topicSelect, topicError);
+                   updateButtonState();
+                   autoSave();
+               });
+
+               capacityInput.addEventListener('input', function() {
+                   clearError(capacityInput, capacityError);
+                   updateButtonState();
+                   autoSave();
+                   
+                   // Update button states
+                   const val = parseInt(this.value) || 3;
+                   capacityMinus.disabled = val <= 3;
+                   capacityPlus.disabled = val >= 20;
+               });
+
+               deadlineInput.addEventListener('input', function() {
+                   clearError(deadlineInput, deadlineError);
+                   updateButtonState();
+                   autoSave();
+               });
+
+               // Load draft on page load
+               loadFormDraft();
+
+               // Defensive click guard
+               createBtn.addEventListener('click', function(e) {
+                   if (this.hasAttribute('disabled')) {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       return false;
+                   }
+               });
+
                newProjectBtn.addEventListener('click', function() {
                    projectForm.classList.toggle('active');
                });
 
                document.getElementById('new-project-form').addEventListener('submit', async function(e) {
                    e.preventDefault();
+
+                   // Final validation check
+                   const titleErr = validateTitle(titleInput.value);
+                   const descriptionErr = validateDescription(descriptionInput.value);
+                   const topicErr = validateTopic(topicSelect.value);
+                   const capacityErr = validateCapacity(capacityInput.value);
+                   const deadlineErr = validateDeadline(deadlineInput.value);
+
+                   // Show all errors and focus first invalid field
+                   let firstInvalid = null;
+                   if (titleErr) {
+                       showError(titleInput, titleError, titleErr);
+                       firstInvalid = firstInvalid || titleInput;
+                   }
+                   if (descriptionErr) {
+                       showError(descriptionInput, descriptionError, descriptionErr);
+                       firstInvalid = firstInvalid || descriptionInput;
+                   }
+                   if (topicErr) {
+                       showError(topicSelect, topicError, topicErr);
+                       firstInvalid = firstInvalid || topicSelect;
+                   }
+                   if (capacityErr) {
+                       showError(capacityInput, capacityError, capacityErr);
+                       firstInvalid = firstInvalid || capacityInput;
+                   }
+                   if (deadlineErr) {
+                       showError(deadlineInput, deadlineError, deadlineErr);
+                       firstInvalid = firstInvalid || deadlineInput;
+                   }
+
+                   // If any validation fails, focus first invalid and block submit
+                   if (firstInvalid) {
+                       firstInvalid.focus();
+                       return;
+                   }
 
                    const projectData = {
                        title: document.getElementById('project-title').value,
@@ -545,6 +1075,23 @@
                                    addProject(newProject);
                                    document.getElementById('new-project-form').reset();
                                    projectForm.classList.remove('active');
+                                   // Clear all validation errors
+                                   clearError(titleInput, titleError);
+                                   clearError(descriptionInput, descriptionError);
+                                   clearError(topicSelect, topicError);
+                                   clearError(capacityInput, capacityError);
+                                   clearError(deadlineInput, deadlineError);
+                                   updateButtonState();
+                                   // Clear localStorage draft
+                                   localStorage.removeItem('projectFormDraft');
+                                   // Reset counters and icons
+                                   updateCharCounter(titleInput, titleCounter, 100);
+                                   updateCharCounter(descriptionInput, descriptionCounter, 500);
+                                   showValidIcon(titleValid, false);
+                                   showValidIcon(descriptionValid, false);
+                                   showValidIcon(topicValid, false);
+                                   showValidIcon(capacityValid, false);
+                                   showValidIcon(deadlineValid, false);
                                    // Stay on page, no redirect
                                } else {
                                    showToast('Payment failed: ' + (paidResult.error || paidResult.message || 'Unknown error'));
@@ -567,6 +1114,23 @@
                            addProject(newProject);
                            document.getElementById('new-project-form').reset();
                            projectForm.classList.remove('active');
+                           // Clear all validation errors
+                           clearError(titleInput, titleError);
+                           clearError(descriptionInput, descriptionError);
+                           clearError(topicSelect, topicError);
+                           clearError(capacityInput, capacityError);
+                           clearError(deadlineInput, deadlineError);
+                           updateButtonState();
+                           // Clear localStorage draft
+                           localStorage.removeItem('projectFormDraft');
+                           // Reset counters and icons
+                           updateCharCounter(titleInput, titleCounter, 100);
+                           updateCharCounter(descriptionInput, descriptionCounter, 500);
+                           showValidIcon(titleValid, false);
+                           showValidIcon(descriptionValid, false);
+                           showValidIcon(topicValid, false);
+                           showValidIcon(capacityValid, false);
+                           showValidIcon(deadlineValid, false);
                            // Stay on page, no redirect
                        } else {
                            showToast('Error creating project: ' + (data.error || data.message || 'Unknown error'));
@@ -663,9 +1227,9 @@
 
     // Removed duplicate handler for createProjectForm — using single handler bound to #new-project-form above
 
-
-
-
+        // ============================================
+        // ESWAR4 - CREATE_PROJ VALIDATION JAVASCRIPT END
+        // ============================================
 
 
 
