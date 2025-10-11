@@ -602,13 +602,25 @@ const upload = multer({ storage: storage });
             res.status(500).json({ success: false, error: 'Failed to delete request' });
         }
     });
-
+   
     app.get("/home", (req, res) => {
         if (!req.session.user || req.session.user.role !== "user") {
             return res.redirect("/login");
         }
         res.render("user-home", { user: req.session.user, homeUrl: navData.homeUrl, navLinks: navData.navLinks });
     });
+ app.get("/home/topics", (req, res) => {
+    const topics = [
+        { name: "Web Development", description: "Learn front-end & back-end development to create responsive and dynamic websites.", joinLink: "/web-dev" },
+        { name: "Cyber Security", description: "Understand ethical hacking, encryption, and security protocols to protect data.", joinLink: "/cyb" },
+        { name: "Robotics", description: "Design, build, and program robots with AI to automate tasks.", joinLink: "/robo" },
+        { name: "Data Science", description: "Analyze big data using Python, R, and SQL for decision-making.", joinLink: "/ds" },
+        { name: "Deep Learning", description: "Understand deep learning and its advanced topics.", joinLink: "/dl" },
+        { name: "Blockchain", description: "Understand decentralized networks, smart contracts, and cryptocurrencies.", joinLink: "/blockchain" }
+    ];
+    res.json(topics);
+});
+
 
     app.get("/recruiter-home", (req, res) => {
         if (!req.session.user || req.session.user.role !== "recruiter") {
