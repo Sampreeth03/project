@@ -1,10 +1,10 @@
-<!-- views/joined_projects.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joined Projects - RELABTeams</title>
+    <!-- ESWAR5 - JOINED_PROJECTS.EJS CANCEL JOIN REQUEST -->
     <style>
         :root {
             --primary-color: #0068FF;
@@ -239,28 +239,65 @@
             color: var(--dark-text);
         }
 
-        .footer {
-            padding: 20px 30px;
-            font-size: 12px;
-            color: var(--medium-text);
-            text-align: center;
-            margin-top: 30px;
-            border-top: 1px solid var(--border-color);
+        /* ESWAR5: Status chip styles for Pending/Approved */
+        .project-status-chip {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
         }
 
+        .project-status-chip.pending {
+            background-color: #ff9800;
+            color: #fff;
+        }
+
+        .project-status-chip.approved {
+            background-color: #4caf50;
+            color: #fff;
+        }
+
+        /* ESWAR5: Cancel Request button styles */
+        .cancel-request-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-request-btn:hover {
+            background-color: #e04848;
+            transform: translateY(-2px);
+        }
+
+        .cancel-request-btn:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ESWAR5: Toast notification styles */
         .toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            padding: 12px 20px;
-            background: var(--primary-color);
-            color: var(--light-text);
+            padding: 15px 20px;
             border-radius: 4px;
+            color: white;
+            font-weight: 500;
             opacity: 0;
             transform: translateY(20px);
-            transition: all 0.3s;
-            z-index: 1000;
-            box-shadow: var(--box-shadow);
+            transition: all 0.3s ease;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .toast.show {
@@ -268,8 +305,37 @@
             transform: translateY(0);
         }
 
+        .toast.success {
+            background-color: #4caf50;
+        }
+
         .toast.error {
-            background: var(--danger-color);
+            background-color: var(--danger-color);
+        }
+
+        /* ESWAR5: Fade out animation for card removal */
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+
+        .project-card.removing {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        .footer {
+            padding: 20px 30px;
+            font-size: 12px;
+            color: var(--medium-text);
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid var(--border-color);
         }
 
         .github-form {
@@ -345,16 +411,35 @@
             <h1>Joined Projects</h1>
         </div>
 
+        <!-- ESWAR5: Empty state when no projects -->
         <% if (!projects || projects.length === 0) { %>
             <div class="empty-state">You have not joined any projects yet.</div>
         <% } else { %>
             <% projects.forEach(project => { %>
-                <div class="project-card" data-project-id="<%= project.id %>">
+                <!-- ESWAR5: Added data-request-id and data-status for cancel functionality -->
+                <div class="project-card" 
+                     data-project-id="<%= project.id %>" 
+                     data-request-id="<%= project.requestId || '' %>"
+                     data-status="<%= project.status || 'approved' %>">
                     <div class="project-title">
-                        <h2><%= project.title %></h2>
+                        <h2>
+                            <%= project.title %>
+                            <!-- ESWAR5: Status chip showing Pending or Approved -->
+                            <% if (project.status === 'pending') { %>
+                                <span class="project-status-chip pending">Pending</span>
+                            <% } else { %>
+                                <span class="project-status-chip approved">Approved</span>
+                            <% } %>
+                        </h2>
                     </div>
                     <div class="project-description">
                         <%= project.description %>
+                        <!-- ESWAR5: Cancel Request button for pending requests -->
+                        <% if (project.status === 'pending' && project.requestId) { %>
+                            <button class="cancel-request-btn" onclick="cancelJoinRequest('<%= project.requestId %>', '<%= project.id %>')">
+                                Cancel Request
+                            </button>
+                        <% } %>
                     </div>
                     <div class="task-list">
                         <% if (!tasks[project.id] || tasks[project.id].length === 0) { %>
@@ -402,6 +487,96 @@
     </footer>
 
     <script>
+        // ESWAR5: Cancel Join Request function with AJAX
+        function cancelJoinRequest(requestId, projectId) {
+            // ESWAR5: Confirm before canceling
+            if (!confirm('Are you sure you want to cancel this join request?')) {
+                return;
+            }
+
+            // ESWAR5: Find the cancel button and disable it
+            const projectCard = document.querySelector(`[data-project-id="${projectId}"]`);
+            const cancelBtn = projectCard.querySelector('.cancel-request-btn');
+            
+            if (cancelBtn) {
+                cancelBtn.disabled = true;
+                cancelBtn.textContent = 'Canceling...';
+            }
+
+            // ESWAR5: AJAX POST request to delete join request
+            fetch('/delete-join-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ requestId: requestId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // ESWAR5: Success - remove the card with animation
+                    projectCard.classList.add('removing');
+                    
+                    // ESWAR5: Show success toast
+                    showToast('Join request canceled successfully', 'success');
+                    
+                    // ESWAR5: Remove card from DOM after animation
+                    setTimeout(() => {
+                        projectCard.remove();
+                        
+                        // ESWAR5: Check if there are no more projects, show empty state
+                        const remainingCards = document.querySelectorAll('.project-card');
+                        if (remainingCards.length === 0) {
+                            const container = document.querySelector('.container');
+                            const header = document.querySelector('.project-header');
+                            const emptyState = document.createElement('div');
+                            emptyState.className = 'empty-state';
+                            emptyState.textContent = 'You have not joined any projects yet.';
+                            container.insertBefore(emptyState, header.nextSibling);
+                        }
+                    }, 300);
+                } else {
+                    // ESWAR5: Error - show error toast and re-enable button
+                    showToast(data.error || 'Failed to cancel join request', 'error');
+                    if (cancelBtn) {
+                        cancelBtn.disabled = false;
+                        cancelBtn.textContent = 'Cancel Request';
+                    }
+                }
+            })
+            .catch(error => {
+                // ESWAR5: Network error - show error toast and re-enable button
+                console.error('Error canceling join request:', error);
+                showToast('An error occurred while canceling the request', 'error');
+                if (cancelBtn) {
+                    cancelBtn.disabled = false;
+                    cancelBtn.textContent = 'Cancel Request';
+                }
+            });
+        }
+
+        // ESWAR5: Toast notification function (non-blocking)
+        function showToast(message, type = 'success') {
+            // ESWAR5: Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // ESWAR5: Show toast with animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // ESWAR5: Hide and remove toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
         function showGitHubForm(taskId) {
             const form = document.getElementById(`github-form-${taskId}`);
             form.style.display = 'block';
@@ -444,18 +619,6 @@
 
         function viewFeedback(feedback) {
             alert('Feedback: ' + feedback);
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => document.body.removeChild(toast), 300);
-            }, 3000);
         }
 
         document.addEventListener('DOMContentLoaded', () => {

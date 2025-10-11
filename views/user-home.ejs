@@ -474,7 +474,7 @@
                 topicDivs.forEach(div => {
                     const name = div.querySelector('.topic-name').textContent.toLowerCase();
                     const desc = div.querySelector('.topic-desc').textContent.toLowerCase();
-                    if (name.includes(query) ) {
+                     if (name.includes(query) || desc.includes(query)) {
                         div.style.display = '';
                     } else {
                         div.style.display = 'none';
