@@ -174,18 +174,6 @@
             color: var(--text-muted);
         }
 
-        /* ESWAR6: Private reply badge */
-        .private-badge {
-            display: inline-block;
-            background-color: #ff9800;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-left: 6px;
-            font-weight: 600;
-        }
-
         .message-text {
             line-height: 1.4;
         }
@@ -378,122 +366,31 @@
             margin-top: 20px;
             font-size: 16px;
         }
-
-        /* ESWAR6: Toast notification styles */
-        .toast {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background-color: #323232;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            z-index: 9999;
-            min-width: 300px;
-            opacity: 0;
-            transform: translateX(400px);
-            transition: all 0.3s ease-in-out;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        .toast.success {
-            background-color: #4CAF50;
-        }
-        .toast.error {
-            background-color: #f44336;
-        }
-        .toast-icon {
-            font-size: 20px;
-        }
-        .toast-message {
-            flex: 1;
-        }
-
-        /* ESWAR6: Reply form styles for inline replies */
-        .reply-form-container {
-            margin-top: 12px;
-            margin-left: 20px;
-            padding: 12px;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            border-left: 3px solid var(--primary);
-        }
-        .reply-form {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .reply-input {
-            flex: 1;
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background-color: #1a1a1a;
-            color: var(--text);
-            font-size: 14px;
-        }
-        .reply-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .reply-submit-btn {
-            padding: 10px 20px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-        .reply-submit-btn:hover {
-            background-color: #0056b3;
-        }
-        .reply-submit-btn:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-        .reply-checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
     </style>
-    <!-- ESWAR6: Font Awesome for toast icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     
-    <header>
-
-           <div class="navbar">
-        <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
-        <ul class="nav-links">
-            <% navLinks.forEach(link => { %>
-                <li>
-                    <a href="<%= link.href %>"><%= link.name %></a>
-                    <% if (link.submenu) { %>
-                        <ul class="dropdown">
-                            <% link.submenu.forEach(sublink => { %>
-                                <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
-                            <% }) %>
-                        </ul>
-                    <% } %>
-                </li>
-            <% }) %>
-        </ul>
-        <input type="text" placeholder="Search" class="search-box" >
-    </div>
-</header>
+        <header>
+            <header>
+                <div class="navbar">
+                    <span class="logo"><a id="logo-link" href="<%= homeUrl %>">RELABTeams</a></span>
+                    <ul class="nav-links">
+                        <% navLinks.forEach(link => { %>
+                            <li>
+                                <a href="<%= link.href %>"><%= link.name %></a>
+                                <% if (link.submenu) { %>
+                                    <ul class="dropdown">
+                                        <% link.submenu.forEach(sublink => { %>
+                                            <li><a href="<%= sublink.href %>"><%= sublink.name %></a></li>
+                                        <% }) %>
+                                    </ul>
+                                <% } %>
+                            </li>
+                        <% }) %>
+                    </ul>
+                    <input type="text" placeholder="Search" class="search-box">
+                </div>
+            </header>
             <div class="chat-area">
                 <div class="chat-header">
                     <h2>Clear Doubts</h2>
@@ -501,11 +398,7 @@
                 <div class="messages-container" id="chat-container">
                     <% if (doubts && doubts.length > 0) { %>
                         <% doubts.forEach((doubt, index) => { %>
-                            <!-- ESWAR6: Each doubt card has data-doubt-id attribute -->
-                            <div class="message" 
-                                 id="doubt-<%= doubt._id %>"
-                                 data-doubt-id="<%= doubt._id %>"
-                                 data-owner-id="<%= doubt.user_id ? doubt.user_id._id : '' %>">
+                            <div class="message" id="doubt-<%= doubt._id %>">
                                 <div class="message-avatar"><%= (doubt.author || "Anonymous").charAt(0) %></div>
                                 <div class="message-content">
                                     <div class="message-header">
@@ -518,10 +411,8 @@
                                             <a href="/<%= doubt.file_path %>" target="_blank">View File</a>
                                         </div>
                                     <% } %>
-                                    
-                                    <!-- ESWAR6: Replies container targetable by doubt id -->
-                                    <% if (doubt.replies && doubt.replies.length > 0) { %>
-                                        <div class="replies-section" data-replies-for="<%= doubt._id %>">
+                                    <div id="reply-container-<%= doubt._id %>">
+                                        <% if (doubt.replies && doubt.replies.length > 0) { %>
                                             <% doubt.replies.forEach(reply => { %>
                                                 <div class="message reply">
                                                     <div class="message-avatar"><%= (reply.author || "Anonymous").charAt(0) %></div>
@@ -529,46 +420,34 @@
                                                         <div class="message-header">
                                                             <span class="message-author"><%= reply.author || "Anonymous" %></span>
                                                             <span class="message-time"><%= new Date(reply.timestamp).toLocaleTimeString() %></span>
-                                                            <!-- ESWAR6: Show private badge if reply is private -->
-                                                            <% if (reply.isPrivate) { %>
-                                                                <span class="private-badge">🔒 PRIVATE</span>
-                                                            <% } %>
                                                         </div>
                                                         <div class="message-text"><%= reply.text %></div>
                                                     </div>
                                                 </div>
                                             <% }) %>
-                                        </div>
-                                    <% } else { %>
-                                        <!-- ESWAR6: Empty replies container for dynamic insertion -->
-                                        <div class="replies-section" data-replies-for="<%= doubt._id %>"></div>
-                                    <% } %>
-
-                                    <!-- ESWAR6: Inline reply form for each doubt -->
-                                    <% 
-                                        const isOwner = doubt.user_id && doubt.user_id._id && doubt.user_id._id.toString() === user.id;
-                                        let otherReplyExists = false;
-                                        if (isOwner && doubt.replies && doubt.replies.length > 0) {
-                                            otherReplyExists = doubt.replies.some(r => r.user_id && r.user_id._id && r.user_id._id.toString() !== doubt.user_id._id.toString());
-                                        }
-                                        const canReply = user.role === 'user' && (!isOwner || otherReplyExists);
-                                    %>
-                                    <% if (canReply) { %>
-                                        <div class="reply-form-container">
-                                            <form class="reply-form" data-doubt-id="<%= doubt._id %>">
-                                                <input type="text" 
-                                                       class="reply-input" 
-                                                       name="text" 
-                                                       placeholder="Reply to this doubt..." 
-                                                       required>
-                                                <label class="reply-checkbox-container">
-                                                    <input type="checkbox" name="isPrivate">
-                                                    <span>Private</span>
-                                                </label>
-                                                <button type="submit" class="reply-submit-btn">Reply</button>
-                                            </form>
-                                        </div>
-                                    <% } %>
+                                        <% } %>
+                                    </div>
+                                                                        <% 
+                                                                            const isOwner = doubt.user_id && doubt.user_id._id && doubt.user_id._id.toString() === user.id;
+                                                                            let otherReplyExists = false;
+                                                                            if (isOwner && doubt.replies && doubt.replies.length > 0) {
+                                                                                otherReplyExists = doubt.replies.some(r => r.user_id && r.user_id._id && r.user_id._id.toString() !== doubt.user_id._id.toString());
+                                                                            }
+                                                                            const canShowReplyButton = user.role === 'user' && (!isOwner || otherReplyExists);
+                                                                        %>
+                                                                        <% if (canShowReplyButton) { %>
+                                                                            <button class="reply-btn" onclick="showReplyBox('<%= doubt._id %>')" id="reply-btn-<%= doubt._id %>">Reply</button>
+                                                                            <div id="reply-input-container-<%= doubt._id %>" style="display:none;">
+                                                                                    <div class="messageBox">
+                                                                                            <input class="messageInput" id="messageInput-<%= doubt._id %>" type="text" placeholder="Your reply..." required onkeypress="handleReply(event, '<%= doubt._id %>')" />
+                                                                                            <button class="sendButton" onclick="sendReply('<%= doubt._id %>')">
+                                                                                                    <svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                                                            <path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="#6c6c6c" stroke-width="33.67" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                                                    </svg>
+                                                                                            </button>
+                                                                                    </div>
+                                                                            </div>
+                                                                        <% } %>
                                 </div>
                             </div>
                         <% }) %>
@@ -576,164 +455,168 @@
                         <div class="no-doubts">No doubts found. Be the first to ask a question!</div>
                     <% } %>
                 </div>
-            </div>
-            <script>
-                // ESWAR6: Inline Reply via XHR (JSON) - Document-level delegated submit handling
-                const CURRENT_USER_ID = "<%= user.id %>";
 
-                // ESWAR6: Toast notification system
-                function showToast(message, type = 'success') {
-                    // Remove any existing toasts
-                    const existingToast = document.querySelector('.toast');
-                    if (existingToast) {
-                        existingToast.remove();
-                    }
-
-                    // Create new toast
-                    const toast = document.createElement('div');
-                    toast.className = `toast ${type}`;
-                    toast.innerHTML = `
-                        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} toast-icon"></i>
-                        <div class="toast-message">${message}</div>
-                    `;
-                    document.body.appendChild(toast);
-
-                    // Trigger animation
-                    setTimeout(() => toast.classList.add('show'), 10);
-
-                    // Auto-remove after 4 seconds
-                    setTimeout(() => {
-                        toast.classList.remove('show');
-                        setTimeout(() => toast.remove(), 300);
-                    }, 4000);
-                }
-
-                // ESWAR6: Format timestamp for new replies
-                function formatTimestamp(date) {
-                    const now = new Date();
-                    const diff = Math.floor((now - date) / 1000); // seconds
-
-                    if (diff < 60) return 'just now';
-                    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-                    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-                    
-                    // Format as readable time
-                    return new Date(date).toLocaleTimeString();
-                }
-
-                // ESWAR6: Append new reply to the DOM
-                function appendReplyToDOM(doubtId, replyData) {
-                    const repliesContainer = document.querySelector(`.replies-section[data-replies-for="${doubtId}"]`);
-                    if (!repliesContainer) return;
-
-                    // ESWAR6: Add private badge if reply is private
-                    const privateBadge = replyData.visible_to_all === false 
-                        ? '<span class="private-badge">🔒 PRIVATE</span>' 
-                        : '';
-
-                    const replyHTML = `
-                        <div class="message reply">
-                            <div class="message-avatar">${replyData.author.charAt(0)}</div>
-                            <div class="message-content">
-                                <div class="message-header">
-                                    <span class="message-author">${replyData.author}</span>
-                                    <span class="message-time">${formatTimestamp(new Date(replyData.timestamp))}</span>
-                                    ${privateBadge}
-                                </div>
-                                <div class="message-text">${replyData.text}</div>
+                <!-- Ask doubt form (uses XHR + FormData) -->
+                <div style="padding:16px; border-top:1px solid var(--border);">
+                    <form id="ask-doubt-form" enctype="multipart/form-data">
+                        <div class="messageBox" style="align-items:center;">
+                            <div class="fileUploadWrapper">
+                                <label for="file-input">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 16v4H8v-4" stroke="#9AA1A6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <span class="tooltip">Attach a file (optional)</span>
+                                </label>
+                                <input class="fileInput" id="file-input" name="file-input" type="file" />
                             </div>
+                            <input class="messageInput" name="message" id="ask-message" type="text" placeholder="Ask your doubt here..." required />
+                            <button type="submit" class="sendButton" id="ask-submit">
+                                <svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="#6c6c6c" stroke-width="33.67" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                            </button>
                         </div>
-                    `;
+                    </form>
+                </div>
 
-                    repliesContainer.insertAdjacentHTML('beforeend', replyHTML);
-                }
+                <div id="toast" style="position:fixed;right:20px;bottom:20px;z-index:2000;display:none;padding:10px 14px;border-radius:6px;color:#fff;"></div>
 
-                // ESWAR6: Delegated submit handler for all reply forms
-                document.addEventListener('submit', function(e) {
-                    // Check if the submitted form is a reply form
-                    if (!e.target.classList.contains('reply-form')) {
+            </div>
+        </div>
+    </header>
+
+    <script>
+        // Utility to show non-blocking toasts
+        function showToast(message, opts) {
+            opts = opts || {};
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.style.display = 'block';
+            toast.style.background = opts.error ? 'rgba(220,53,69,0.95)' : 'rgba(40,167,69,0.95)';
+            toast.textContent = message;
+            if (opts.timeout === 0) return; // leave visible
+            setTimeout(() => { toast.style.display = 'none'; }, opts.timeout || 3000);
+        }
+
+        // Ask-doubt form XHR + FormData
+        (function () {
+            const form = document.getElementById('ask-doubt-form');
+            if (!form) return;
+            const doubtsContainer = document.getElementById('chat-container');
+            const submitBtn = document.getElementById('ask-submit');
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (submitBtn) submitBtn.disabled = true;
+
+                const formData = new FormData(form); // message and file-input
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/ask');
+                xhr.responseType = 'json';
+                xhr.timeout = 15000;
+
+                xhr.onload = function () {
+                    if (submitBtn) submitBtn.disabled = false;
+                    const res = xhr.response;
+                    if (!res) {
+                        showToast('Invalid server response', { error: true });
                         return;
                     }
-
-                    e.preventDefault();
-                    const form = e.target;
-                    
-                    // ESWAR6: Collect data from form
-                    const doubtId = form.getAttribute('data-doubt-id');
-                    const textInput = form.querySelector('input[name="text"]');
-                    const isPrivateCheckbox = form.querySelector('input[name="isPrivate"]');
-                    const submitBtn = form.querySelector('.reply-submit-btn');
-                    
-                    const text = textInput.value.trim();
-                    const isPrivate = isPrivateCheckbox ? isPrivateCheckbox.checked : false;
-
-                    if (!text) {
-                        showToast('Please enter a reply message', 'error');
-                        return;
-                    }
-
-                    // ESWAR6: Disable submit button during request
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Sending...';
-
-                    // ESWAR6: Create XMLHttpRequest for JSON submission
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/reply', true);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    xhr.responseType = 'json';
-
-                    // ESWAR6: Handle successful response
-                    xhr.onload = function() {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Reply';
-
-                        if (xhr.status === 200 && xhr.response) {
-                            const data = xhr.response;
-                            
-                            if (data.success) {
-                                // ESWAR6: Append new reply to DOM
-                                appendReplyToDOM(doubtId, data.reply);
-                                
-                                // Clear input
-                                textInput.value = '';
-                                if (isPrivateCheckbox) isPrivateCheckbox.checked = false;
-                                
-                                // Show success toast
-                                showToast('Reply posted successfully!', 'success');
-                            } else {
-                                // ESWAR6: Show server error message (including the "Wait for another user" rule)
-                                showToast(data.message || 'Failed to post reply', 'error');
-                            }
-                        } else {
-                            showToast('Server error. Please try again.', 'error');
+                    if (res.success) {
+                        const doubt = res.doubt;
+                        const card = document.createElement('div');
+                        card.className = 'message';
+                        card.id = `doubt-${doubt._id}`;
+                        const avatarLetter = (doubt.author || 'Anonymous').charAt(0);
+                        const timeString = new Date(doubt.timestamp).toLocaleTimeString();
+                        card.innerHTML = `\n                            <div class="message-avatar">${avatarLetter}</div>\n                            <div class="message-content">\n                                <div class="message-header">\n                                    <span class="message-author">${escapeHtml(doubt.author || 'Anonymous')}</span>\n                                    <span class="message-time">${timeString}</span>\n                                </div>\n                                <div class="message-text">${escapeHtml(doubt.text)}</div>\n                            </div>\n                        `;
+                        if (doubtsContainer && doubtsContainer.firstChild) {
+                            doubtsContainer.insertBefore(card, doubtsContainer.firstChild);
+                        } else if (doubtsContainer) {
+                            doubtsContainer.appendChild(card);
                         }
-                    };
+                        form.reset();
+                        showToast(res.message || 'Doubt posted', { error: false });
+                    } else {
+                        showToast(res.message || 'Failed to post doubt', { error: true });
+                        // keep inputs
+                    }
+                };
 
-                    // ESWAR6: Handle network errors
-                    xhr.onerror = function() {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Reply';
-                        showToast('Network error. Please check your connection.', 'error');
-                    };
+                xhr.onerror = function () {
+                    if (submitBtn) submitBtn.disabled = false;
+                    showToast('Network error while posting doubt', { error: true });
+                };
 
-                    // ESWAR6: Handle timeout
-                    xhr.ontimeout = function() {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Reply';
-                        showToast('Request timed out. Please try again.', 'error');
-                    };
+                xhr.ontimeout = function () {
+                    if (submitBtn) submitBtn.disabled = false;
+                    showToast('Request timed out while posting doubt', { error: true });
+                };
 
-                    xhr.timeout = 10000; // 10 second timeout
+                xhr.send(formData);
+            });
+        })();
 
-                    // ESWAR6: Send JSON payload
-                    const payload = JSON.stringify({
-                        doubtId: doubtId,
-                        text: text,
-                        isPrivate: isPrivate
-                    });
+        // Simple escaping to avoid inserting raw HTML from server into DOM
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
-                    xhr.send(payload);
+        // Reply handlers (kept and made non-blocking)
+        function showReplyBox(doubtId) {
+            const inputContainer = document.getElementById(`reply-input-container-${doubtId}`);
+            if (!inputContainer) return;
+            inputContainer.style.display = "block";
+            const input = document.getElementById(`messageInput-${doubtId}`);
+            if (input) input.focus();
+        }
+
+        function handleReply(event, doubtId) {
+            if (event.key === "Enter") {
+                sendReply(doubtId);
+            }
+        }
+
+        function sendReply(doubtId) {
+            const inputBox = document.getElementById(`messageInput-${doubtId}`);
+            if (!inputBox) return;
+            const replyText = inputBox.value.trim();
+
+            if (replyText) {
+                fetch('/reply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ doubtId, text: replyText })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const replyContainer = document.getElementById(`reply-container-${doubtId}`);
+                        const replyDiv = document.createElement("div");
+                        replyDiv.classList.add("message", "reply");
+                        replyDiv.innerHTML = `\n                            <div class="message-avatar">${escapeHtml((data.reply.author||'Anonymous').charAt(0))}</div>\n                            <div class="message-content">\n                                <div class="message-header">\n                                    <span class="message-author">${escapeHtml(data.reply.author||'Anonymous')}</span>\n                                    <span class="message-time">${new Date(data.reply.timestamp).toLocaleTimeString()}</span>\n                                </div>\n                                <div class="message-text">${escapeHtml(data.reply.text)}</div>\n                            </div>\n                        `;
+                        if (replyContainer) replyContainer.appendChild(replyDiv);
+                        inputBox.value = "";
+                        const cont = document.getElementById(`reply-input-container-${doubtId}`);
+                        if (cont) cont.style.display = "none";
+                        const btn = document.getElementById(`reply-btn-${doubtId}`);
+                        if (btn) btn.style.display = "none";
+                        showToast('Reply posted', { error: false });
+                    } else {
+                        showToast(data.message || 'Failed to send reply', { error: true });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error sending reply:", error);
+                    showToast('Network error while sending reply', { error: true });
                 });
-            </script>
-    </body>
+            }
+        }
+    </script>
+</body>
 </html>
