@@ -96,6 +96,17 @@
       font-size: 12px;
       color: var(--text-muted);
     }
+    /* ESWAR6: Private reply badge */
+    .private-badge {
+      display: inline-block;
+      background-color: #ff9800;
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+      font-weight: 600;
+    }
     .message-text {
       line-height: 1.4;
     }
@@ -258,10 +269,7 @@
     <div class="messages-container" id="messages">
       <% if ((doubts || []).length > 0) { %>
       <% doubts.forEach(doubt => { %>
-        <div class="message" 
-           data-doubt-id="<%= doubt._id %>"
-           data-owner-id="<%= doubt.user_id ? doubt.user_id._id : '' %>"
-           data-has-other-reply="<%= (doubt.replies || []).some(r => r.user_id && r.user_id._id && doubt.user_id && r.user_id._id.toString() !== doubt.user_id._id.toString()) %>">
+        <div class="message">
                   <div class="message-avatar"><%= (doubt.author || "Anonymous").charAt(0) %></div>
                   <div class="message-content">
                       <div class="message-header">
@@ -283,6 +291,10 @@
                                           <div class="reply-header">
                                               <span class="reply-author"><%= reply.author || "Unknown" %></span>
                                               <span class="message-time"><%= reply.timestamp %></span>
+                                              <!-- ESWAR6: Show private badge if reply is private -->
+                                              <% if (reply.isPrivate) { %>
+                                                  <span class="private-badge">🔒 PRIVATE</span>
+                                              <% } %>
                                           </div>
                                           <div class="reply-text"><%= reply.text %></div>
                                       </div>
@@ -298,8 +310,7 @@
       <% } %>
     </div>
     <div class="message-input-container">
-      <form class="message-input-form" id="main-reply-form">
-          <input type="hidden" id="current-doubt-id" name="doubtId" value="">
+      <form class="message-input-form" id="main-doubt-form" enctype="multipart/form-data">
           <label class="file-label" for="file-input">
               <i class="fas fa-paperclip"></i> Attach File
           </label>
@@ -313,95 +324,51 @@
   </div>
 
 <script>
-// Set up click handlers for messages to select which doubt to reply to
-document.addEventListener('DOMContentLoaded', function() {
-  const CURRENT_USER_ID = "<%= user.id %>";
-  const messages = document.querySelectorAll('.message');
-  const doubtIdInput = document.getElementById('current-doubt-id');
-  const messageInput = document.querySelector('.message-input');
+// Handle doubt posting via AJAX to avoid showing JSON response
+document.getElementById('main-doubt-form').addEventListener('submit', function(e) {
+    e.preventDefault();
     
-  messages.forEach(message => {
-    message.addEventListener('click', function() {
-      const doubtId = this.getAttribute('data-doubt-id');
-      const ownerId = this.getAttribute('data-owner-id');
-      const hasOtherReply = this.getAttribute('data-has-other-reply') === 'true';
-      if (ownerId && ownerId === CURRENT_USER_ID && !hasOtherReply) {
-        doubtIdInput.value = '';
-        messageInput.placeholder = 'Ask your doubt here...';
-        alert('Wait for another user to reply before you add a follow-up.');
-        return;
-      }
-      doubtIdInput.value = doubtId;
-      messageInput.placeholder = `Replying to doubt ${doubtId.substring(0, 6)}...`;
-      messageInput.focus();
-    });
-  });
-    
-    // Handle form submission
-    const form = document.getElementById('main-reply-form');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const doubtId = doubtIdInput.value;
-        const message = messageInput.value;
-        const fileInput = document.getElementById('file-input');
-        const formData = new FormData();
-
-        if (!doubtId) {
-            // If no doubt selected, post as new doubt
-            formData.append('message', message);
-            if (fileInput.files.length > 0) {
-                formData.append('file-input', fileInput.files[0]);
-            }
-            fetch('/ask', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = '/doubt'; // Redirect to refresh doubts
-                } else {
-                    alert(data.message || 'Failed to post doubt');
-                }
-            })
-            .catch(error => {
-                console.error('Error posting doubt:', error);
-                alert('An error occurred while posting your doubt');
-            });
-            return;
-        }
-        
-        // If doubt selected, post as reply
-        fetch('/reply', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                doubtId: doubtId,
-                text: message
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message || 'Failed to post reply');
-            }
-        })
-        .catch(error => {
-            console.error('Error posting reply:', error);
-            alert('An error occurred while posting your reply');
-        });
-    });
-    
-    // Handle file input for new doubts
+    const formData = new FormData();
+    const messageInput = this.querySelector('input[name="message"]');
     const fileInput = document.getElementById('file-input');
-    fileInput.addEventListener('change', function() {
-        doubtIdInput.value = '';
-        messageInput.placeholder = 'Ask your doubt here...';
+    
+    const message = messageInput.value.trim();
+    
+    if (!message) {
+        alert('Please enter your doubt');
+        return;
+    }
+    
+    formData.append('message', message);
+    if (fileInput.files.length > 0) {
+        formData.append('file-input', fileInput.files[0]);
+    }
+    
+    // Disable submit button during request
+    const submitBtn = this.querySelector('.send-button');
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.5';
+    
+    fetch('/ask', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Redirect to doubt page to see the new doubt
+            window.location.href = '/doubt';
+        } else {
+            alert(data.message || 'Failed to post doubt');
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+        }
+    })
+    .catch(error => {
+        console.error('Error posting doubt:', error);
+        alert('An error occurred while posting your doubt');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
     });
 });
 </script>

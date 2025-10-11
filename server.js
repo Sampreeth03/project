@@ -572,17 +572,29 @@ const upload = multer({ storage: storage });
         }
     });
 
+    // ESWAR5: Modified to allow both creator and requester to delete join requests
     app.post('/delete-join-request', async (req, res) => {
         const { requestId } = req.body;
-        const creatorId = req.session.user.id;
+        const userId = req.session.user.id;
 
         try {
+            // ESWAR5: Find the request
             const request = await JoinRequest.findOne({ _id: requestId })
-                .populate({ path: 'project_id', match: { user_id: creatorId } });
-            if (!request || !request.project_id) {
-                return res.status(403).json({ success: false, error: 'Unauthorized or request not found' });
+                .populate('project_id');
+            
+            if (!request) {
+                return res.status(404).json({ success: false, error: 'Request not found' });
             }
 
+            // ESWAR5: Check if user is either the project creator OR the user who made the request
+            const isCreator = request.project_id && request.project_id.user_id.toString() === userId;
+            const isRequester = request.user_id.toString() === userId;
+
+            if (!isCreator && !isRequester) {
+                return res.status(403).json({ success: false, error: 'Unauthorized to delete this request' });
+            }
+
+            // ESWAR5: Delete the join request
             await JoinRequest.deleteOne({ _id: requestId });
             res.json({ success: true });
         } catch (err) {
@@ -1768,12 +1780,15 @@ app.get('/stud', async (req, res) => {
         }
     });
 
+    // ESWAR6: Fixed private reply visibility logic
     app.get("/clear", async (req, res) => {
         if (!req.session.user) {
             return res.redirect("/login");
         }
         
         try {
+            const currentUserId = req.session.user.id;
+            
             const doubts = await Doubt.find({ 
                 visible_to_all: true 
             })
@@ -1788,14 +1803,33 @@ app.get('/stud', async (req, res) => {
             .sort({ timestamp: -1 })
             .lean();
 
-            const formattedDoubts = doubts.map(doubt => ({
-                ...doubt,
-                author: doubt.user_id?.name || "Anonymous",
-                replies: doubt.replies?.map(reply => ({
+            // ESWAR6: Filter replies based on visibility rules
+            const formattedDoubts = doubts.map(doubt => {
+                const doubtOwnerId = doubt.user_id?._id?.toString();
+                
+                // Filter replies: show public OR (private AND (user is doubt owner OR reply author))
+                const visibleReplies = doubt.replies?.filter(reply => {
+                    const replyAuthorId = reply.user_id?._id?.toString();
+                    
+                    // If reply is public, everyone can see it
+                    if (reply.visible_to_all !== false) {
+                        return true;
+                    }
+                    
+                    // If reply is private, only doubt owner or reply author can see it
+                    return currentUserId === doubtOwnerId || currentUserId === replyAuthorId;
+                }).map(reply => ({
                     ...reply,
-                    author: reply.user_id?.name || reply.author || "Anonymous"
-                })) || []
-            }));
+                    author: reply.user_id?.name || reply.author || "Anonymous",
+                    isPrivate: reply.visible_to_all === false // ESWAR6: Add flag for UI
+                })) || [];
+
+                return {
+                    ...doubt,
+                    author: doubt.user_id?.name || "Anonymous",
+                    replies: visibleReplies
+                };
+            });
 
             res.render("clear", {
                 user: req.session.user,
@@ -1947,7 +1981,7 @@ app.get('/stud', async (req, res) => {
         const userId = req.session.user.id;
 
         try {
-            // Fetch projects that the user has joined
+            // ESWAR5: Fetch projects that the user has joined (approved members)
             const userObjectId = new mongoose.Types.ObjectId(userId);
             const projects = await Project.aggregate([
                 {
@@ -1975,7 +2009,13 @@ app.get('/stud', async (req, res) => {
                 }
             ]);
 
-            // Fetch tasks for all joined projects
+            // ESWAR5: Fetch pending join requests for this user
+            const pendingRequests = await JoinRequest.find({
+                user_id: userId,
+                status: 'pending'
+            }).populate('project_id').lean();
+
+            // ESWAR5: Fetch tasks for all joined projects
             const projectIds = projects.map(project => project._id);
             const tasks = await Task.find({
                 project_id: { $in: projectIds },
@@ -2000,17 +2040,34 @@ app.get('/stud', async (req, res) => {
                 });
             });
 
-            // Format projects for the template
+            // ESWAR5: Format approved projects
             const formattedProjects = projects.map(project => ({
                 id: project._id,
                 title: project.title,
                 description: project.description,
-                member_count: project.member_count
+                member_count: project.member_count,
+                status: 'approved',
+                requestId: null
             }));
+
+            // ESWAR5: Add pending requests as projects with status 'pending'
+            const pendingProjects = pendingRequests
+                .filter(req => req.project_id) // Only include if project exists
+                .map(request => ({
+                    id: request.project_id._id,
+                    title: request.project_id.title,
+                    description: request.project_id.description,
+                    member_count: 0,
+                    status: 'pending',
+                    requestId: request._id.toString()
+                }));
+
+            // ESWAR5: Combine approved and pending projects
+            const allProjects = [...formattedProjects, ...pendingProjects];
 
             res.render('joined_projects', {
                 user: req.session.user,
-                projects: formattedProjects,
+                projects: allProjects,
                 tasks: tasksByProject,
                 navLinks: getNavLinks(req.session.user),
                 homeUrl: '/dashboard'
@@ -2649,21 +2706,18 @@ app.get('/stud', async (req, res) => {
         }
     });
 
+    // ESWAR6: Fixed private reply visibility logic for doubt page
     app.get("/doubt", async (req, res) => {
         if (!req.session.user) {
             return res.redirect("/login");
         }
 
         try {
+            const currentUserId = req.session.user.id;
+            
             const doubts = await Doubt.find({ visible_to_all: true })
                 .populate({
                     path: 'replies',
-                    match: { 
-                        $or: [
-                            { visible_to_all: true },
-                            { user_id: req.session.user.id }
-                        ]
-                    },
                     populate: {
                         path: 'user_id',
                         select: 'name'
@@ -2673,28 +2727,36 @@ app.get('/stud', async (req, res) => {
                 .sort({ timestamp: -1 })
                 .lean();
 
-            console.log("Raw doubts from DB:", doubts);
-
+            // ESWAR6: Filter replies based on visibility rules
             const formattedDoubts = doubts.map(doubt => {
-                const isOriginalPoster = doubt.user_id?._id.toString() === req.session.user.id;
-                const filteredReplies = doubt.replies?.filter(reply => 
-                    isOriginalPoster || reply.visible_to_all
-                ) || [];
-
-                console.log("Formatted doubt:", { ...doubt, replies: filteredReplies });
+                const doubtOwnerId = doubt.user_id?._id?.toString();
+                
+                // Filter replies: show public OR (private AND (user is doubt owner OR reply author))
+                const visibleReplies = doubt.replies?.filter(reply => {
+                    const replyAuthorId = reply.user_id?._id?.toString();
+                    
+                    // If reply is public, everyone can see it
+                    if (reply.visible_to_all !== false) {
+                        return true;
+                    }
+                    
+                    // If reply is private, only doubt owner or reply author can see it
+                    return currentUserId === doubtOwnerId || currentUserId === replyAuthorId;
+                }).map(reply => ({
+                    ...reply,
+                    author: reply.user_id?.name || reply.author || "Anonymous",
+                    timestamp: new Date(reply.timestamp).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    isPrivate: reply.visible_to_all === false // ESWAR6: Add flag for UI
+                })) || [];
 
                 return {
                     ...doubt,
                     author: doubt.user_id?.name || "Anonymous",
-                    replies: filteredReplies.map(reply => ({
-                        ...reply,
-                        author: reply.user_id?.name || reply.author || "Anonymous",
-                        timestamp: new Date(reply.timestamp).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
-                        })
-                    })),
+                    replies: visibleReplies,
                     timestamp: new Date(doubt.timestamp).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
