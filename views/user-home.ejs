@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/home.css">
+    <!-- Font Awesome for social icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <title>RelabTeams - User Homepage</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,82 +17,85 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tenorite', sans-serif; }
         body { background-color: #121212; color: white; padding-top: 70px; }
         
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: black;
-    padding: 15px 5%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 1000;
-}
-
-.nav-links {
-    display: flex;
-    gap: 38px;
-}
-
-.nav-links li {
-    position: relative;
-}
-
-.nav-links li a {
-    color: white;
-    text-decoration: none;
-    font-size: 20px;
-    transition: color 0.3s ease;
-    padding: 10px;
-    display: block;
-}
-
-.nav-links li a:hover {
-    color: #0068FF;
-}
-.logo { font-size: 30px; color: #0068FF; font-weight: bold; margin-right: 30px; }
-#logo-link { text-decoration: none; color: #0068FF; }
-
-.dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: black;
-    min-width: 200px; /* Increased width for better visibility */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    z-index: 1001; /* Higher than navbar */
-    border-radius: 5px;
-}
-
-.dropdown li {
-    width: 100%;
-}
-
-.dropdown li a {
-    padding: 12px 15px;
-    font-size: 18px;
-    display: block;
-    color: white;
-    white-space: nowrap;
-}
-
-.dropdown li a:hover {
-    background-color: #333;
-    color: #0068FF;
-}
-
-/* Show dropdown on hover of parent li */
-.nav-links li:hover > .dropdown {
-    display: block;
-}
-
-/* Ensure navbar has enough space */
-.navbar {
-    min-height: 60px;
-}
+        .navbar { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 60px; 
+            background-color: black; 
+            padding: 15px 5%; 
+            display: flex; 
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+        .logo { 
+            font-size: 30px; 
+            color: #0068FF; 
+            font-weight: bold; 
+            margin-right: 30px; 
+        }
+        #logo-link { 
+            text-decoration: none; 
+            color: #0068FF; 
+        }
+        .nav-links { 
+            list-style: none; 
+            display: flex; 
+            gap: 38px; 
+            position: relative; 
+        }
+        .nav-links li { 
+            position: relative; 
+        }
+        .nav-links li a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 20px; 
+            transition: color 0.3s ease; 
+            padding: 9px; 
+            display: block; 
+        }
+        .nav-links li a:hover { 
+            color: #0068FF; 
+        }
+        .dropdown { 
+            display: none; 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            background-color: black; 
+            min-width: max-content; 
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); 
+            z-index: 1000; 
+        }
+        .dropdown li { 
+            width: 100%; 
+        }
+        .dropdown li a { 
+            padding: 12px; 
+            font-size: 18px; 
+            display: block; 
+            color: white; 
+            white-space: nowrap; 
+        }
+        .dropdown li a:hover { 
+            background-color: #333; 
+            color: #0068FF; 
+        }
+        .nav-links li:hover .dropdown { 
+            display: block; 
+        }
+        .search-box { 
+            padding: 8px; 
+            border-radius: 5px; 
+            border: none; 
+            outline: none; 
+            width: 205px; 
+            background-color: #222; 
+            color: white; 
+        }
         .welcome-section { 
             position: relative; 
             padding: 200px; 
@@ -270,6 +275,32 @@
         footer a { color: white; margin: 0 10px; text-decoration: none; }
         @media (max-width: 1024px) { .topics { grid-template-columns: 1fr 1fr; } .feature-box { flex: 1 1 calc(50% - 20px); } }
         @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .nav-links { flex-direction: column; gap: 10px; } .topics { grid-template-columns: 1fr; } .features-container { flex-direction: column; align-items: center; } .feature-box { flex: 1 1 100%; } }
+        /* Footer styles */
+        .site-footer {
+            background: linear-gradient(180deg, #0b0b0c 0%, #0a0a0a 100%);
+            color: #d1d5db;
+            padding: 48px 5%;
+            margin-top: 60px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .site-footer .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: start;
+        }
+    .site-footer h4 { color: #fff; margin-bottom: 14px; }
+    .site-footer p, .site-footer a { color: #9ca3af; font-size: 14px; text-decoration: none; display:block; margin-bottom: 10px; line-height: 1.6; }
+    .footer-social { display: flex; gap: 12px; margin-top: 12px; }
+    /* center icons specifically under the Follow us heading */
+    .footer-social-col .footer-social { justify-content: center; }
+    .footer-social a { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; background: rgba(255,255,255,0.03); color:#fff; transition: background 160ms ease, transform 160ms ease; }
+    .footer-social a:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+    .site-footer .footer-bottom { margin-top: 32px; text-align: center; color: #6b7280; font-size: 13px; }
+    @media (max-width: 992px) { .site-footer .footer-grid { grid-template-columns: repeat(2, 1fr); text-align: left; } .footer-social-col .footer-social { justify-content: flex-start; } }
+        @media (max-width: 768px) { .site-footer .footer-grid { grid-template-columns: 1fr; text-align: center; } .footer-social { justify-content: center; } }
     </style>
 </head>
 <body>
@@ -291,7 +322,7 @@
                 </li>
             <% }) %>
         </ul>
-        <input type="text" placeholder="Search topics..." class="search-box" id="topicSearchBar">
+        <input type="text" placeholder="Search" class="search-box" id="topicSearchBar">
     </div>
 </header>
     
@@ -364,11 +395,34 @@
     </div>
 
     <!-- Footer -->
-    <footer>
-        <p>Follow us on:</p>
-        <a href="https://linkedin.com">LinkedIn</a>
-        <a href="https://instagram.com">Instagram</a>
-        <a href="https://youtube.com">YouTube</a>
+    <footer class="site-footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>RELABTeams</h4>
+                <p>Building collaborative student projects, helping students find teammates, and connecting talent with recruiters.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Explore</h4>
+                <p><a href="/projects">Projects</a></p>
+                <p><a href="/groups">Groups</a></p>
+                <p><a href="/faq">Help / FAQ</a></p>
+            </div>
+            <div class="footer-col">
+                <h4>Followers</h4>
+                <p><a href="https://linkedin.com">LinkedIn</a></p>
+                <p><a href="https://instagram.com">Instagram</a></p>
+                <p><a href="https://youtube.com">YouTube</a></p>
+            </div>
+            <div class="footer-col footer-social-col">
+                <h4>Quick follow links</h4>
+                <div class="footer-social">
+                    <a href="https://linkedin.com" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://instagram.com" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://youtube.com" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; <%= new Date().getFullYear() %> RELABTeams. All rights reserved.</div>
     </footer>
 
     <script>
