@@ -361,80 +361,80 @@
 </table>
         </div>
     </div>
-
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    // Store initial data from server
-    const recruiters = <%- JSON.stringify(recruitersData) %>;
-
-    console.log('Recruiters data:', recruiters); // Debug log to check received data
-
-    // DOM elements
+document.addEventListener('DOMContentLoaded', function() {
     const recruitersTableBody = document.getElementById('recruitersTableBody');
     const searchInput = document.getElementById('searchRecruiter');
+    let recruiters = [];
 
-    // Load recruiters data
+    // Fetch recruiters from /admin-rec/data
+    function fetchRecruiters() {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "/admin-rec/data", true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                recruiters = data.recruiters || [];
+                loadRecruiters();
+            } else {
+                console.error("Failed to fetch recruiters data:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function() {
+            console.error("Network error while fetching recruiters data");
+        };
+        xhr.send();
+    }
+
+    // Render table rows
     function loadRecruiters(searchTerm = '') {
         recruitersTableBody.innerHTML = '';
-        
-        let filteredRecruiters = recruiters;
-        
+
+        let filtered = recruiters;
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
-            filteredRecruiters = recruiters.filter(recruiter => 
-                (recruiter.name && recruiter.name.toLowerCase().includes(term)) || 
-                (recruiter.email && recruiter.email.toLowerCase().includes(term)) || 
-                (recruiter.company && recruiter.company.toLowerCase().includes(term))
+            filtered = recruiters.filter(r =>
+                (r.name && r.name.toLowerCase().includes(term)) ||
+                (r.email && r.email.toLowerCase().includes(term)) ||
+                (r.company && r.company.toLowerCase().includes(term))
             );
         }
-        
-        filteredRecruiters.forEach(recruiter => {
-            const row = document.createElement('tr');
-            
-            // Handle joinDate safely
-            const joinDate = recruiter.joinedDate && !isNaN(new Date(recruiter.joinedDate).getTime())
-                ? new Date(recruiter.joinedDate)
+
+        filtered.forEach(r => {
+            const joinDate = r.joinedDate && !isNaN(new Date(r.joinedDate).getTime())
+                ? new Date(r.joinedDate)
                 : new Date();
-            const formattedDate = joinDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-            
-            const companyInitial = recruiter.company && recruiter.company.length > 0 
-                ? recruiter.company.charAt(0) 
-                : 'N/A';
-            
+            const formattedDate = joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+            const companyInitial = r.company && r.company.length > 0 ? r.company.charAt(0) : 'N/A';
+
+            const row = document.createElement('tr');
             row.innerHTML = `
                 <td>
                     <div class="recruiter-info">
                         <div class="company-logo">${companyInitial}</div>
                         <div>
-                            <div class="recruiter-name">${recruiter.name}</div>
-                            <div class="recruiter-company">${recruiter.company}</div>
+                            <div class="recruiter-name">${r.name}</div>
+                            <div class="recruiter-company">${r.company}</div>
                         </div>
                     </div>
                 </td>
-                <td>${recruiter.email || 'N/A'}</td>
-                <td>${recruiter.role || 'Recruiter'}</td>
-                <td>
-                    <div class="recruitment-count">${recruiter.recruitmentCount || 0}</div>
-                </td>
+                <td>${r.email}</td>
+                <td>${r.role}</td>
+                <td><div class="recruitment-count">${r.recruitmentCount}</div></td>
                 <td>${formattedDate}</td>
             `;
-            
             recruitersTableBody.appendChild(row);
         });
     }
 
-    // Search recruiters
-    searchInput.addEventListener('input', function() {
-        loadRecruiters(this.value);
-    });
+    // Search recruiters in real time
+    searchInput.addEventListener('input', () => loadRecruiters(searchInput.value));
 
-    // Load recruiters on page load
-    loadRecruiters();
+    // Load recruiters initially
+    fetchRecruiters();
 });
-    </script>
+</script>
+
 </body>
 </html>

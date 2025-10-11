@@ -1126,7 +1126,7 @@ const upload = multer({ storage: storage });
     });
 
     // Route to render admin page shell
-app.get("/admin", (req, res) => {
+app.get("/admin", async (req, res) => {
     if (!req.session.user || req.session.user.role !== "admin") {
         return res.redirect("/login");
     }
@@ -1289,44 +1289,55 @@ app.get('/api/students', async (req, res) => {
         }
     });
 
-    app.get('/admin-rec', async (req, res) => {
-        if (!req.session.user || req.session.user.role !== "admin") {
-            return res.redirect("/login");
-        }
-    
-        try {
-            const recruiters = await User.find({ role: 'recruiter' })
-                .select('name email createdAt')
-                .lean();
-    
-            console.log('Fetched recruiters:', recruiters); // Debug log to check fetched data
-    
-            const recruitersData = await Promise.all(recruiters.map(async (recruiter) => {
+   // 1️⃣ Render Admin Recruiters page (no data)
+app.get('/admin-rec', (req, res) => {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        return res.redirect("/login");
+    }
+
+    res.render('admin-rec', {
+        activePage: 'dashboard',
+        adminName: req.session.user.name
+    });
+});
+
+
+// 2️⃣ Provide recruiter data via AJAX (XMLHttpRequest)
+app.get('/admin-rec/data', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const recruiters = await User.find({ role: 'recruiter' })
+            .select('name email createdAt')
+            .lean();
+
+        const recruitersData = await Promise.all(
+            recruiters.map(async (recruiter) => {
                 const jobCount = await JobApplication.countDocuments({ posted_by: recruiter._id });
                 const fallbackName = recruiter.email ? recruiter.email.split('@')[0] : 'Unnamed Recruiter';
                 return {
                     id: recruiter._id.toString(),
-                    name: recruiter.name || fallbackName, // Fallback in case name is still missing
+                    name: recruiter.name || fallbackName,
                     email: recruiter.email || 'N/A',
-                    company: recruiter.name || fallbackName, // Adjust if you have a company field
-                    role: 'Recruiter', // Static role; adjust if you have specific roles
-                    joinedDate: recruiter.createdAt ? new Date(recruiter.createdAt).toISOString().split('T')[0] : 'N/A',
-                    recruitmentCount: jobCount || 0
+                    company: recruiter.name || fallbackName,
+                    role: 'Recruiter',
+                    joinedDate: recruiter.createdAt
+                        ? new Date(recruiter.createdAt).toISOString().split('T')[0]
+                        : 'N/A',
+                    recruitmentCount: jobCount || 0,
                 };
-            }));
-    
-            console.log('Processed recruitersData:', recruitersData); // Debug log to check processed data
-    
-            res.render('admin-rec', {
-                activePage: 'dashboard',
-                adminName: req.session.user.name,
-                recruitersData
-            });
-        } catch (err) {
-            console.error("Error fetching recruiters data:", err.message);
-            res.status(500).send("Server Error");
-        }
-    });
+            })
+        );
+
+        res.json({ recruiters: recruitersData });
+    } catch (err) {
+        console.error("Error fetching recruiters data:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
 
     app.get('/admin-prof', (req, res) => {
         res.render('admin-prof', { activePage: 'dashboard' });
