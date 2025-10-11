@@ -6,7 +6,6 @@
     <title>RELABTeams Admin - Students Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        
         :root {
             --primary: #0068FF;
             --secondary: #0056d6;
@@ -374,13 +373,6 @@
             border-bottom: 1px solid var(--gray-dark);
         }
 
-        th {
-            color: var(--gray-text);
-            font-weight: 500;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-
         tr:hover {
             background-color: rgba(255, 255, 255, 0.02);
         }
@@ -417,9 +409,6 @@
             color: var(--gray-text);
         }
 
-        
-        
-
         .pagination {
             display: flex;
             justify-content: flex-start;
@@ -432,99 +421,30 @@
             font-size: 14px;
         }
 
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background-color: var(--darker);
-            color: var(--light-text);
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 1100;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast-success {
-            border-left: 4px solid var(--success);
-        }
-
-        .toast-error {
-            border-left: 4px solid var(--danger);
-        }
-
-        .toast-warning {
-            border-left: 4px solid var(--warning);
-        }
-
-        .toast i {
-            font-size: 20px;
-        }
-
-        .toast-success i {
-            color: var(--success);
-        }
-
-        .toast-error i {
-            color: var(--danger);
-        }
-
-        .toast-warning i {
-            color: var(--warning);
-        }
-
-        .toast-message {
-            flex: 1;
-        }
-
-        .toast-close {
-            color: var(--gray-text);
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 0;
-            transition: all 0.2s;
-        }
-
-        .toast-close:hover {
-            color: var(--light-text);
-        }
-
         @media (max-width: 992px) {
             .sidebar {
                 width: 80px;
             }
-            
+
             .logo-text,
             .menu-label,
             .menu-item span {
                 display: none;
             }
-            
+
             .menu-item {
                 justify-content: center;
                 padding: 12px 0;
             }
-            
+
             .menu-item i {
                 margin-right: 0;
             }
-            
+
             .main-content {
                 margin-left: 80px;
             }
-            
+
             .search-box {
                 width: 200px;
             }
@@ -535,7 +455,7 @@
                 width: 100%;
                 justify-content: flex-end;
             }
-            
+
             .search-box {
                 width: 100%;
                 position: absolute;
@@ -545,192 +465,171 @@
                 z-index: 50;
                 display: none;
             }
-            
+
             .search-box.active {
                 display: block;
             }
-            
+
             .header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
                 position: relative;
             }
-            
+
             .admin-controls {
                 align-self: flex-end;
             }
-            
+
             .search-toggle {
                 display: block;
             }
-            
+
             .admin-info {
                 display: none;
             }
         }
-
-        
     </style>
 </head>
 <body>
-    <div class="container">
-        <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
-        <!-- Main Content -->
-        <div class="main-content" id="main-content">
-            <!-- Header -->
-            <div class="header">
-                <div class="page-title">
-                    <h2>Students Management</h2>
-                    <div class="breadcrumb">
-                        Students
-                    </div>
-                </div>
-                <div class="admin-controls">
-                    <div class="search-box" id="search-box">
-                        <input type="text" id="student-search" placeholder="Search students...">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <div class="action-btn" id="search-toggle">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <div class="admin-profile" id="admin-profile">
-                        <div class="admin-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="admin-info">
-                            <div class="admin-name"><%= adminName %></div>
-                            <div class="admin-role">Admin</div>
-                        </div>
-                        <div class="profile-dropdown" id="profile-dropdown">
-                            <a href="profile.html">
-                                <i class="fas fa-user-circle"></i> Profile
-                            </a>
-                            <a href="settings.html">
-                                <i class="fas fa-cog"></i> Settings
-                            </a>
-                            <hr>
-                            <a href="login.html">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="container">
+    <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
 
-            <!-- Students Table -->
-<table class="students-table">
-    <thead>
-        <tr>
-            <th>Student</th>
-            <th>Hosted Projects</th>
-            <th>Tasks Completed</th>
-        </tr>
-    </thead>
-    <tbody id="students-tbody">
-    </tbody>
-</table>
+    <div class="main-content" id="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Students Management</h2>
+                <div class="breadcrumb">Students</div>
+            </div>
+            <div class="admin-controls">
+                <div class="search-box" id="search-box">
+                    <input type="text" id="student-search" placeholder="Search students...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="action-btn" id="search-toggle"><i class="fas fa-search"></i></div>
+                <div class="admin-profile" id="admin-profile">
+                    <div class="admin-avatar"><i class="fas fa-user"></i></div>
+                    <div class="admin-info">
+                        <div class="admin-name"><%= adminName %></div>
+                        <div class="admin-role">Admin</div>
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <a href="/login"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Students Table -->
+        <div class="students-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Hosted Projects</th>
+                        <th>Tasks Completed</th>
+                    </tr>
+                </thead>
+                <tbody id="students-tbody"></tbody>
+            </table>
+            <div id="students-empty" style="display:block; padding:20px; text-align:center; color:var(--gray-text);">
+                Loading students...
+            </div>
+        </div>
     </div>
+</div>
+
 <script>
- document.addEventListener('DOMContentLoaded', function() {
-    // Store initial data from server
-    const studentsData = <%- JSON.stringify(studentsData) %>;
-
-    // Get the table body element
+document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.getElementById('students-tbody');
+    const emptyNotice = document.getElementById('students-empty');
 
-    // Function to create a table row for a student
     function createStudentRow(student) {
         const tr = document.createElement('tr');
-        tr.setAttribute('data-id', student.id);
+        tr.setAttribute('data-id', student.id || '');
 
-        // Student info
         const tdStudent = document.createElement('td');
-        const userInfo = document.createElement('div');
-        userInfo.className = 'user-info';
-        const userAvatar = document.createElement('div');
-        userAvatar.className = 'user-avatar';
-        userAvatar.textContent = student.name.split(' ').map(n => n[0]).join(''); // Initials
-        const userDetails = document.createElement('div');
-        userDetails.className = 'user-details';
-        const userName = document.createElement('div');
-        userName.className = 'user-name';
-        userName.textContent = student.name;
-        const userEmail = document.createElement('div');
-        userEmail.className = 'user-email';
-        userEmail.textContent = student.email;
-        userDetails.appendChild(userName);
-        userDetails.appendChild(userEmail);
-        userInfo.appendChild(userAvatar);
-        userInfo.appendChild(userDetails);
+        const userInfo = document.createElement('div'); userInfo.className = 'user-info';
+        const userAvatar = document.createElement('div'); userAvatar.className = 'user-avatar';
+        userAvatar.textContent = (student.name || '').split(' ').map(n => n[0] || '').join('');
+        const userDetails = document.createElement('div'); userDetails.className = 'user-details';
+        const userName = document.createElement('div'); userName.className = 'user-name'; userName.textContent = student.name || '';
+        const userEmail = document.createElement('div'); userEmail.className = 'user-email'; userEmail.textContent = student.email || '';
+        userDetails.appendChild(userName); userDetails.appendChild(userEmail);
+        userInfo.appendChild(userAvatar); userInfo.appendChild(userDetails);
         tdStudent.appendChild(userInfo);
 
-        // Hosted Projects
-        const tdHosted = document.createElement('td');
-        tdHosted.textContent = student.hostedProjects;
+        const tdHosted = document.createElement('td'); tdHosted.textContent = student.hostedProjects || 0;
+        const tdTasks = document.createElement('td'); tdTasks.textContent = student.tasksCompleted || 0;
 
-        // Tasks Completed
-        const tdTasks = document.createElement('td');
-        tdTasks.textContent = student.tasksCompleted;
-
-        // Append all cells to the row
-        tr.appendChild(tdStudent);
-        tr.appendChild(tdHosted);
-        tr.appendChild(tdTasks);
-
+        tr.appendChild(tdStudent); tr.appendChild(tdHosted); tr.appendChild(tdTasks);
         return tr;
     }
 
-    // Populate the table with student data
     function populateTable(data) {
-        tbody.innerHTML = ''; // Clear existing rows
-        data.forEach(student => {
-            const row = createStudentRow(student);
-            tbody.appendChild(row);
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            emptyNotice.style.display = 'block';
+            emptyNotice.textContent = 'No students found.';
+            return;
+        }
+        emptyNotice.style.display = 'none';
+        data.forEach((student, index) => {
+            setTimeout(() => {
+                tbody.appendChild(createStudentRow(student));
+            }, 80 * (index + 1));
         });
     }
 
-    // Initial population of the table
-    populateTable(studentsData);
+    function fetchStudents() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/students', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    const studentsData = JSON.parse(xhr.responseText);
+                    populateTable(studentsData);
+                } else {
+                    emptyNotice.style.display = 'block';
+                    emptyNotice.textContent = 'Failed to load students.';
+                }
+            }
+        };
+        xhr.send();
+    }
 
-    // Sidebar toggle functionality
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('main-content');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('sidebar-collapsed');
-        mainContent.classList.toggle('main-content-expanded');
-    });
+    fetchStudents();
 
-    // Profile dropdown functionality
+    // Search
+    const searchInput = document.getElementById('student-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = (searchInput.value || '').toLowerCase();
+            const filteredRows = Array.from(tbody.children).filter(row => {
+                const name = row.querySelector('.user-name')?.textContent.toLowerCase() || '';
+                const email = row.querySelector('.user-email')?.textContent.toLowerCase() || '';
+                return name.includes(query) || email.includes(query);
+            });
+            tbody.innerHTML = '';
+            if (filteredRows.length === 0) {
+                emptyNotice.style.display = 'block';
+                emptyNotice.textContent = 'No students found.';
+            } else {
+                emptyNotice.style.display = 'none';
+                filteredRows.forEach(row => tbody.appendChild(row));
+            }
+        });
+    }
+    
+
+    // Sidebar & Profile dropdown
     const adminProfile = document.getElementById('admin-profile');
     const profileDropdown = document.getElementById('profile-dropdown');
-    adminProfile.addEventListener('click', () => {
-        profileDropdown.classList.toggle('show');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!adminProfile.contains(e.target)) {
-            profileDropdown.classList.remove('show');
-        }
-    });
-
-    // Search functionality
-    const searchInput = document.getElementById('student-search');
-    searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase();
-        const filteredData = studentsData.filter(student =>
-            student.name.toLowerCase().includes(query) ||
-            student.email.toLowerCase().includes(query)
-        );
-        populateTable(filteredData);
-    });
+    if (adminProfile && profileDropdown) {
+        adminProfile.addEventListener('click', () => profileDropdown.classList.toggle('show'));
+        document.addEventListener('click', e => { if (!adminProfile.contains(e.target)) profileDropdown.classList.remove('show'); });
+    }
 });
 </script>
-   
 </body>
 </html>
