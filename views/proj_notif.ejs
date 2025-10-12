@@ -905,7 +905,7 @@
 
     function markAsRead(notificationId) {
       const button = event.target;
-      if (buttonStates.get(notificationId)) return; // Prevent multiple clicks
+      if (buttonStates.get(notificationId)) return; 
       buttonStates.set(notificationId, true);
       button.disabled = true;
       button.textContent = 'Marking...';
