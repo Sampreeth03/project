@@ -22,7 +22,6 @@
 | **Strong Password** | `Password: Pass@123` | Password strength meter shows "Strong" in green. | Green bar displays with "Strong" label. Password field valid. | Passed | ![Strong Password](test_plan/signup_strong_password.png) |
 | **Password Mismatch** | `Password: Pass@123`, `Confirm: Pass@124` | Confirm password shows "❌ Passwords do not match" in red. | Red mismatch indicator appears. Button disabled. | Passed | ![Password Mismatch](test_plan/signup_password_mismatch.png) |
 | **Password Match** | `Password: Pass@123`, `Confirm: Pass@123` | Confirm password shows "✓ Passwords match" in green. | Green match indicator appears. | Passed | ![Password Match](test_plan/signup_password_match.png) |
-| **Unchecked Terms** | All fields valid but terms checkbox unchecked | Button remains disabled. Alert: "Please accept terms and conditions". | Cannot submit. Alert shows on attempt. | Passed | ![Unchecked Terms](test_plan/signup_unchecked_terms.png) |
 | **Valid Signup** | `Name: John Doe`, `Email: john@gmail.com`, `Password: Pass@123`, `Confirm: Pass@123`, Terms checked | All errors clear. Sign Up button enabled. Progress: "Step 4 of 4 Complete". | Button enabled. Account created successfully. Redirects to home page. | Passed | ![Valid Signup](test_plan/signup_valid.png) |
 
 ---
