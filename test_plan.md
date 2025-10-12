@@ -16,7 +16,6 @@
 | Case | Input | Expected Result | Actual Result | Status | Screenshot |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Empty Name** | Name field left empty, user clicks outside | Placeholder shows "Name is required" in red. Sign Up button disabled. | Error message appears. Button stays disabled. | Passed | ![Empty Name](test_plan/signup_empty_name.png) |
-| **Short Name** | `Name: A` | Placeholder shows "Name must be at least 2 characters" in red with shake animation. | Error displays with shake animation. | Passed | ![Short Name](test_plan/signup_short_name.png) |
 | **Invalid Email** | `Email: user@` | Placeholder shows "Invalid email format" in red. | Error message appears immediately on blur. | Passed | ![Invalid Email](test_plan/signup_invalid_email.png) |
 | **Weak Password** | `Password: pass` | Password strength meter shows "Weak" in red. Placeholder error appears. | Strength meter displays red bar with "Weak" label. Button disabled. | Passed | ![Weak Password](test_plan/signup_weak_password.png) |
 | **Medium Password** | `Password: Pass123` | Password strength meter shows "Medium" in orange. | Orange bar displays with "Medium" label. Still requires special character. | Passed | ![Medium Password](test_plan/signup_medium_password.png) |
