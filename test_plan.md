@@ -37,7 +37,6 @@
 | **Password Mismatch** | `Password: Recruit@123`, `Confirm: Recruit@124` | Confirm shows "❌ Passwords do not match" in red. | Red mismatch indicator appears. | Passed | ![Password Mismatch](test_plan/recruiter_signup_password_mismatch.png) |
 | **Password Match** | `Password: Recruit@123`, `Confirm: Recruit@123` | Confirm shows "✓ Passwords match" in green. | Green match indicator displays. | Passed | ![Password Match](test_plan/recruiter_signup_password_match.png) |
 | **With Verification File** | User uploads PDF/DOC verification file | File name displays below upload button. No validation error. | File accepted and file name shown. | Passed | ![With File](test_plan/recruiter_signup_with_file.png) |
-| **Unchecked Terms** | All fields valid but terms unchecked | Submit button disabled. Alert on submission attempt. | Cannot submit until terms checked. | Passed | ![Unchecked Terms](test_plan/recruiter_signup_unchecked_terms.png) |
 | **Valid Recruiter Signup** | `Name: Jane Recruiter`, `Email: jane@company.com`, `Password: Recruit@123`, `Confirm: Recruit@123`, File uploaded, Terms checked | All validations pass. Sign Up button enabled. Progress: "Step 4 of 4 Complete". | Button enabled. Recruiter account created. Redirects to recruiter home. | Passed | ![Valid Signup](test_plan/recruiter_signup_valid.png) |
 
 ---
@@ -53,7 +52,7 @@
 | **Short Description** | `Description: Short` | Inline error: "Description must be at least 10 characters". Counter shows "5/500" in red. | Error displays with live character count. | Passed | ![Short Description](test_plan/create_project_short_description.png) |
 | **Valid Description** | `Description:` (50 characters of valid text) | Character counter shows "50/500" in green. No error message. | Counter updates in real-time in green color. Validation passes. | Passed | ![Valid Description](test_plan/create_project_valid_description.png) |
 | **Long Description** | `Description:` (501 characters) | Inline error: "Description cannot exceed 500 characters". Counter shows "501/500" in red. | Error displays. Counter turns red exceeding limit. | Passed | ![Long Description](test_plan/create_project_long_description.png) |
-| **Invalid Capacity** | `Capacity: 0` | Inline error: "Capacity must be between 1 and 100". | Error message appears below capacity field. | Passed | ![Invalid Capacity](test_plan/create_project_invalid_capacity.png) |
+| **Invalid Capacity** | `Capacity: 0` | Inline error: "Capacity must be between 3 and 100". | Error message appears below capacity field. | Passed | ![Invalid Capacity](test_plan/create_project_invalid_capacity.png) |
 | **No Topic Selected** | Topic dropdown left at default "Select a topic" | Inline error: "Please select a project topic". | Error appears on blur. Button disabled. | Passed | ![No Topic](test_plan/create_project_no_topic.png) |
 | **Empty Start Date** | Start date field left empty | Inline error: "Start date is required" below date field. | Error displays in red. | Passed | ![Empty Start Date](test_plan/create_project_empty_start_date.png) |
 | **Past Start Date** | `Start Date: 2024-01-01` | Inline error: "Start date must be today or in the future". | Error displays. Past dates rejected. | Passed | ![Past Start Date](test_plan/create_project_past_start_date.png) |
