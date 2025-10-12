@@ -82,16 +82,6 @@
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); 
       z-index: 1000; 
     }
-    .dropdown li { 
-      width: 100%; 
-    }
-    .dropdown li a { 
-      padding: 12px; 
-      font-size: 18px; 
-      display: block; 
-      color: white; 
-      white-space: nowrap; 
-    }
     .dropdown li a:hover { 
       background-color: #333; 
       color: var(--accent-color); 
@@ -151,18 +141,6 @@
       font-weight: bold;
       color: white;
     }
-    .profile-info {
-      display: flex;
-      flex-direction: column;
-    }
-    .profile-name {
-      font-weight: 600;
-      font-size: 16px;
-    }
-    .profile-role {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
     .metrics-container {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -195,18 +173,15 @@
       font-size: 14px;
       color: var(--text-secondary);
       margin-bottom: 10px;
-      font-weight: 500;
     }
     .metric-value {
       font-size: 32px;
       font-weight: 700;
-      color: var(--text-primary);
     }
     .completed-projects {
       background-color: var(--card-bg);
       border-radius: 12px;
       padding: 20px;
-      text-rendering: geometricPrecision;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
     .completed-projects-header {
@@ -223,14 +198,10 @@
       font-size: 12px;
       color: var(--accent-color);
       text-decoration: none;
-      transition: color 0.3s ease;
     }
     .view-all:hover {
       color: var(--hover-color);
       text-decoration: underline;
-    }
-    .project-list {
-      list-style: none;
     }
     .project-item {
       display: flex;
@@ -238,62 +209,13 @@
       align-items: center;
       padding: 15px;
       border-bottom: 1px solid var(--border-color);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .project-item:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-      transform: translateX(5px);
-      padding-left: 20px;
-    }
-    .project-item:hover::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 4px;
-      height: 100%;
-      background-color: var(--accent-color);
-    }
-    .project-item:last-child {
-      border-bottom: none;
-    }
-    .project-info {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .project-name {
-      font-weight: 500;
-    }
-    .project-date {
-      font-size: 11px;
-      color: var(--text-secondary);
-    }
-    .project-status {
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background-color: var(--accent-color);
-      color: white;
-      font-weight: 500;
     }
     .project-status.completed {
       background-color: #4caf50;
-    }
-    .footer {
-      padding: 20px 30px;
+      color: white;
+      border-radius: 20px;
+      padding: 5px 10px;
       font-size: 12px;
-      color: var(--text-secondary);
-      text-align: center;
-      margin-top: 30px;
-      border-top: 1px solid var(--border-color);
-    }
-    @media (max-width: 1200px) {
-      .metrics-container {
-        grid-template-columns: repeat(3, 1fr);
-      }
     }
     @media (max-width: 900px) {
       .metrics-container {
@@ -306,10 +228,6 @@
       }
       .dashboard-header {
         flex-direction: column;
-        gap: 20px;
-      }
-      .user-profile {
-        width: 100%;
       }
     }
   </style>
@@ -321,12 +239,7 @@
       <ul class="nav-links">
         <% navLinks.forEach(link => { %>
           <li>
-            <a href="<%= link.href %>">
-              <%= link.name %>
-              <% if (link.name === 'Notifications' && typeof unreadNotifCount !== 'undefined' && unreadNotifCount > 0) { %>
-                <span class="notif-badge show" id="notif-badge"><%= unreadNotifCount %></span>
-              <% } %>
-            </a>
+            <a href="<%= link.href %>"><%= link.name %></a>
             <% if (link.submenu) { %>
               <ul class="dropdown">
                 <% link.submenu.forEach(sublink => { %>
@@ -337,89 +250,121 @@
           </li>
         <% }) %>
       </ul>
-      <input type="text" placeholder="Search" class="search-box">
+      <input type="text" placeholder="Search metrics..." class="search-box">
     </div>
   </header>
+
   <div class="main-content">
     <div class="dashboard-header">
       <div class="user-greeting">
         <h1 class="dashboard-title">Dashboard</h1>
-        <p>Welcome back, <%= userData.username %>. Here's your current performance summary.</p>
+        <p id="user-welcome">Loading your data...</p>
       </div>
-      <div class="user-profile">
-        <div class="profile-image">
-          <%= userData.username.charAt(0) %>
-        </div>
+      <div class="user-profile" id="user-profile">
+        <div class="profile-image">?</div>
         <div class="profile-info">
-          <div class="profile-name"><%= userData.username %></div>
+          <div class="profile-name">Loading...</div>
           <div class="profile-role">Student │ IIIT Sri City</div>
         </div>
       </div>
     </div>
-    <div class="metrics-container">
-      <div class="metric-card">
-        <div class="metric-title">Total Collaborations</div>
-        <div class="metric-value"><%= userData.metrics.total_collaborations || 0 %></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Active Projects</div>
-        <div class="metric-value"><%= userData.metrics.active_projects || 0 %></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Completed Tasks</div>
-        <div class="metric-value"><%= userData.metrics.completed_tasks || 0 %></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Leadership Roles</div>
-        <div class="metric-value"><%= userData.metrics.leadership_roles || 0 %></div>
-      </div>
-      
-      <div class="metric-card">
-        <div class="metric-title">Inquiries Initiated</div>
-        <div class="metric-value"><%= userData.metrics.inquiriesInitiated || 0 %></div>
+
+    <div class="metrics-container" id="metrics-container">
+      <p>Loading metrics...</p>
     </div>
-      
-      <div class="metric-card">
-        <div class="metric-title">Job Applications</div>
-        <div class="metric-value"><%= userData.metrics.job_applications || 0 %></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Projects as Member</div>
-        <div class="metric-value"><%= userData.metrics.projects_as_member || 0 %></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Solutions Provided</div>
-        <div class="metric-value"><%= userData.metrics.solutions_provided || 0 %></div>
+    <div id="completed-projects-container">
+      <p>Loading completed projects...</p>
     </div>
-      
-    
-    <% if (completedProjects && completedProjects.length > 0) { %>
-      <div class="completed-projects">
-        <div class="completed-projects-header">
-          <h2 class="completed-projects-title">Completed Projects</h2>
-          <a href="/project" class="view-all">View All Projects</a>
-        </div>
-        <ul class="project-list">
-          <% completedProjects.forEach(project => { %>
-            <li class="project-item">
-              <div class="project-info">
-                <div class="project-name"><%= project.title %></div>
-                <div class="project-date">Completed on <%= new Date(project.deadline).toLocaleDateString() %></div>
-              </div>
-              <div class="project-status completed">Completed</div>
-            </li>
-          <% }) %>
-        </ul>
-      </div>
-    <% } else { %>
-      <div class="completed-projects">
-        <div class="completed-projects-header">
-          <h2 class="completed-projects-title">No Completed Projects Yet</h2>
-          <a href="/project" class="view-all">Start a Project</a>
-        </div>
-      </div>
-    <% } %>
   </div>
- 
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      setTimeout(() => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "/api/dashboard-metrics", true);
+
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+
+            // Update profile info
+            document.querySelector('.profile-name').textContent = data.username;
+            document.querySelector('.profile-image').textContent = data.username.charAt(0).toUpperCase();
+            document.getElementById('user-welcome').textContent =
+              `Welcome back, ${data.username}. Here's your current performance summary.`;
+
+            // Metrics
+            const m = data.metrics;
+            const metricsHTML = `
+              <div class="metric-card"><div class="metric-title">Total Collaborations</div><div class="metric-value">${m.total_collaborations || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Active Projects</div><div class="metric-value">${m.active_projects || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Completed Tasks</div><div class="metric-value">${m.completed_tasks || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Leadership Roles</div><div class="metric-value">${m.leadership_roles || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Inquiries Initiated</div><div class="metric-value">${m.inquiriesInitiated || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Job Applications</div><div class="metric-value">${m.job_applications || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Projects as Member</div><div class="metric-value">${m.projects_as_member || 0}</div></div>
+              <div class="metric-card"><div class="metric-title">Solutions Provided</div><div class="metric-value">${m.solutions_provided || 0}</div></div>
+            `;
+            document.getElementById("metrics-container").innerHTML = metricsHTML;
+
+            // Completed Projects
+            const projectsHTML = data.completedProjects.length > 0
+              ? `
+                <div class="completed-projects">
+                  <div class="completed-projects-header">
+                    <h2 class="completed-projects-title">Completed Projects</h2>
+                    <a href="/project" class="view-all">View All Projects</a>
+                  </div>
+                  <ul class="project-list">
+                    ${data.completedProjects.map(p => `
+                      <li class="project-item">
+                        <div class="project-info">
+                          <div class="project-name">${p.title}</div>
+                          <div class="project-date">Completed on ${new Date(p.deadline).toLocaleDateString()}</div>
+                        </div>
+                        <div class="project-status completed">Completed</div>
+                      </li>
+                    `).join('')}
+                  </ul>
+                </div>
+              `
+              : `
+                <div class="completed-projects">
+                  <div class="completed-projects-header">
+                    <h2 class="completed-projects-title">No Completed Projects Yet</h2>
+                    <a href="/project" class="view-all">Start a Project</a>
+                  </div>
+                </div>
+              `;
+            document.getElementById("completed-projects-container").innerHTML = projectsHTML;
+
+            // ✅ SEARCH FUNCTIONALITY
+            const search = document.querySelector(".search-box");
+            search.addEventListener("input", () => {
+              const term = search.value.toLowerCase();
+              const cards = document.querySelectorAll(".metric-card");
+              cards.forEach(card => {
+                const title = card.querySelector(".metric-title").textContent.toLowerCase();
+                if (title.includes(term)) {
+                  card.style.display = "block";
+                } else {
+                  card.style.display = "none";
+                }
+              });
+            });
+
+          } else {
+            document.getElementById('metrics-container').innerHTML = `<p>Failed to load metrics.</p>`;
+          }
+        };
+
+        xhr.onerror = function() {
+          document.getElementById('metrics-container').innerHTML = `<p>Network error. Try again later.</p>`;
+        };
+
+        xhr.send();
+      }, 1500); // 1.5s delay for simulated async loading
+    });
+  </script>
 </body>
 </html>

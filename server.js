@@ -247,43 +247,41 @@ const upload = multer({ storage: storage });
             process.exit(1);
         });
 
-        app.get('/dashboard', async (req, res) => {
-            if (!req.session.user) {
-                return res.redirect('/login');
-            }
-            const userId = req.session.user.id;
-            try {
-                const user = await User.findById(userId);
-                if (!user) {
-                    console.error('User not found for ID:', userId);
-                    return res.redirect('/login?error=User not found');
-                }
-                let metrics = await UserMetrics.findOne({ user_id: new mongoose.Types.ObjectId(userId) });
-                if (!metrics) {
-                    console.log(`No metrics found for user ${userId}, creating new document...`);
-                    metrics = await UserMetrics.create({ user_id: new mongoose.Types.ObjectId(userId) });
-                }
-                console.log(`Metrics fetched for user ${userId}:`, {
-                    leadership_roles: metrics.leadership_roles,
-                    total_collaborations: metrics.total_collaborations,
-                    active_projects: metrics.active_projects,
-                    projects_as_member: metrics.projects_as_member
-                });
-                const completedProjects = await Project.find({ user_id: userId, status: 'completed' });
-                const userData = { username: user.name, metrics };
-                res.render('dashboard', {
-                    userData,
-                    completedProjects: completedProjects || [],
-                    inquiriesInitiated: metrics.inquiriesInitiated || 0,
-                    solutionsProvided: metrics.solutions_provided || 0,
-                    homeUrl: navData.homeUrl,
-                    navLinks: navData.navLinks
-                });
-            } catch (err) {
-                console.error('Error in dashboard route:', err.message, { stack: err.stack });
-                res.redirect('/doubt?error=Failed to load dashboard');
-            }
+        app.get('/dashboard', (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    res.render('dashboard', {
+        homeUrl: navData.homeUrl,
+        navLinks: navData.navLinks
+    });
+});
+
+app.get('/api/dashboard-metrics', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.session.user.id;
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        let metrics = await UserMetrics.findOne({ user_id: new mongoose.Types.ObjectId(userId) });
+        if (!metrics) {
+            metrics = await UserMetrics.create({ user_id: new mongoose.Types.ObjectId(userId) });
+        }
+
+        const completedProjects = await Project.find({ user_id: userId, status: 'completed' });
+
+        res.json({
+            username: user.name,
+            metrics,
+            completedProjects
         });
+
+    } catch (err) {
+        console.error('Error fetching dashboard metrics:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
         const userNav = {
             homeUrl: "/home",
             navLinks: [
