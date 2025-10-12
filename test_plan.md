@@ -42,8 +42,7 @@
 
 | Case | Input | Expected Result | Actual Result | Status | Screenshot |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Empty Project Name** | Project name field left empty, user clicks outside | Inline error message: "Project name is required" appears below field in red. | Error displays below input field. Button disabled. | Passed | ![Empty Name](test_plan/create_project_empty_name.png) |
-| **Short Project Name** | `Project Name: AB` | Inline error: "Project name must be at least 3 characters". | Error message appears below field. Validation fails. | Passed | ![Short Name](test_plan/create_project_short_name.png) |
+| **Empty Project Name** | Project name field left empty, user clicks outside | Inline error message: "Project name is required" appears below field in red. | Error displays below input field. Button disabled. | Passed | ![Empty Name](test_plan/create_project_empty_name.png) ||
 | **Empty Description** | Description field left empty | Inline error: "Description is required" appears in red below textarea. | Error message shown. Character counter shows "0/500". | Passed | ![Empty Description](test_plan/create_project_empty_description.png) |
 | **Short Description** | `Description: Short` | Inline error: "Description must be at least 10 characters". Counter shows "5/500" in red. | Error displays with live character count. | Passed | ![Short Description](test_plan/create_project_short_description.png) |
 | **Valid Description** | `Description:` (50 characters of valid text) | Character counter shows "50/500" in green. No error message. | Counter updates in real-time in green color. Validation passes. | Passed | ![Valid Description](test_plan/create_project_valid_description.png) |
