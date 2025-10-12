@@ -35,9 +35,6 @@
 | **Weak Password** | `Password: weak` | Password strength meter shows "Weak" in red. Button disabled. | Red strength bar displays. Validation fails. | Passed | ![Weak Password](test_plan/recruiter_signup_weak_password.png) |
 | **Strong Password** | `Password: Recruit@123` | Password strength meter shows "Strong" in green. | Green bar displays with "Strong" label. Field valid. | Passed | ![Strong Password](test_plan/recruiter_signup_strong_password.png) |
 | **Password Mismatch** | `Password: Recruit@123`, `Confirm: Recruit@124` | Confirm shows "❌ Passwords do not match" in red. | Red mismatch indicator appears. | Passed | ![Password Mismatch](test_plan/recruiter_signup_password_mismatch.png) |
-| **Password Match** | `Password: Recruit@123`, `Confirm: Recruit@123` | Confirm shows "✓ Passwords match" in green. | Green match indicator displays. | Passed | ![Password Match](test_plan/recruiter_signup_password_match.png) |
-| **With Verification File** | User uploads PDF/DOC verification file | File name displays below upload button. No validation error. | File accepted and file name shown. | Passed | ![With File](test_plan/recruiter_signup_with_file.png) |
-| **Valid Recruiter Signup** | `Name: Jane Recruiter`, `Email: jane@company.com`, `Password: Recruit@123`, `Confirm: Recruit@123`, File uploaded, Terms checked | All validations pass. Sign Up button enabled. Progress: "Step 4 of 4 Complete". | Button enabled. Recruiter account created. Redirects to recruiter home. | Passed | ![Valid Signup](test_plan/recruiter_signup_valid.png) |
 
 ---
 
@@ -54,6 +51,4 @@
 | **Long Description** | `Description:` (501 characters) | Inline error: "Description cannot exceed 500 characters". Counter shows "501/500" in red. | Error displays. Counter turns red exceeding limit. | Passed | ![Long Description](test_plan/create_project_long_description.png) |
 | **Invalid Capacity** | `Capacity: 0` | Inline error: "Capacity must be between 3 and 100". | Error message appears below capacity field. | Passed | ![Invalid Capacity](test_plan/create_project_invalid_capacity.png) |
 | **No Topic Selected** | Topic dropdown left at default "Select a topic" | Inline error: "Please select a project topic". | Error appears on blur. Button disabled. | Passed | ![No Topic](test_plan/create_project_no_topic.png) |
-| **Empty Start Date** | Start date field left empty | Inline error: "Start date is required" below date field. | Error displays in red. | Passed | ![Empty Start Date](test_plan/create_project_empty_start_date.png) |
-| **End Before Start** | `Start: 2025-10-20`, `End: 2025-10-15` | Inline error: "End date must be after start date". | Date validation error appears below end date. | Passed | ![End Before Start](test_plan/create_project_end_before_start.png) |
-| **Valid Project** | `Name: RelabTeams Project`, `Description:` (50 valid chars), `Capacity: 5`, `Topic: Web Development`, `Start: 2025-10-20`, `End: 2025-12-31` | All errors clear. Character counter green "50/500". Create Project button enabled (opacity 1). | Button enabled. Project created successfully. Redirects to projects page. | Passed | ![Valid Project](test_plan/create_project_valid.png) |
+
