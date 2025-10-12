@@ -413,8 +413,7 @@
             return;
           }
           inputEl.classList.add('input-error');
-          inputEl.value = '';
-          inputEl.setAttribute('placeholder', message);
+          inputEl.setAttribute('placeholder', originalPlaceholder);
           // For password criteria failures show a visible detailed message under the field
           if (errorEl && errorEl.id === 'password-error' && /password/i.test(message)) {
             errorEl.textContent = 'Password must be at least 6 characters and include one uppercase letter and one special character.';
@@ -423,7 +422,7 @@
           } else {
             // keep the placeholder-style inline error for other fields (hidden summary)
             errorEl.textContent = message;
-            errorEl.style.display = 'none';
+            errorEl.style.display = 'block';
           }
         }
 
@@ -475,9 +474,10 @@
 
         // wire toggle password control
         if (toggleBtn) {
-          toggleBtn.addEventListener('click', function() {
-            togglePassword('password', this);
-          });
+          toggleBtn.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          togglePassword('password', this);
+        });
         }
 
         updateButtonState();
