@@ -441,24 +441,30 @@
                 <div class="form-container">
                     <div class="card">
                         <h2>Create a New Job</h2>
-                        <form id="recruiterJobForm">
+                        <form id="recruiterJobForm" novalidate>
                             <div class="form-group">
                                 <label for="jobTitle">Job Title</label>
-                                <input type="text" id="jobTitle" placeholder="e.g. Senior Frontend Developer" required autocomplete="off">
+                                <input type="text" id="jobTitle" placeholder="e.g. Senior Frontend Developer" required autocomplete="off" maxlength="100">
+                                <div class="char-counter" id="jobTitle-counter" style="font-size:12px;color:#a0a0a0;margin-top:6px;">0/100</div>
+                                <div id="jobTitle-error" style="color:#ff6b6b;font-size:13px;min-height:18px;display:none;margin-top:6px;"></div>
                             </div>
                             <div class="form-group">
                                 <label for="jobDescription">Job Description</label>
-                                <textarea id="jobDescription" placeholder="Describe the job role, responsibilities, and requirements..." required></textarea>
+                                <textarea id="jobDescription" placeholder="Describe the job role, responsibilities, and requirements..." required maxlength="2000" style="min-height:120px;"></textarea>
+                                <div class="char-counter" id="jobDescription-counter" style="font-size:12px;color:#a0a0a0;margin-top:6px;">0/2000</div>
+                                <div id="jobDescription-error" style="color:#ff6b6b;font-size:13px;min-height:18px;display:none;margin-top:6px;"></div>
                             </div>
                             <div class="form-group">
                                 <label for="jobPay">Pay / Salary</label>
                                 <input type="text" id="jobPay" placeholder="e.g. $80,000 - $120,000 per year" required autocomplete="off">
+                                <div id="jobPay-error" style="color:#ff6b6b;font-size:13px;min-height:18px;display:none;margin-top:6px;"></div>
                             </div>
                             <div class="form-group">
                                 <label for="Skills">Required Skills</label>
                                 <input type="text" id="skills" placeholder="e.g. JavaScript, React, Node.js" required autocomplete="off">
+                                <div id="skills-error" style="color:#ff6b6b;font-size:13px;min-height:18px;display:none;margin-top:6px;"></div>
                             </div>
-                            <button type="submit">Create Job</button>
+                            <button type="submit" id="createJobBtn" disabled aria-disabled="true">Create Job</button>
                         </form>
                     </div>
                 </div>
@@ -475,10 +481,10 @@
                                             <div class="job-pay"><%= job.salary_range %></div>
                                         </div>
                                         <div class="job-actions">
-                                            <button class="toggle-active-btn <%= job.active ? 'deactivate' : 'activate' %>" onclick="toggleJobActive('<%= job._id.toString() %>', <%= job.active ? 'true' : 'false' %>)">
+                                            <button class="toggle-active-btn <%= job.active ? 'deactivate' : 'activate' %>" data-job-id="<%= job._id.toString() %>" data-active="<%= job.active ? '1' : '0' %>">
                                                 <%= job.active ? 'Deactivate' : 'Activate' %>
                                             </button>
-                                            <button class="delete-icon" onclick="deleteJob('<%= job._id.toString() %>')">Delete</button>
+                                            <button class="delete-icon" data-job-id="<%= job._id.toString() %>">Delete</button>
                                         </div>
                                     </div>
                                     <div class="job-description"><%= job.description %></div>
@@ -497,62 +503,153 @@
     <div class="notification" id="notification">Job created successfully!</div>
 
     <script>
-        const jobForm = document.getElementById('recruiterJobForm');
-        const notification = document.getElementById('notification');
+        (function () {
+            const jobForm = document.getElementById('recruiterJobForm');
+            const notification = document.getElementById('notification');
+            const titleEl = document.getElementById('jobTitle');
+            const descEl = document.getElementById('jobDescription');
+            const payEl = document.getElementById('jobPay');
+            const skillsEl = document.getElementById('skills');
+            const createBtn = document.getElementById('createJobBtn');
 
-        jobForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
+            const titleCounter = document.getElementById('jobTitle-counter');
+            const descCounter = document.getElementById('jobDescription-counter');
 
-            const title = document.getElementById('jobTitle').value.trim();
-            const description = document.getElementById('jobDescription').value.trim();
-            const salaryRange = document.getElementById('jobPay').value.trim();
-            const skills = document.getElementById('skills').value.trim();
+            const titleError = document.getElementById('jobTitle-error');
+            const descError = document.getElementById('jobDescription-error');
+            const payError = document.getElementById('jobPay-error');
+            const skillsError = document.getElementById('skills-error');
 
-            if (!title || !description || !salaryRange || !skills) {
-                showNotification('Please fill all fields!');
-                return;
-            }
+            const MAX_TITLE = 100;
+            const MAX_DESC = 2000;
 
-            try {
-                const response = await fetch('/create-recruiter-job', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jobTitle: title,
-                        description: description,
-                        salaryRange: salaryRange,
-                        skills: skills
-                    })
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    showNotification('Job created successfully!');
-                    jobForm.reset();
-                    setTimeout(() => location.reload(), 1000);
+            function setError(el, errorEl, msg) {
+                if (!msg) {
+                    errorEl.style.display = 'none';
+                    errorEl.textContent = '';
+                    el.classList.remove('invalid');
                 } else {
-                    showNotification(result.error || 'Failed to create job');
+                    errorEl.style.display = 'block';
+                    errorEl.textContent = msg;
+                    el.classList.add('invalid');
                 }
-            } catch (error) {
-                console.error('Error creating job:', error);
-                showNotification('An error occurred');
             }
-        });
 
-        function showNotification(message) {
-            notification.textContent = message;
-            notification.classList.add('show');
-            setTimeout(() => notification.classList.remove('show'), 3000);
-        }
+            function validateTitle(v) {
+                if (!v || v.trim().length < 3) return 'Title must be at least 3 characters';
+                if (v.length > MAX_TITLE) return `Title cannot exceed ${MAX_TITLE} characters`;
+                return '';
+            }
 
-        async function deleteJob(jobId) {
-            if (confirm('Are you sure you want to delete this job?')) {
+            function validateDescription(v) {
+                if (!v || v.trim().length < 20) return 'Description must be at least 20 characters';
+                if (v.length > MAX_DESC) return `Description cannot exceed ${MAX_DESC} characters`;
+                return '';
+            }
+
+            function validatePay(v) {
+                if (!v || v.trim().length < 2) return 'Please enter a valid pay/salary';
+                return '';
+            }
+
+            function validateSkills(v) {
+                if (!v || v.trim().length === 0) return 'Please list at least one required skill';
+                // simple check: at least one comma-separated token or single word
+                const parts = v.split(',').map(s => s.trim()).filter(Boolean);
+                if (parts.length === 0) return 'Please list at least one skill';
+                return '';
+            }
+
+            function updateCounters() {
+                titleCounter.textContent = `${titleEl.value.length}/${MAX_TITLE}`;
+                descCounter.textContent = `${descEl.value.length}/${MAX_DESC}`;
+            }
+
+            function updateButtonState() {
+                const ok = !validateTitle(titleEl.value) && !validateDescription(descEl.value) && !validatePay(payEl.value) && !validateSkills(skillsEl.value);
+                if (ok) {
+                    createBtn.removeAttribute('disabled');
+                    createBtn.setAttribute('aria-disabled', 'false');
+                } else {
+                    createBtn.setAttribute('disabled', '');
+                    createBtn.setAttribute('aria-disabled', 'true');
+                }
+            }
+
+            // wire events
+            titleEl.addEventListener('input', () => { setError(titleEl, titleError, ''); updateCounters(); updateButtonState(); });
+            descEl.addEventListener('input', () => { setError(descEl, descError, ''); updateCounters(); updateButtonState(); });
+            payEl.addEventListener('input', () => { setError(payEl, payError, ''); updateButtonState(); });
+            skillsEl.addEventListener('input', () => { setError(skillsEl, skillsError, ''); updateButtonState(); });
+
+            titleEl.addEventListener('blur', () => { setError(titleEl, titleError, validateTitle(titleEl.value)); updateButtonState(); });
+            descEl.addEventListener('blur', () => { setError(descEl, descError, validateDescription(descEl.value)); updateButtonState(); });
+            payEl.addEventListener('blur', () => { setError(payEl, payError, validatePay(payEl.value)); updateButtonState(); });
+            skillsEl.addEventListener('blur', () => { setError(skillsEl, skillsError, validateSkills(skillsEl.value)); updateButtonState(); });
+
+            // initial state
+            updateCounters();
+            updateButtonState();
+
+            jobForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const title = titleEl.value.trim();
+                const description = descEl.value.trim();
+                const salaryRange = payEl.value.trim();
+                const skills = skillsEl.value.trim();
+
+                // final validation
+                const tErr = validateTitle(title);
+                const dErr = validateDescription(description);
+                const pErr = validatePay(salaryRange);
+                const sErr = validateSkills(skills);
+
+                setError(titleEl, titleError, tErr);
+                setError(descEl, descError, dErr);
+                setError(payEl, payError, pErr);
+                setError(skillsEl, skillsError, sErr);
+
+                if (tErr || dErr || pErr || sErr) {
+                    // focus the first invalid field
+                    const first = [ [tErr, titleEl], [dErr, descEl], [pErr, payEl], [sErr, skillsEl] ].find(x => x[0]);
+                    if (first) first[1].focus();
+                    return;
+                }
+
                 try {
-                    const response = await fetch(`/delete-recruiter-job/${jobId}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' }
+                    const resp = await fetch('/create-recruiter-job', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jobTitle: title, description, salaryRange, skills })
                     });
+                    const result = await resp.json();
+                    if (result.success) {
+                        showNotification('Job created successfully!');
+                        jobForm.reset();
+                        updateCounters();
+                        updateButtonState();
+                        setTimeout(() => location.reload(), 900);
+                    } else {
+                        showNotification(result.error || 'Failed to create job');
+                    }
+                } catch (err) {
+                    console.error('Error creating job:', err);
+                    showNotification('An error occurred');
+                }
+            });
 
+            function showNotification(message) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 3000);
+            }
+
+            // reuse existing helpers for delete/toggle (keeps previous behavior)
+            window.deleteJob = async function (jobId) {
+                if (!confirm('Are you sure you want to delete this job?')) return;
+                try {
+                    const response = await fetch(`/delete-recruiter-job/${jobId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
                     const result = await response.json();
                     if (result.success) {
                         showNotification('Job deleted successfully!');
@@ -564,22 +661,14 @@
                     console.error('Error deleting job:', error);
                     showNotification('An error occurred');
                 }
-            }
-        }
+            };
 
-        async function toggleJobActive(jobId, currentStatus) {
-            const action = currentStatus ? 'deactivate' : 'activate';
-            console.log(`Toggling job ${jobId} to ${action}, currentStatus: ${currentStatus}`);
-            if (confirm(`Are you sure you want to ${action} this job?`)) {
+            window.toggleJobActive = async function (jobId, currentStatus) {
+                const action = currentStatus ? 'deactivate' : 'activate';
+                if (!confirm(`Are you sure you want to ${action} this job?`)) return;
                 try {
-                    const response = await fetch(`/toggle-job-active/${jobId}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ active: !currentStatus })
-                    });
-
+                    const response = await fetch(`/toggle-job-active/${jobId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: !currentStatus }) });
                     const result = await response.json();
-                    console.log(`Toggle response for ${jobId}:`, result);
                     if (result.success) {
                         showNotification(`Job ${action}d successfully!`);
                         setTimeout(() => location.reload(), 1000);
@@ -590,8 +679,24 @@
                     console.error(`Error ${action}ing job ${jobId}:`, error);
                     showNotification('An error occurred');
                 }
-            }
-        }
+            };
+            // Event delegation for buttons in the job list to avoid inline handlers
+            document.querySelector('.job-list-container').addEventListener('click', function (ev) {
+                const toggleBtn = ev.target.closest('.toggle-active-btn');
+                if (toggleBtn) {
+                    const jobId = toggleBtn.getAttribute('data-job-id');
+                    const active = toggleBtn.getAttribute('data-active') === '1';
+                    window.toggleJobActive(jobId, active);
+                    return;
+                }
+
+                const delBtn = ev.target.closest('.delete-icon');
+                if (delBtn) {
+                    const jobId = delBtn.getAttribute('data-job-id');
+                    window.deleteJob(jobId);
+                }
+            });
+        })();
     </script>
 </body>
 </html>

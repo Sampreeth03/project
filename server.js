@@ -247,41 +247,43 @@ const upload = multer({ storage: storage });
             process.exit(1);
         });
 
-        app.get('/dashboard', (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    res.render('dashboard', {
-        homeUrl: navData.homeUrl,
-        navLinks: navData.navLinks
-    });
-});
-
-app.get('/api/dashboard-metrics', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const userId = req.session.user.id;
-
-    try {
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        let metrics = await UserMetrics.findOne({ user_id: new mongoose.Types.ObjectId(userId) });
-        if (!metrics) {
-            metrics = await UserMetrics.create({ user_id: new mongoose.Types.ObjectId(userId) });
-        }
-
-        const completedProjects = await Project.find({ user_id: userId, status: 'completed' });
-
-        res.json({
-            username: user.name,
-            metrics,
-            completedProjects
+        app.get('/dashboard', async (req, res) => {
+            if (!req.session.user) {
+                return res.redirect('/login');
+            }
+            const userId = req.session.user.id;
+            try {
+                const user = await User.findById(userId);
+                if (!user) {
+                    console.error('User not found for ID:', userId);
+                    return res.redirect('/login?error=User not found');
+                }
+                let metrics = await UserMetrics.findOne({ user_id: new mongoose.Types.ObjectId(userId) });
+                if (!metrics) {
+                    console.log(`No metrics found for user ${userId}, creating new document...`);
+                    metrics = await UserMetrics.create({ user_id: new mongoose.Types.ObjectId(userId) });
+                }
+                console.log(`Metrics fetched for user ${userId}:`, {
+                    leadership_roles: metrics.leadership_roles,
+                    total_collaborations: metrics.total_collaborations,
+                    active_projects: metrics.active_projects,
+                    projects_as_member: metrics.projects_as_member
+                });
+                const completedProjects = await Project.find({ user_id: userId, status: 'completed' });
+                const userData = { username: user.name, metrics };
+                res.render('dashboard', {
+                    userData,
+                    completedProjects: completedProjects || [],
+                    inquiriesInitiated: metrics.inquiriesInitiated || 0,
+                    solutionsProvided: metrics.solutions_provided || 0,
+                    homeUrl: navData.homeUrl,
+                    navLinks: navData.navLinks
+                });
+            } catch (err) {
+                console.error('Error in dashboard route:', err.message, { stack: err.stack });
+                res.redirect('/doubt?error=Failed to load dashboard');
+            }
         });
-
-    } catch (err) {
-        console.error('Error fetching dashboard metrics:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
         const userNav = {
             homeUrl: "/home",
             navLinks: [
@@ -600,25 +602,13 @@ app.get('/api/dashboard-metrics', async (req, res) => {
             res.status(500).json({ success: false, error: 'Failed to delete request' });
         }
     });
-   
+
     app.get("/home", (req, res) => {
         if (!req.session.user || req.session.user.role !== "user") {
             return res.redirect("/login");
         }
         res.render("user-home", { user: req.session.user, homeUrl: navData.homeUrl, navLinks: navData.navLinks });
     });
- app.get("/home/topics", (req, res) => {
-    const topics = [
-        { name: "Web Development", description: "Learn front-end & back-end development to create responsive and dynamic websites.", joinLink: "/web-dev" },
-        { name: "Cyber Security", description: "Understand ethical hacking, encryption, and security protocols to protect data.", joinLink: "/cyb" },
-        { name: "Robotics", description: "Design, build, and program robots with AI to automate tasks.", joinLink: "/robo" },
-        { name: "Data Science", description: "Analyze big data using Python, R, and SQL for decision-making.", joinLink: "/ds" },
-        { name: "Deep Learning", description: "Understand deep learning and its advanced topics.", joinLink: "/dl" },
-        { name: "Blockchain", description: "Understand decentralized networks, smart contracts, and cryptocurrencies.", joinLink: "/blockchain" }
-    ];
-    res.json(topics);
-});
-
 
     app.get("/recruiter-home", (req, res) => {
         if (!req.session.user || req.session.user.role !== "recruiter") {
@@ -772,8 +762,7 @@ app.get('/api/dashboard-metrics', async (req, res) => {
                     badge: 'Application',
                     status: statusLower, // Map 'Waiting' to 'pending', 'Approved' to 'approved', etc.
                     applicantName: app.user_id.name,
-                    resumeId: app._id.toString(),
-                    jobTitle: app.job_title // #srih1: used for client-side filter (ommtsn)
+                    resumeId: app._id.toString()
                 };
             });
 
@@ -894,23 +883,12 @@ app.get('/api/dashboard-metrics', async (req, res) => {
                 return res.status(404).send('Application not found');
             }
 
-            if (!application.resume_path && !application.resumeUrl) {
+            if (!application.resume_path) {
                 console.log('Resume path is missing in application:', applicationId);
                 return res.status(404).send('Resume not found');
             }
-            // #srih1: robust path resolution for absolute/relative/URL-like paths (ommtsn)
-            const rawPath = application.resume_path || application.resumeUrl;
-            let filePath = rawPath;
-            try {
-                if (!path.isAbsolute(rawPath)) {
-                    // trim leading slashes and backslashes
-                    const trimmed = rawPath.replace(/^\\+|^\/+/, '');
-                    filePath = path.join(__dirname, trimmed);
-                }
-            } catch (e) {
-                console.warn('Path resolve fallback used for resume:', e.message);
-                filePath = path.join(__dirname, String(rawPath || ''));
-            }
+
+            const filePath = path.join(__dirname, application.resume_path);
             console.log('Resolved filePath:', filePath);
 
             if (!fs.existsSync(filePath)) {
@@ -1148,7 +1126,7 @@ app.get('/api/dashboard-metrics', async (req, res) => {
     });
 
     // Route to render admin page shell
-app.get("/admin", async (req, res) => {
+app.get("/admin", (req, res) => {
     if (!req.session.user || req.session.user.role !== "admin") {
         return res.redirect("/login");
     }
@@ -1311,55 +1289,44 @@ app.get('/api/students', async (req, res) => {
         }
     });
 
-   // 1️⃣ Render Admin Recruiters page (no data)
-app.get('/admin-rec', (req, res) => {
-    if (!req.session.user || req.session.user.role !== "admin") {
-        return res.redirect("/login");
-    }
-
-    res.render('admin-rec', {
-        activePage: 'dashboard',
-        adminName: req.session.user.name
-    });
-});
-
-
-// 2️⃣ Provide recruiter data via AJAX (XMLHttpRequest)
-app.get('/admin-rec/data', async (req, res) => {
-    if (!req.session.user || req.session.user.role !== "admin") {
-        return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    try {
-        const recruiters = await User.find({ role: 'recruiter' })
-            .select('name email createdAt')
-            .lean();
-
-        const recruitersData = await Promise.all(
-            recruiters.map(async (recruiter) => {
+    app.get('/admin-rec', async (req, res) => {
+        if (!req.session.user || req.session.user.role !== "admin") {
+            return res.redirect("/login");
+        }
+    
+        try {
+            const recruiters = await User.find({ role: 'recruiter' })
+                .select('name email createdAt')
+                .lean();
+    
+            console.log('Fetched recruiters:', recruiters); // Debug log to check fetched data
+    
+            const recruitersData = await Promise.all(recruiters.map(async (recruiter) => {
                 const jobCount = await JobApplication.countDocuments({ posted_by: recruiter._id });
                 const fallbackName = recruiter.email ? recruiter.email.split('@')[0] : 'Unnamed Recruiter';
                 return {
                     id: recruiter._id.toString(),
-                    name: recruiter.name || fallbackName,
+                    name: recruiter.name || fallbackName, // Fallback in case name is still missing
                     email: recruiter.email || 'N/A',
-                    company: recruiter.name || fallbackName,
-                    role: 'Recruiter',
-                    joinedDate: recruiter.createdAt
-                        ? new Date(recruiter.createdAt).toISOString().split('T')[0]
-                        : 'N/A',
-                    recruitmentCount: jobCount || 0,
+                    company: recruiter.name || fallbackName, // Adjust if you have a company field
+                    role: 'Recruiter', // Static role; adjust if you have specific roles
+                    joinedDate: recruiter.createdAt ? new Date(recruiter.createdAt).toISOString().split('T')[0] : 'N/A',
+                    recruitmentCount: jobCount || 0
                 };
-            })
-        );
-
-        res.json({ recruiters: recruitersData });
-    } catch (err) {
-        console.error("Error fetching recruiters data:", err.message);
-        res.status(500).json({ error: "Server Error" });
-    }
-});
-
+            }));
+    
+            console.log('Processed recruitersData:', recruitersData); // Debug log to check processed data
+    
+            res.render('admin-rec', {
+                activePage: 'dashboard',
+                adminName: req.session.user.name,
+                recruitersData
+            });
+        } catch (err) {
+            console.error("Error fetching recruiters data:", err.message);
+            res.status(500).send("Server Error");
+        }
+    });
 
     app.get('/admin-prof', (req, res) => {
         res.render('admin-prof', { activePage: 'dashboard' });
@@ -1369,60 +1336,60 @@ app.get('/admin-rec/data', async (req, res) => {
         res.render('admin-mess', { activePage: 'dashboard' });
     });
 
-   app.get("/admin-proj", (req, res) => {
-    if (!req.session.user || req.session.user.role !== "admin") {
-        return res.redirect("/login");
-    }
-
-    const dashboardData = {
-        currentPage: "projects",
-        adminName: req.session.user.name,
-        adminRole: "Super Admin"
-    };
-
-    res.render("admin-proj", { activePage: "projects", dashboardData });
-});
-app.get("/api/projects", async (req, res) => {
-    if (!req.session.user || req.session.user.role !== "admin") {
-        return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    try {
-        const projects = await Project.find().lean();
-        const now = new Date();
-
-        const projectData = await Promise.all(projects.map(async (project) => {
-            const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
-            let derivedStatus = project.status || 'active';
-
-            if (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed') {
-                derivedStatus = 'completed';
-            } else {
-                if (project.deadline && new Date(project.deadline).getTime() < now.getTime()) {
-                    derivedStatus = 'expired';
+    app.get("/admin-proj", async (req, res) => {
+        if (!req.session.user || req.session.user.role !== "admin") {
+            return res.redirect("/login");
+        }
+    
+        try {
+            // Fetch all projects
+            const projects = await Project.find().lean();
+    
+            // Fetch member counts for each project
+            const now = new Date();
+            const projectData = await Promise.all(projects.map(async (project) => {
+                const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
+                // derive status: completed if marked completed, expired if deadline passed and not completed, active otherwise
+                let derivedStatus = project.status || 'active';
+                if ((derivedStatus === 'completed' || (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed'))) {
+                    derivedStatus = 'completed';
                 } else {
-                    derivedStatus = 'active';
+                    if (project.deadline) {
+                        const dl = new Date(project.deadline);
+                        if (dl.getTime() < now.getTime()) {
+                            derivedStatus = 'expired';
+                        } else {
+                            derivedStatus = 'active';
+                        }
+                    } else {
+                        derivedStatus = 'active';
+                    }
                 }
-            }
 
-            return {
-                id: project._id.toString(),
-                title: project.title,
-                category: project.topic || project.category || 'General',
-                status: derivedStatus,
-                description: project.description,
-                deadline: project.deadline,
-                members: memberCount
+                return {
+                    id: project._id.toString(),
+                    title: project.title,
+                    category: project.topic || project.category || 'General',
+                    status: derivedStatus,
+                    description: project.description,
+                    deadline: project.deadline,
+                    members: memberCount
+                };
+            }));
+    
+            const dashboardData = {
+                currentPage: "projects",
+                adminName: req.session.user.name,
+                adminRole: "Super Admin",
+                projects: projectData
             };
-        }));
-
-        res.json(projectData);
-    } catch (err) {
-        console.error("Error fetching projects:", err);
-        res.status(500).json({ error: "Server Error" });
-    }
-});
-
+    
+            res.render('admin-proj', { activePage: 'projects', dashboardData });
+        } catch (err) {
+            console.error("Error fetching projects data:", err.message);
+            res.status(500).send("Server Error");
+        }
+    });
 
     app.get("/logout", (req, res) => {
         req.session.destroy(() => res.redirect("/login"));
@@ -1494,24 +1461,42 @@ app.get("/api/projects", async (req, res) => {
     migrateJobApplications();
 
     app.post('/apply-job', upload.single('resume'), async (req, res) => {
+        // Quick diagnostics logging to help debug apply failures
+        console.log('Received /apply-job request. sessionUser=', req.session && req.session.user ? req.session.user.id : null);
+        console.log('Request body keys:', Object.keys(req.body || {}));
+        console.log('Request file present:', !!req.file);
+
         if (!req.session.user) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
+            return res.status(401).json({ success: false, error: 'Unauthorized: please login to apply' });
         }
 
-        const { jobId } = req.body;
+        const { jobId } = req.body || {};
         const userId = req.session.user.id;
 
         try {
-            if (!mongoose.Types.ObjectId.isValid(jobId)) {
+            if (!jobId || !mongoose.Types.ObjectId.isValid(String(jobId))) {
+                console.warn('/apply-job: invalid jobId:', jobId);
                 return res.status(400).json({ success: false, error: 'Invalid job ID' });
             }
 
             if (!req.file) {
-                return res.status(400).json({ success: false, error: 'Resume is required' });
+                console.warn('/apply-job: missing resume file for user', userId);
+                return res.status(400).json({ success: false, error: 'Resume file is required' });
             }
 
-            console.log('Uploaded file:', req.file);
-            console.log('Saved resume_path:', req.file.path);
+            // Basic resume validation: extension and MIME
+            const allowedExt = ['.pdf', '.doc', '.docx'];
+            const fileExt = path.extname(req.file.originalname || '').toLowerCase();
+            const allowedMimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const fileMime = req.file.mimetype || '';
+            if (!allowedExt.includes(fileExt) || !allowedMimes.includes(fileMime)) {
+                console.warn('/apply-job: rejected file type', req.file.originalname, fileExt, fileMime);
+                // remove uploaded file to avoid storing invalid files
+                try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
+                return res.status(400).json({ success: false, error: 'Resume must be PDF, DOC or DOCX' });
+            }
+
+            console.log('Uploaded file:', req.file.originalname, 'saved at', req.file.path);
 
             const job = await JobApplication.findById(jobId);
             if (!job || job.user_id) {
@@ -1528,6 +1513,9 @@ app.get("/api/projects", async (req, res) => {
                 return res.status(400).json({ success: false, error: 'You have already applied for this job' });
             }
 
+            // store resume path relative to project root (uploads/<filename>) to make serving predictable
+            const resumeRelativePath = req.file && req.file.filename ? path.join('uploads', req.file.filename) : req.file.path;
+
             const newApplication = await JobApplication.create({
                 posted_by: job.posted_by,
                 job_title: job.job_title,
@@ -1536,7 +1524,7 @@ app.get("/api/projects", async (req, res) => {
                 description: job.description,
                 skills: job.skills,
                 user_id: userId,
-                resume_path: req.file.path,
+                resume_path: resumeRelativePath,
                 active: true,
                 date_applied: new Date()
             });
@@ -1601,7 +1589,6 @@ app.get("/api/projects", async (req, res) => {
         }
     });
 
-    // #srih2: XHR endpoint to update application status via JSON { applicationId, status } (ommtsn)
     app.post("/update-application-status", express.json(), async (req, res) => {
         if (!req.session.user || req.session.user.role !== "recruiter") {
             return res.status(403).json({ success: false, error: "Unauthorized" });
@@ -1610,44 +1597,13 @@ app.get("/api/projects", async (req, res) => {
         const recruiterId = req.session.user.id;
 
         try {
-            // #srih2: validate and normalize status (ommtsn)
-            const allowed = ['approved', 'rejected'];
-            const statusLc = String(status || '').toLowerCase();
-            if (!allowed.includes(statusLc)) {
-                return res.status(400).json({ success: false, error: 'Invalid status' });
+            const result = await JobApplication.updateOne(
+                { _id: applicationId, posted_by: recruiterId },
+                { status }
+            );
+            if (result.modifiedCount === 0) {
+                return res.status(404).json({ success: false, error: "Application not found or not authorized" });
             }
-
-            const appDoc = await JobApplication.findOne({ _id: applicationId, posted_by: recruiterId, user_id: { $ne: null } });
-            if (!appDoc) {
-                return res.status(404).json({ success: false, error: 'Application not found or not authorized' });
-            }
-
-            const canonicalStatus = statusLc === 'approved' ? 'Approved' : 'Rejected';
-            appDoc.status = canonicalStatus;
-            await appDoc.save();
-
-            // Notify student about the decision
-            try {
-                const recruiter = await User.findById(recruiterId).select('email name').lean();
-                if (statusLc === 'approved') {
-                    await Notification.create({
-                        user_id: appDoc.user_id,
-                        message: `You got hired for "${appDoc.job_title}". Recruiter email: ${recruiter?.email || 'N/A'}.`,
-                        type: 'job_hired',
-                        is_read: false
-                    });
-                } else {
-                    await Notification.create({
-                        user_id: appDoc.user_id,
-                        message: `Your application for "${appDoc.job_title}" was rejected.`,
-                        type: 'job_rejected',
-                        is_read: false
-                    });
-                }
-            } catch (nErr) {
-                console.warn('Failed to create decision notification:', nErr.message);
-            }
-
             res.json({ success: true });
         } catch (err) {
             console.error("Error updating application status:", err.message);
