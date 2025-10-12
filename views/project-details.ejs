@@ -690,6 +690,22 @@
       background-color: #C2185B;
     }
 
+    .view-profile-btn {
+      background-color: transparent;
+      color: #80B3FF;
+      border: 1px solid #2a4b80;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    .view-profile-btn:hover {
+      background-color: #0d2347;
+      color: #cfe2ff;
+    }
+
     #statusModal .modal-content {
       max-width: 500px;
     }
@@ -833,6 +849,9 @@
                 <div class="member-name"><%= member.user_id.name || 'Unknown User' %></div>
                 <div class="member-role"><%= member.user_id.email || 'No Email' %></div>
               </div>
+              <% if (member.user_id._id) { %>
+                <button class="view-profile-btn" type="button" data-user-id="<%= member.user_id._id %>">View Profile</button>
+              <% } %>
               <% if (user.id === project.user_id.toString() && member.user_id._id && user.id !== member.user_id._id.toString()) { %>
                 <button class="remove-member-btn" data-id="<%= member.user_id._id %>" data-project="<%= project._id %>" onclick="removeMemberFromEl(this)">Remove</button>
               <% } %>
@@ -925,6 +944,22 @@
         <div class="modal-buttons">
           <button class="cancel-btn" onclick="closeReviewModal()">Cancel</button>
           <button class="confirm-btn" id="confirmReviewBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Profile Modal -->
+    <div id="profileModal" class="modal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="modal-header">
+          <h2 id="profileModalTitle">Member Profile</h2>
+          <span class="close" id="profileModalClose" tabindex="0" role="button" aria-label="Close">×</span>
+        </div>
+        <div id="profileModalBody">
+          <p>Loading...</p>
+        </div>
+        <div class="modal-buttons">
+          <button class="cancel-btn" id="profileModalOk" type="button">Close</button>
         </div>
       </div>
     </div>
@@ -1259,6 +1294,114 @@
           notification.style.display = 'none';
         }, 3000);
       }
+
+      // =====================
+      // srih Quick Profile via XHR
+      // =====================
+      (function () {
+        var profileModal = document.getElementById('profileModal');
+        var profileBody = document.getElementById('profileModalBody');
+        var profileClose = document.getElementById('profileModalClose');
+        var profileOk = document.getElementById('profileModalOk');
+        var lastFocusedEl = null;
+
+        function openProfileModal() {
+          if (!profileModal) return;
+          profileModal.style.display = 'block';
+          profileModal.setAttribute('aria-hidden', 'false');
+          // focus close button for accessibility
+          if (profileClose) profileClose.focus();
+        }
+
+        function closeProfileModal() {
+          if (!profileModal) return;
+          profileModal.style.display = 'none';
+          profileModal.setAttribute('aria-hidden', 'true');
+          // restore focus
+          if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
+            try { lastFocusedEl.focus(); } catch (e) {}
+          }
+        }
+
+        function renderUser(user) {
+          var safe = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]);}); };
+          var arrToText = function (a) { return Array.isArray(a) ? a.map(safe).join(', ') : ''; };
+          var avatar = user && user.avatarUrl ? user.avatarUrl : '/public/default-avatar.png';
+          var resume = user && user.resumeUrl ? '<div style="margin-top:8px;"><a href="' + safe(user.resumeUrl) + '" target="_blank" rel="noopener">View Resume</a></div>' : '';
+          profileBody.innerHTML =
+            '<div style="display:flex; gap:12px; align-items:flex-start;">' +
+              '<img src="' + avatar + '" alt="avatar" style="width:64px; height:64px; border-radius:50%; object-fit:cover; background:#f0f0f0;" />' +
+              '<div>' +
+                '<div><strong>Name:</strong> ' + safe(user && user.name) + '</div>' +
+                '<div><strong>Email:</strong> ' + safe(user && user.email) + '</div>' +
+                '<div><strong>Bio:</strong> ' + (safe(user && (user.bio || '—'))) + '</div>' +
+                (user && user.skills && user.skills.length ? '<div><strong>Skills:</strong> ' + arrToText(user.skills) + '</div>' : '') +
+                (user && user.interests && user.interests.length ? '<div><strong>Interests:</strong> ' + arrToText(user.interests) + '</div>' : '') +
+                resume +
+              '</div>' +
+            '</div>';
+        }
+
+        function xhrGet(url, onSuccess, onFail) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.responseType = 'json';
+          xhr.timeout = 15000;
+          xhr.onload = function () {
+            var status = xhr.status;
+            var body = xhr.response;
+            if (status >= 200 && status < 300) {
+              onSuccess && onSuccess(body);
+            } else {
+              onFail && onFail(new Error('HTTP ' + status));
+            }
+          };
+          xhr.onerror = function () { onFail && onFail(new Error('Network error')); };
+          xhr.ontimeout = function () { onFail && onFail(new Error('Request timeout')); };
+          xhr.send();
+        }
+
+        // Open handler (delegated)
+        document.addEventListener('click', function (e) {
+          var btn = e.target && e.target.closest('.view-profile-btn');
+          if (!btn) return;
+          var userId = btn.getAttribute('data-user-id');
+          if (!userId) return;
+          lastFocusedEl = btn;
+          profileBody.innerHTML = '<p>Loading...</p>';
+          openProfileModal();
+          xhrGet('/profile-data/' + encodeURIComponent(userId), function (data) {
+            if (data && data.success) {
+              renderUser(data.user || {});
+            } else {
+              closeProfileModal();
+              showNotification((data && data.message) || 'Could not load profile', 'error');
+            }
+          }, function () {
+            closeProfileModal();
+            showNotification('Error loading profile', 'error');
+          });
+        });
+
+        // Close handlers
+        if (profileClose) profileClose.addEventListener('click', closeProfileModal);
+        if (profileOk) profileOk.addEventListener('click', closeProfileModal);
+
+        // Overlay click closes when clicking outside modal-content
+        if (profileModal) profileModal.addEventListener('click', function (e) {
+          var content = profileModal.querySelector('.modal-content');
+          if (e.target === profileModal || (content && !content.contains(e.target))) {
+            closeProfileModal();
+          }
+        });
+
+        // Esc to close
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && profileModal && profileModal.style.display === 'block') {
+            closeProfileModal();
+          }
+        });
+      })();
     </script>
   </div>
 </body>

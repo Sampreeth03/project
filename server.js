@@ -774,7 +774,8 @@ const upload = multer({ storage: storage });
                     badge: 'Application',
                     status: statusLower, // Map 'Waiting' to 'pending', 'Approved' to 'approved', etc.
                     applicantName: app.user_id.name,
-                    resumeId: app._id.toString()
+                    resumeId: app._id.toString(),
+                    jobTitle: app.job_title // #srih1: used for client-side filter (ommtsn)
                 };
             });
 
@@ -895,12 +896,23 @@ const upload = multer({ storage: storage });
                 return res.status(404).send('Application not found');
             }
 
-            if (!application.resume_path) {
+            if (!application.resume_path && !application.resumeUrl) {
                 console.log('Resume path is missing in application:', applicationId);
                 return res.status(404).send('Resume not found');
             }
-
-            const filePath = path.join(__dirname, application.resume_path);
+            // #srih1: robust path resolution for absolute/relative/URL-like paths (ommtsn)
+            const rawPath = application.resume_path || application.resumeUrl;
+            let filePath = rawPath;
+            try {
+                if (!path.isAbsolute(rawPath)) {
+                    // trim leading slashes and backslashes
+                    const trimmed = rawPath.replace(/^\\+|^\/+/, '');
+                    filePath = path.join(__dirname, trimmed);
+                }
+            } catch (e) {
+                console.warn('Path resolve fallback used for resume:', e.message);
+                filePath = path.join(__dirname, String(rawPath || ''));
+            }
             console.log('Resolved filePath:', filePath);
 
             if (!fs.existsSync(filePath)) {
@@ -1591,6 +1603,7 @@ app.get('/admin-rec/data', async (req, res) => {
         }
     });
 
+    // #srih2: XHR endpoint to update application status via JSON { applicationId, status } (ommtsn)
     app.post("/update-application-status", express.json(), async (req, res) => {
         if (!req.session.user || req.session.user.role !== "recruiter") {
             return res.status(403).json({ success: false, error: "Unauthorized" });
@@ -1599,13 +1612,44 @@ app.get('/admin-rec/data', async (req, res) => {
         const recruiterId = req.session.user.id;
 
         try {
-            const result = await JobApplication.updateOne(
-                { _id: applicationId, posted_by: recruiterId },
-                { status }
-            );
-            if (result.modifiedCount === 0) {
-                return res.status(404).json({ success: false, error: "Application not found or not authorized" });
+            // #srih2: validate and normalize status (ommtsn)
+            const allowed = ['approved', 'rejected'];
+            const statusLc = String(status || '').toLowerCase();
+            if (!allowed.includes(statusLc)) {
+                return res.status(400).json({ success: false, error: 'Invalid status' });
             }
+
+            const appDoc = await JobApplication.findOne({ _id: applicationId, posted_by: recruiterId, user_id: { $ne: null } });
+            if (!appDoc) {
+                return res.status(404).json({ success: false, error: 'Application not found or not authorized' });
+            }
+
+            const canonicalStatus = statusLc === 'approved' ? 'Approved' : 'Rejected';
+            appDoc.status = canonicalStatus;
+            await appDoc.save();
+
+            // Notify student about the decision
+            try {
+                const recruiter = await User.findById(recruiterId).select('email name').lean();
+                if (statusLc === 'approved') {
+                    await Notification.create({
+                        user_id: appDoc.user_id,
+                        message: `You got hired for "${appDoc.job_title}". Recruiter email: ${recruiter?.email || 'N/A'}.`,
+                        type: 'job_hired',
+                        is_read: false
+                    });
+                } else {
+                    await Notification.create({
+                        user_id: appDoc.user_id,
+                        message: `Your application for "${appDoc.job_title}" was rejected.`,
+                        type: 'job_rejected',
+                        is_read: false
+                    });
+                }
+            } catch (nErr) {
+                console.warn('Failed to create decision notification:', nErr.message);
+            }
+
             res.json({ success: true });
         } catch (err) {
             console.error("Error updating application status:", err.message);
