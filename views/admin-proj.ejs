@@ -186,10 +186,17 @@
             background-color: var(--darker);
             border-radius: 10px;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: all 0.4s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
         }
         
+        .project-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .project-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -308,34 +315,73 @@
             </div>
 
             <!-- Projects Grid -->
-            <div class="projects-grid">
-                <% dashboardData.projects.forEach(project => { %>
-                    <div class="project-card">
-                        <div class="project-header">
-                            <div class="project-title"><%= project.title %></div>
-                            <div class="project-category"><%= project.category %></div>
-                            <span class="project-status status-<%= project.status %>">
-                                <%= project.status.charAt(0).toUpperCase() + project.status.slice(1) %>
-                            </span>
-                        </div>
-                        <div class="project-body">
-                            <div class="project-description"><%= project.description %></div>
-                            <div class="project-details">
-                                <div class="detail-item">
-                                    <span class="detail-label">Deadline:</span>
-                                    <span class="detail-value">
-                                        <%= new Date(project.deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="project-members">
-                                <div class="member-count"><%= project.members %> Members</div>
-                            </div>
-                        </div>
-                    </div>
-                <% }) %>
+            <div id="projectsContainer" class="projects-grid">
+                <!-- Projects will be loaded dynamically -->
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const container = document.getElementById("projectsContainer");
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", "/api/projects", true);
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const projects = JSON.parse(xhr.responseText);
+                    container.innerHTML = "";
+
+                    projects.forEach((project, index) => {
+                        const statusLabel = project.status.charAt(0).toUpperCase() + project.status.slice(1);
+                        const deadline = new Date(project.deadline).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+
+                        const card = document.createElement("div");
+                        card.classList.add("project-card");
+                        card.innerHTML = `
+                            <div class="project-header">
+                                <div class="project-title">${project.title}</div>
+                                <div class="project-category">${project.category}</div>
+                                <span class="project-status status-${project.status}">
+                                    ${statusLabel}
+                                </span>
+                            </div>
+                            <div class="project-body">
+                                <div class="project-description">${project.description || ''}</div>
+                                <div class="project-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Deadline:</span>
+                                        <span class="detail-value">${deadline}</span>
+                                    </div>
+                                </div>
+                                <div class="project-members">
+                                    <div class="member-count">${project.members} Members</div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Delay insertion for cascade effect
+                        setTimeout(() => {
+                            container.appendChild(card);
+                            // add a small delay before making it visible
+                            setTimeout(() => card.classList.add("show"), 100);
+                        }, index * 150); // 150ms delay between cards
+                    });
+                } else {
+                    container.innerHTML = "<p>Failed to load projects.</p>";
+                }
+            };
+
+            xhr.onerror = function() {
+                container.innerHTML = "<p>Network error while loading projects.</p>";
+            };
+
+            xhr.send();
+        });
+    </script>
 </body>
 </html>

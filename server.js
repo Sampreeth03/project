@@ -1369,60 +1369,60 @@ app.get('/admin-rec/data', async (req, res) => {
         res.render('admin-mess', { activePage: 'dashboard' });
     });
 
-    app.get("/admin-proj", async (req, res) => {
-        if (!req.session.user || req.session.user.role !== "admin") {
-            return res.redirect("/login");
-        }
-    
-        try {
-            // Fetch all projects
-            const projects = await Project.find().lean();
-    
-            // Fetch member counts for each project
-            const now = new Date();
-            const projectData = await Promise.all(projects.map(async (project) => {
-                const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
-                // derive status: completed if marked completed, expired if deadline passed and not completed, active otherwise
-                let derivedStatus = project.status || 'active';
-                if ((derivedStatus === 'completed' || (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed'))) {
-                    derivedStatus = 'completed';
-                } else {
-                    if (project.deadline) {
-                        const dl = new Date(project.deadline);
-                        if (dl.getTime() < now.getTime()) {
-                            derivedStatus = 'expired';
-                        } else {
-                            derivedStatus = 'active';
-                        }
-                    } else {
-                        derivedStatus = 'active';
-                    }
-                }
+   app.get("/admin-proj", (req, res) => {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        return res.redirect("/login");
+    }
 
-                return {
-                    id: project._id.toString(),
-                    title: project.title,
-                    category: project.topic || project.category || 'General',
-                    status: derivedStatus,
-                    description: project.description,
-                    deadline: project.deadline,
-                    members: memberCount
-                };
-            }));
-    
-            const dashboardData = {
-                currentPage: "projects",
-                adminName: req.session.user.name,
-                adminRole: "Super Admin",
-                projects: projectData
+    const dashboardData = {
+        currentPage: "projects",
+        adminName: req.session.user.name,
+        adminRole: "Super Admin"
+    };
+
+    res.render("admin-proj", { activePage: "projects", dashboardData });
+});
+app.get("/api/projects", async (req, res) => {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const projects = await Project.find().lean();
+        const now = new Date();
+
+        const projectData = await Promise.all(projects.map(async (project) => {
+            const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
+            let derivedStatus = project.status || 'active';
+
+            if (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed') {
+                derivedStatus = 'completed';
+            } else {
+                if (project.deadline && new Date(project.deadline).getTime() < now.getTime()) {
+                    derivedStatus = 'expired';
+                } else {
+                    derivedStatus = 'active';
+                }
+            }
+
+            return {
+                id: project._id.toString(),
+                title: project.title,
+                category: project.topic || project.category || 'General',
+                status: derivedStatus,
+                description: project.description,
+                deadline: project.deadline,
+                members: memberCount
             };
-    
-            res.render('admin-proj', { activePage: 'projects', dashboardData });
-        } catch (err) {
-            console.error("Error fetching projects data:", err.message);
-            res.status(500).send("Server Error");
-        }
-    });
+        }));
+
+        res.json(projectData);
+    } catch (err) {
+        console.error("Error fetching projects:", err);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
 
     app.get("/logout", (req, res) => {
         req.session.destroy(() => res.redirect("/login"));
