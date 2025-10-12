@@ -294,6 +294,9 @@
             background-color: var(--success);
             color: white;
         }
+        /* #srih1: style for pending and rejected badges (ommtsn) */
+        .status-badge.pending { background-color: #ff9800; color: #111; }
+        .status-badge.rejected { background-color: var(--danger); color: #fff; }
 
         .application-buttons {
             display: flex;
@@ -437,7 +440,10 @@
             <div class="tab" data-tab="approved">Approved</div>
         </div>
 
-    <div class="applications" id="applications-container"></div> <!-- #srihesh1 -->
+        <!-- #srih1: client-side search/filter (ommtsn) -->
+        <input id="app-search" class="search-box" placeholder="Search by name, title, status" aria-label="Search applications" />
+
+        <div class="applications" id="applications-container"></div> <!-- #srih1 -->
 
         <div class="empty-state" id="empty-state">
             <img src="/api/placeholder/100/100" alt="No applications">
@@ -449,8 +455,8 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        // Use the applications data passed from the server
-                            let applicationsData = <%- JSON.stringify(applications) %>;
+        // Use the applications data passed from the server.
+        let applicationsData = <%- JSON.stringify(applications) %>;
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -462,7 +468,8 @@
             }, 3000);
         }
 
-        function renderApplications(filter = 'all') {
+        // #srih2: render with optional filter & query (ommtsn)
+        function renderApplications(filter = 'all', query = '') {
             const container = document.getElementById('applications-container');
             const emptyState = document.getElementById('empty-state');
             container.innerHTML = '';
@@ -472,6 +479,15 @@
                 filteredApplications = applicationsData.filter(app => app.status === 'pending');
             } else if (filter === 'approved') {
                 filteredApplications = applicationsData.filter(app => app.status === 'approved');
+            }
+
+            // #srih2: apply text query on applicantName, jobTitle and status (ommtsn)
+            const q = (query || '').trim().toLowerCase();
+            if (q) {
+                filteredApplications = filteredApplications.filter(app => {
+                    const fields = [app.applicantName || '', app.jobTitle || '', app.status || '', app.content || ''];
+                    return fields.some(f => String(f).toLowerCase().includes(q));
+                });
             }
 
             if (filteredApplications.length === 0) {
@@ -486,22 +502,25 @@
             filteredApplications.forEach(application => {
                 const applicationElement = document.createElement('div');
                 applicationElement.className = `application ${application.unread ? 'unread' : ''}`;
-                applicationElement.setAttribute('data-id', application.id);
+                applicationElement.setAttribute('data-app-id', application.id); // #srih1 (ommtsn)
 
                 let actionButtons = '';
                 if (application.status === 'approved') { // #srihesh1
-                    actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary">View Resume</a>
+                    actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary" data-app-id="${application.id}">View Resume</a>
                                    <span class="status-badge approved">Approved</span>`;
                 } else if (application.status === 'pending') { // #srihesh1
-                    actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary">View Resume</a>
+                    actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary" data-app-id="${application.id}">View Resume</a>
                                    <span class="status-badge pending">Pending</span>
-                                   <button class="btn btn-success" data-action="approve">Approve</button>
-                                   <button class="btn btn-danger" data-action="reject">Reject</button>`;
+                                   <button class="btn btn-success" data-action="approve" data-app-id="${application.id}">Approve</button>
+                                   <button class="btn btn-danger" data-action="reject" data-app-id="${application.id}">Reject</button>`;
+                } else if (application.status === 'rejected') { // #srih1
+                    actionButtons = `<a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary" data-app-id="${application.id}">View Resume</a>
+                                    <span class="status-badge rejected">Rejected</span>`;
                 } else {
                     actionButtons = `
-                        <a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary">View Resume</a>
-                        <button class="btn btn-success" data-action="approve">Approve</button>
-                        <button class="btn btn-danger" data-action="reject">Reject</button>`; // #srihesh1
+                        <a href="/view-resume/${application.resumeId}" target="_blank" class="btn btn-primary" data-app-id="${application.id}">View Resume</a>
+                        <button class="btn btn-success" data-action="approve" data-app-id="${application.id}">Approve</button>
+                        <button class="btn btn-danger" data-action="reject" data-app-id="${application.id}">Reject</button>`; // #srih1
                 }
 
                 let applicationHTML = `
@@ -528,20 +547,21 @@
 
             document.querySelectorAll('.application').forEach(element => {
                 element.addEventListener('click', async function(e) {
-                    if (e.target.tagName === 'BUTTON') { // #srihesh2
+                    if (e.target.tagName === 'BUTTON') { // #srih2
                         e.stopPropagation();
-                        
-                        const applicationId = this.getAttribute('data-id');
+                        // #srih2: prefer button's data-app-id else fallback to row (ommtsn)
+                        const applicationId = e.target.getAttribute('data-app-id') || this.getAttribute('data-app-id');
                         const application = applicationsData.find(n => n.id === applicationId);
                         
                         if (application) {
-                            const action = e.target.getAttribute('data-action'); // #srihesh2
-                            if (action === 'approve') { // #srihesh2
+                            const action = e.target.getAttribute('data-action'); // #srih2
+                            if (action === 'approve') { // #srih2
                                 try {
-                                    const response = await fetch(`/update-application-status/${applicationId}`, {
-                                        method: 'PATCH',
+                                    // #srih2: POST JSON payload { applicationId, status } (ommtsn)
+                                    const response = await fetch(`/update-application-status`, {
+                                        method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ status: 'Approved' })
+                                        body: JSON.stringify({ applicationId, status: 'Approved' })
                                     });
                                     const data = await response.json();
                                     if (data.success) {
@@ -550,7 +570,7 @@
                                         application.content = application.content.replace('has applied for', 'was approved for');
                                         showToast(`Application approved successfully.`, 'success');
                                         const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
-                                        renderApplications(activeTab);
+                                        renderApplications(activeTab, document.getElementById('app-search').value);
                                         updateApplicationCount();
                                     } else {
                                         showToast(data.error || 'Failed to approve application', 'danger');
@@ -558,19 +578,21 @@
                                 } catch (err) {
                                     showToast('Error approving application', 'danger');
                                 }
-                            } else if (action === 'reject') { // #srihesh2
+                            } else if (action === 'reject') { // #srih2
                                 try {
-                                    const response = await fetch(`/update-application-status/${applicationId}`, {
-                                        method: 'PATCH',
+                                    // #srih2: POST JSON payload { applicationId, status } (ommtsn)
+                                    const response = await fetch(`/update-application-status`, {
+                                        method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ status: 'Rejected' })
+                                        body: JSON.stringify({ applicationId, status: 'Rejected' })
                                     });
                                     const data = await response.json();
                                     if (data.success) {
-                                        applicationsData = applicationsData.filter(n => n.id !== applicationId);
-                                        showToast(`Application rejected and removed.`, 'danger');
+                                        // #srih2: mark rejected and disable actions instead of removing (ommtsn)
+                                        application.status = 'rejected';
+                                        showToast(`Application rejected.`, 'danger');
                                         const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
-                                        renderApplications(activeTab);
+                                        renderApplications(activeTab, document.getElementById('app-search').value);
                                         updateApplicationCount();
                                     } else {
                                         showToast(data.error || 'Failed to reject application', 'danger');
@@ -584,7 +606,7 @@
                     }
                     
                     this.classList.remove('unread');
-                    const applicationId = this.getAttribute('data-id');
+                    const applicationId = this.getAttribute('data-app-id');
                     const application = applicationsData.find(n => n.id === applicationId);
                     if (application) {
                         application.unread = false;
@@ -604,12 +626,18 @@
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 const tabType = this.getAttribute('data-tab');
-                renderApplications(tabType);
+                renderApplications(tabType, document.getElementById('app-search').value);
             });
         });
 
+        // #srih1: bind search input to re-render (ommtsn)
+        document.getElementById('app-search').addEventListener('input', function() {
+            const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+            renderApplications(activeTab, this.value);
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
-            renderApplications('all');
+            renderApplications('all', '');
             updateApplicationCount();
         });
     </script>

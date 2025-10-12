@@ -79,6 +79,10 @@ const jobApplicationSchema = new mongoose.Schema({
   skills: { type: String, required: true },
   status: { type: String, default: 'Waiting', enum: ['Waiting', 'Approved', 'Rejected'] },
   resume: { data: Buffer, contentType: String }, // Updated to match the code
+  // #srih1: file-system based resume path used by server.js (/apply-job, /view-resume) (ommtsn)
+  resume_path: { type: String, default: null },
+  // #srih1: when user applied (used in UI); server migration sets this when missing (ommtsn)
+  date_applied: { type: Date, default: null },
   active: { type: Boolean, default: true }
 }, { 
   timestamps: true,
@@ -130,7 +134,7 @@ const notificationSchema = new mongoose.Schema({
   task_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
   type: {
       type: String,
-  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired'],
+  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected'], // #srih2 add job_rejected (ommtsn)
       default: 'task'
   },
   is_read: { type: Boolean, default: false }
