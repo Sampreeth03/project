@@ -21,7 +21,6 @@
 | **Medium Password** | `Password: Pass123` | Password strength meter shows "Medium" in orange. | Orange bar displays with "Medium" label. Still requires special character. | Passed | ![Medium Password](test_plan/signup_medium_password.png) |
 | **Strong Password** | `Password: Pass@123` | Password strength meter shows "Strong" in green. | Green bar displays with "Strong" label. Password field valid. | Passed | ![Strong Password](test_plan/signup_strong_password.png) |
 | **Password Mismatch** | `Password: Pass@123`, `Confirm: Pass@124` | Confirm password shows "❌ Passwords do not match" in red. | Red mismatch indicator appears. Button disabled. | Passed | ![Password Mismatch](test_plan/signup_password_mismatch.png) |
-| **Password Match** | `Password: Pass@123`, `Confirm: Pass@123` | Confirm password shows "✓ Passwords match" in green. | Green match indicator appears. | Passed | ![Password Match](test_plan/signup_password_match.png) |
 | **Valid Signup** | `Name: John Doe`, `Email: john@gmail.com`, `Password: Pass@123`, `Confirm: Pass@123`, Terms checked | All errors clear. Sign Up button enabled. Progress: "Step 4 of 4 Complete". | Button enabled. Account created successfully. Redirects to home page. | Passed | ![Valid Signup](test_plan/signup_valid.png) |
 
 ---
@@ -48,3 +47,10 @@
 | **Invalid Capacity** | `Capacity: 0` | Inline error: "Capacity must be between 3 and 100". | Error message appears below capacity field. | Passed | ![Invalid Capacity](test_plan/create_project_invalid_capacity.png) |
 | **No Topic Selected** | Topic dropdown left at default "Select a topic" | Inline error: "Please select a project topic". | Error appears on blur. Button disabled. | Passed | ![No Topic](test_plan/create_project_no_topic.png) |
 
+## 4. Async test cases with network calls in multiple files 
+
+| Page | Function | Status | Screenshot |
+| :--- | :--- | :--- | :--- |
+| **Dashboard** | Cards are fetched using XMLHTTP request| 200 | ![Dashboard](dashboard.png) |
+| **Ask-doubts** | It calls the network to load the doubts list on page load and to POST /ask and /reply via XHR/Fetch, and duplicate listeners can cause extra calls| 200 | ![ask-doubts](ask.png) |
+| **Profile** | It calls the network to fetch profile data and to POST updates (/profile); duplicate listeners or autosave can trigger extra calls.| 200 | ![profile](profile.png) |
