@@ -535,34 +535,57 @@
                 }
             }
 
+            // Normalize string: trim and collapse whitespace
+            function normalizedString(str) {
+                if (!str) return '';
+                return String(str).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
+            }
+
             function validateTitle(v) {
-                if (!v || v.trim().length < 3) return 'Title must be at least 3 characters';
-                if (v.length > MAX_TITLE) return `Title cannot exceed ${MAX_TITLE} characters`;
+                const norm = normalizedString(v);
+                if (!norm) return 'Title must be at least 3 letters';
+                if (!/^[A-Za-z ]+$/.test(norm)) return 'Title can only contain letters and spaces';
+                const lettersOnly = norm.replace(/\s+/g, '');
+                if (lettersOnly.length < 3) return 'Title must be at least 3 letters';
+                if (norm.length > MAX_TITLE) return `Title cannot exceed ${MAX_TITLE} characters`;
                 return '';
             }
 
             function validateDescription(v) {
-                if (!v || v.trim().length < 20) return 'Description must be at least 20 characters';
-                if (v.length > MAX_DESC) return `Description cannot exceed ${MAX_DESC} characters`;
+                const norm = normalizedString(v);
+                if (!norm) return 'Description must be at least 10 letters';
+                // Only letters and spaces allowed
+                if (!/^[A-Za-z ]+$/.test(norm)) return 'Description can only contain letters and spaces';
+                const lettersOnly = norm.replace(/\s+/g, '');
+                if (lettersOnly.length < 10) return 'Description must be at least 10 letters';
+                if (norm.length > MAX_DESC) return `Description cannot exceed ${MAX_DESC} characters`;
                 return '';
             }
 
             function validatePay(v) {
-                if (!v || v.trim().length < 2) return 'Please enter a valid pay/salary';
+                const val = (v || '').trim();
+                if (!val) return 'Please enter a valid pay/salary';
+                const salaryRegex = /^[\s\d,\.\-\$£€₹kKmM]+$/;
+                if (!salaryRegex.test(val)) return 'Please enter a numeric salary or range (e.g. $80,000 - $120,000)';
+                if (!/\d/.test(val)) return 'Please include a numeric amount';
                 return '';
             }
 
             function validateSkills(v) {
-                if (!v || v.trim().length === 0) return 'Please list at least one required skill';
-                // simple check: at least one comma-separated token or single word
-                const parts = v.split(',').map(s => s.trim()).filter(Boolean);
-                if (parts.length === 0) return 'Please list at least one skill';
+                if (!v) return 'Please list at least one required skill';
+                const items = v.split(',').map(s => normalizedString(s)).filter(Boolean);
+                if (items.length === 0) return 'Please list at least one required skill';
+                for (const item of items) {
+                    if (!/^[A-Za-z ]+$/.test(item)) return 'Each skill can only contain letters and spaces';
+                }
                 return '';
             }
 
             function updateCounters() {
-                titleCounter.textContent = `${titleEl.value.length}/${MAX_TITLE}`;
-                descCounter.textContent = `${descEl.value.length}/${MAX_DESC}`;
+                const tNorm = normalizedString(titleEl.value);
+                const dNorm = normalizedString(descEl.value);
+                titleCounter.textContent = `${tNorm.length}/${MAX_TITLE}`;
+                descCounter.textContent = `${dNorm.length}/${MAX_DESC}`;
             }
 
             function updateButtonState() {
@@ -594,10 +617,12 @@
             jobForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                const title = titleEl.value.trim();
-                const description = descEl.value.trim();
-                const salaryRange = payEl.value.trim();
-                const skills = skillsEl.value.trim();
+                const title = normalizedString(titleEl.value);
+                const description = normalizedString(descEl.value);
+                const salaryRange = normalizedString(payEl.value);
+                // Normalize skills: split on commas, normalize each token, then join with ', '
+                const skillsTokens = skillsEl.value.split(',').map(s => normalizedString(s)).filter(Boolean);
+                const skills = skillsTokens.join(', ');
 
                 // final validation
                 const tErr = validateTitle(title);

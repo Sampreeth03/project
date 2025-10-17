@@ -266,6 +266,7 @@
             >Show</span
           >
           <div id="password-error" class="field-error" aria-live="polite"></div>
+          <a href="/login" >Forgot Password?</a>
         </div>
 
         <button type="submit" id="login-btn" class="login-btn" aria-disabled="true" disabled>Login</button>
@@ -380,7 +381,7 @@
 
         function validateEmail(value) {
           if (!value) return 'Email is required.';
-          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const re = /^[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+$/;
           return re.test(value) ? '' : 'Enter a valid email address.';
         }
 
@@ -414,13 +415,10 @@
           }
           inputEl.classList.add('input-error');
           inputEl.setAttribute('placeholder', originalPlaceholder);
-          // For password criteria failures show a visible detailed message under the field
           if (errorEl && errorEl.id === 'password-error' && /password/i.test(message)) {
             errorEl.textContent = 'Password must be at least 6 characters and include one uppercase letter and one special character.';
-            // show as normal block so it pushes content down
             errorEl.style.display = 'block';
           } else {
-            // keep the placeholder-style inline error for other fields (hidden summary)
             errorEl.textContent = message;
             errorEl.style.display = 'block';
           }

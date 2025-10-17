@@ -528,7 +528,7 @@
                             <input type="text" id="project-title" name="title" required autocomplete="off" maxlength="100">
                             <span class="field-valid-icon" id="title-valid">✓</span>
                             <div class="char-counter" id="title-counter">0/100</div>
-                            <div class="form-hint" id="title-hint">💡 Use a clear, descriptive title for your project</div>
+                            <div class="form-hint" id="title-hint">Use a clear, descriptive title for your project</div>
                             <div class="field-error" id="title-error"></div>
                         </div>
                         <div class="form-group">
@@ -536,7 +536,7 @@
                             <textarea id="project-description" name="description" rows="3" required autocomplete="off" maxlength="500"></textarea>
                             <span class="field-valid-icon" id="description-valid" style="top: 30px;">✓</span>
                             <div class="char-counter" id="description-counter">0/500</div>
-                            <div class="form-hint" id="description-hint">💡 Explain what your project is about and its goals</div>
+                            <div class="form-hint" id="description-hint">Explain what your project is about and its goals</div>
                             <div class="field-error" id="description-error"></div>
                         </div>
                         <div class="form-group n">
@@ -551,7 +551,7 @@
                                 <option value="data science" style="background-color: #252525;">Data Science</option>
                             </select>
                             <span class="field-valid-icon" id="topic-valid">✓</span>
-                            <div class="form-hint" id="topic-hint">💡 Choose the category that best fits your project</div>
+                            <div class="form-hint" id="topic-hint">Choose the category that best fits your project</div>
                             <div class="field-error" id="topic-error"></div>
                         </div>
                         <div class="form-group">
@@ -562,7 +562,7 @@
                                 <button type="button" class="capacity-btn" id="capacity-plus">+</button>
                             </div>
                             <span class="field-valid-icon" id="capacity-valid">✓</span>
-                            <div class="form-hint" id="capacity-hint">💡 Choose between 3-20 team members</div>
+                            <div class="form-hint" id="capacity-hint">Choose between 3-20 team members</div>
                             <div class="field-error" id="capacity-error"></div>
                         </div>
                         <div class="form-group">
@@ -577,7 +577,7 @@
             </div>
 
             <div class="auto-save-indicator" id="auto-save-indicator">
-                💾 Draft saved
+                Draft saved
             </div>
         
             <div class="projects-section">
@@ -661,9 +661,18 @@
                 const capacityError = document.getElementById('capacity-error');
                 const deadlineError = document.getElementById('deadline-error');
 
-                // Advanced DOM elements
                 const titleCounter = document.getElementById('title-counter');
                 const descriptionCounter = document.getElementById('description-counter');
+                   // Normalize input: trim and collapse any run of whitespace to a single space.
+                   function normalizedString(str) {
+                       if (!str) return '';
+                       // Remove zero-width and BOM characters that may be invisible but counted
+                       let s = String(str).replace(/[\u200B-\u200D\uFEFF]/g, '');
+                       // Collapse all whitespace (including NBSP) to single spaces and trim ends
+                       s = s.replace(/\s+/g, ' ').trim();
+                       return s;
+                   }
+
                 const titleHint = document.getElementById('title-hint');
                 const descriptionHint = document.getElementById('description-hint');
                 const topicHint = document.getElementById('topic-hint');
@@ -726,9 +735,11 @@
                     }
                 }
 
-                // Character counter with visual feedback
+                // Character counter with visual feedback — counts characters in the normalized string.
                 function updateCharCounter(input, counter, max, min = 0) {
-                    const length = input.value.length;
+                    // Use normalizedString to trim and collapse consecutive whitespace
+                    const norm = normalizedString(input.value);
+                    const length = norm.length;
                     counter.textContent = `${length}/${max}`;
 
                     counter.classList.remove('good', 'warning', 'danger');
@@ -776,21 +787,27 @@
                     }
                 });
 
-                // ============================================
                 // ESWAR4 - CREATE_PROJ VALIDATION FUNCTIONS START
-                // All validation logic below implemented by Eswar
-                // ============================================
+               
                 
-                // ESWAR4: Validation functions
                 function validateTitle(value) {
-                    if (!value || value.trim().length < 3) {
+                    const norm = normalizedString(value);
+                    if (!norm) return 'Project name is required';
+                    // allow letters, numbers and simple punctuation; multiple internal spaces already collapsed
+                    const regex = /^[A-Za-z0-9][A-Za-z0-9 .,'\-()]*$/;
+                    if (!regex.test(norm)) {
+                        return 'Project name contains invalid characters';
+                    }
+                    if (norm.length < 3) {
                         return 'Project name must be at least 3 characters';
                     }
                     return '';
                 }
 
+
                 function validateDescription(value) {
-                    if (!value || value.trim().length < 10) {
+                    const norm = normalizedString(value);
+                    if (!norm || norm.length < 10) {
                         return 'Description must be at least 10 characters';
                     }
                     return '';
@@ -1230,11 +1247,7 @@
 
         // ============================================
         // ESWAR4 - CREATE_PROJ VALIDATION JAVASCRIPT END
-        // ============================================
-
-
-
-
+        // ==============================================
         </script>
 </body>
 </html>

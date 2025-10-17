@@ -546,13 +546,20 @@
         emailInput.addEventListener('input', updateFormProgress);
 
         function validateName(v) {
-          if (!v || !v.trim()) return 'Name is required.';
+          if (!v || !v.trim()) {
+            return 'Name is required.';
+          }
+          const trimmed = v.trim();
+          const regex = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+          if (!regex.test(trimmed)) {
+            return 'Name must contain only characters.';
+          }
           return '';
         }
 
         function validateEmail(v) {
           if (!v) return 'Email is required.';
-          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const re = /^[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+$/;
           return re.test(v) ? '' : 'Enter a valid email address.';
         }
 

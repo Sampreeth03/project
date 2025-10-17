@@ -4,23 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recruiter Signup</title>
-    <!-- ============================================
-         ESWAR3 - SIGNUPFORREC.EJS DOM VALIDATION
-         Features Implemented by Eswar:
-         1. Name required validation
-         2. Email format validation
-         3. Password policy (6+ chars, uppercase, special)
-         4. Confirm password match validation
-         5. Live per-field feedback (blur/focus/input)
-         6. Small summary if submit blocked
-         7. Disable Sign Up button until all fields valid
-         8. Password strength meter (weak/medium/strong)
-         9. Password match indicator (✓/✗)
-         10. Form progress indicator (Step X of 4)
-         11. Focus glow effects on all fields
-         12. Shake animation on validation errors
-         Note: Same features as signup.ejs for recruiter form
-         ============================================ -->
+    <!-- ESWAR3 - SIGNUPFORREC.EJS DOM VALIDATION-->
     <style>
       body {
         background-color: #121212;
@@ -568,13 +552,20 @@
         emailInput.addEventListener('input', updateFormProgress);
 
         function validateName(v) {
-          if (!v || !v.trim()) return 'Name is required.';
+          if (!v || !v.trim()) {
+            return 'Name is required.';
+          }
+          const trimmed = v.trim();
+          const regex = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+          if (!regex.test(trimmed)) {
+            return 'Name must contain only characters.';
+          }
           return '';
         }
 
         function validateEmail(v) {
           if (!v) return 'Email is required.';
-          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const re = /^[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+$/;
           return re.test(v) ? '' : 'Enter a valid email address.';
         }
 
@@ -588,12 +579,10 @@
           if (!v) return 'Please confirm your password.';
           return v === pw ? '' : 'Passwords do not match.';
         }
-
         const originalNamePlaceholder = nameInput.getAttribute('placeholder') || '';
         const originalEmailPlaceholder = emailInput.getAttribute('placeholder') || '';
         const originalPasswordPlaceholder = passwordInput.getAttribute('placeholder') || '';
         const originalConfirmPlaceholder = confirmInput.getAttribute('placeholder') || '';
-
         function applyInlinePlaceholderError(inputEl, errorEl, message, originalPlaceholder) {
           if (!message) {
             inputEl.classList.remove('input-error');

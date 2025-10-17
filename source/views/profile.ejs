@@ -266,18 +266,13 @@
                 const profilePicFile = document.getElementById("editProfilePic").files[0];
                 const resumeFile = document.getElementById("editResume").files[0];
 
-                // server route in this project expects uploaded picture key named 'picture' for profile picture (upload.single('picture'))
                 if (profilePicFile) formData.append("picture", profilePicFile);
                 if (resumeFile) formData.append("resume", resumeFile);
-
-                // also include values for direct upload fallback
-                // POST to /profile (server route exists in server.js)
                 fetch('/profile', {
                     method: 'POST',
                     body: formData
                 }).then(async res => {
                     if (!res.ok) throw new Error("Server returned " + res.status);
-                    // attempt parse json, but server may redirect/render — handle gracefully
                     const contentType = res.headers.get('content-type') || '';
                     if (contentType.includes('application/json')) {
                         return res.json();
