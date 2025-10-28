@@ -1,6 +1,7 @@
 // controllers/doubtController.js
 
 const mongoose = require("mongoose");
+const path = require('path');
 // Import ALL necessary models for Doubts and Notifications
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("../database"); 
 const { getNavLinks } = require("../services/helperService");
@@ -41,6 +42,7 @@ exports.getDoubtBoard = async (req, res) => {
             return {
                 ...doubt,
                 author: doubt.user_id?.name || "Anonymous",
+                file_path: doubt.file_path ? `uploads/${path.basename(doubt.file_path)}` : null,
                 replies: visibleReplies,
                 timestamp: new Date(doubt.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
             };
@@ -71,7 +73,8 @@ exports.getClearDoubts = async (req, res) => {
 exports.postDoubt = async (req, res) => {
     // NOTE: Multer (upload.single("file-input")) is handled in the router.
     const { message } = req.body;
-    const filePath = req.file ? req.file.path : null;
+    // Store a relative path (served under /uploads) instead of an absolute server path
+    const filePath = req.file ? path.join('uploads', req.file.filename).replace(/\\/g, '/') : null;
     const userId = req.session.user.id;
 
     if (req.session.user.role !== "user") {
@@ -207,7 +210,7 @@ exports.getDoubtsJSON = async (req, res) => {
                 _id: doubt._id,
                 author: doubt.user_id?.name || 'Anonymous',
                 text: doubt.text,
-                file_path: doubt.file_path,
+                file_path: doubt.file_path ? `uploads/${path.basename(doubt.file_path)}` : null,
                 timestamp: new Date(doubt.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
                 replies: visibleReplies
             };

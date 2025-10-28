@@ -15,10 +15,19 @@ body{background:var(--dark-bg);color:var(--text)}
 .private-badge{display:inline-block;background-color:#ff9800;color:white;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:6px;font-weight:600}
 .message-text{line-height:1.4}
 .message-input-container{padding:16px;border-top:1px solid var(--border);flex-shrink:0}
-.file-label{cursor:pointer;background-color:var(--primary);color:white;padding:8px 12px;border-radius:4px;margin-right:8px;font-size:14px}
-.message-input{flex:1;padding:12px;border-radius:8px;border:none;background-color:#303030;color:var(--text);font-size:16px}
+/* layout the form controls in a single row */
+.message-input-container{display:flex;align-items:center}
+.message-input-form{display:flex;align-items:center;gap:12px;width:100%}
+.file-label{cursor:pointer;display:inline-flex;align-items:center;gap:10px;background-color:var(--primary);color:white;padding:10px 14px;border-radius:20px;margin:0;font-size:14px;white-space:nowrap;flex:0 0 auto}
+.file-label i{font-size:18px}
+.message-input{flex:1;min-width:0;padding:14px 20px;height:56px;border-radius:28px;border:none;background-color:#2b2b2b;color:var(--text);font-size:16px}
+.message-input::placeholder{color:#9a9a9a}
+
+/* ensure send button stays compact and aligned */
+.message-input-form > .send-button{flex:0 0 44px;width:44px;height:44px;margin-left:8px}
+.message-input-form > .file-label{flex:0 0 auto;margin-right:8px}
 .message-input:focus{outline:none}
-.send-button{margin-left:8px;padding:0 16px;background-color:var(--primary);color:white;border:none;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px}
+.send-button{background-color:var(--primary);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;box-shadow:0 2px 6px rgba(0,0,0,0.4)}
 .send-button:hover{background-color:#0056b3}
 .send-button i{font-size:18px}
 .image-container{position:relative}

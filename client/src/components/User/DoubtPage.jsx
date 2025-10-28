@@ -114,7 +114,32 @@ const DoubtPage = () => {
                 </div>
                 <div className="message-text">{d.text}</div>
                 {d.file_path && (
-                  <div className="image-container"><a className="view-image" href={`/${d.file_path}`} target="_blank" rel="noreferrer">View File</a></div>
+                  (() => {
+                    // Compute backend base URL (assumes backend runs on port 5000)
+                      const host = window.location.hostname || 'localhost';
+                      const backendBase = `${window.location.protocol}//${host}:5000`;
+                      // Use a relative '/uploads/...' path so the dev server proxy handles routing
+                      let fileUrl;
+                      // If it's an absolute http(s) URL, use it directly
+                      if (/^https?:\/\//i.test(d.file_path)) {
+                        fileUrl = d.file_path;
+                      } else {
+                        // Normalize Windows absolute paths (e.g. C:\Users\... or C:/Users/...) and other absolute paths
+                        // If the path contains backslashes or a Windows drive letter, extract the basename
+                        const looksLikeWindowsAbs = /^[a-zA-Z]:\\|^[a-zA-Z]:\//.test(d.file_path) || d.file_path.indexOf('\\') !== -1;
+                        if (looksLikeWindowsAbs) {
+                          const parts = d.file_path.split(/\\|\//);
+                          const base = parts[parts.length - 1];
+                          fileUrl = `/uploads/${base}`;
+                        } else if (d.file_path.startsWith('/')) {
+                          fileUrl = d.file_path;
+                        } else {
+                          // For anything else (like 'uploads/filename' or 'C:/...'), prefix a slash so it's relative to origin
+                          fileUrl = d.file_path.startsWith('uploads/') ? `/${d.file_path}` : `/${d.file_path}`;
+                        }
+                      }
+                    return (<div className="image-container"><a className="view-image" href={fileUrl} target="_blank" rel="noreferrer">View File</a></div>);
+                  })()
                 )}
                 <div className="replies-section">
                   {(d.replies||[]).map(r => (
@@ -143,7 +168,7 @@ const DoubtPage = () => {
 
         <div className="message-input-container">
           <form className="message-input-form" onSubmit={handleSubmit} encType="multipart/form-data">
-            <label className="file-label" htmlFor="file-input"><i className="fas fa-paperclip"></i> Attach File</label>
+            <label className="file-label" htmlFor="file-input"><i className="fas fa-paperclip"></i> Attach a file (optional)</label>
             <input id="file-input" type="file" name="file-input" style={{display:'none'}} onChange={e=>setFile(e.target.files[0]||null)} />
             <input type="text" className="message-input" name="message" placeholder="Ask your doubt here..." value={message} onChange={e=>setMessage(e.target.value)} required />
             <button type="submit" className="send-button" disabled={loading}>{loading? '...' : <i className="fas fa-paper-plane"></i>}</button>
