@@ -1,21 +1,22 @@
 // controllers/projectController.js
 
 const mongoose = require("mongoose");
-// Import ALL necessary models
 const { User, UserMetrics, Project, ProjectMember, JoinRequest, Task, Notification } = require("../database"); 
-const { getNavLinks } = require("../services/helperService");
+const { getTimeAgo } = require("../services/helperService");
 const { topics, topicNormalizationMap } = require("../config/constants");
 
 // =========================================================================
-// 1. All Projects View (GET /project - Created & Available)
+// 1. All Projects View (GET /project - Created & Available) - CONVERTED TO JSON
 // =========================================================================
 exports.getAllProjects = async (req, res) => {
-    const userId = req.session.user.id;
-    const { navData } = require('../config/constants');
+    // Authentication handled by isAuthenticatedAPI middleware
+    const userId = req.session.user.id; 
 
     try {
-        const createdProjects = await Project.find({ user_id: userId });
+        // 1. Fetch Projects Created by User
+        const createdProjects = await Project.find({ user_id: userId }).lean();
         
+        // 2. Fetch Projects Available to Join (Complex Aggregation)
         const availableProjects = await Project.aggregate([
             { $lookup: { from: 'projectmembers', localField: '_id', foreignField: 'project_id', as: 'members' } },
             { $lookup: { from: 'joinrequests', localField: '_id', foreignField: 'project_id', as: 'join_requests' } },
@@ -31,28 +32,30 @@ exports.getAllProjects = async (req, res) => {
             } }
         ]);
         
-        res.render('projects-list', {
-            user: req.session.user,
+        // Return JSON payload with all data (SUCCESS)
+        res.json({
+            success: true,
+            user: { id: userId, role: req.session.user.role },
             createdProjects: createdProjects || [],
-            availableProjects: availableProjects || [],
-            navLinks: getNavLinks(req.session.user),
-            homeUrl: navData.homeUrl
+            availableProjects: availableProjects || []
         });
     } catch (err) {
+        // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching projects (All Projects):', err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({ success: false, error: 'Server Error during fetch.' });
     }
 };
 
 // =========================================================================
-// 2. Joined Projects View (GET /joined-projects)
+// 2. Joined Projects View (GET /joined-projects) - CONVERTED TO JSON
 // =========================================================================
 exports.getJoinedProjects = async (req, res) => {
     const userId = req.session.user.id;
-    const { navData } = require('../config/constants');
 
     try {
         const userObjectId = new mongoose.Types.ObjectId(userId);
+        
+        // 1. Projects where user is an approved member but not the creator
         const projects = await Project.aggregate([
             { $lookup: { from: 'projectmembers', localField: '_id', foreignField: 'project_id', as: 'members' } },
             { $match: { $expr: { $and: [
@@ -62,10 +65,14 @@ exports.getJoinedProjects = async (req, res) => {
             { $addFields: { member_count: { $size: '$members' } } }
         ]);
 
+        // 2. Pending Join Requests sent by this user
         const pendingRequests = await JoinRequest.find({ user_id: userId, status: 'pending' }).populate('project_id').lean();
+        
+        // 3. Tasks assigned to this user across these projects
         const projectIds = projects.map(project => project._id);
         const tasks = await Task.find({ project_id: { $in: projectIds }, assigned_to: userId }).lean();
 
+        // Group tasks by project ID
         const tasksByProject = {};
         tasks.forEach(task => {
             const projectId = task.project_id.toString();
@@ -76,36 +83,38 @@ exports.getJoinedProjects = async (req, res) => {
             });
         });
 
+        // Format combined list for React
         const formattedProjects = projects.map(project => ({ id: project._id, title: project.title, description: project.description, member_count: project.member_count, status: 'approved', requestId: null }));
         const pendingProjects = pendingRequests.filter(req => req.project_id).map(request => ({
             id: request.project_id._id, title: request.project_id.title, description: request.project_id.description,
             member_count: 0, status: 'pending', requestId: request._id.toString()
         }));
 
-        res.render('joined_projects', {
-            user: req.session.user,
+        // Return JSON payload (SUCCESS)
+        res.json({
+            success: true,
+            user: { id: userId, role: req.session.user.role },
             projects: [...formattedProjects, ...pendingProjects],
-            tasks: tasksByProject,
-            navLinks: getNavLinks(req.session.user),
-            homeUrl: navData.homeUrl
+            tasksByProject: tasksByProject,
         });
     } catch (err) {
+        // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching joined projects:', err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({ success: false, error: 'Server Error during fetch.' });
     }
 };
 
 // =========================================================================
-// 3. Project Detail View (GET /project/:id)
+// 3. Project Detail View (GET /project/:id) - CONVERTED TO JSON
 // =========================================================================
 exports.getProjectDetails = async (req, res) => {
     const projectId = req.params.id;
     const userId = req.session.user.id;
-    const { navData } = require('../config/constants');
 
     try {
-        if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).send('Invalid project ID');
+        if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ success: false, error: 'Invalid project ID' });
 
+        // Complex aggregation to fetch project, creator, members, and request status
         const projects = await Project.aggregate([
             { $match: { _id: new mongoose.Types.ObjectId(projectId) } },
             { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'creator' } },
@@ -122,36 +131,40 @@ exports.getProjectDetails = async (req, res) => {
             { $project: { members: 0, join_requests: 0, creator: 0 } }
         ]);
 
-        if (!projects || projects.length === 0) return res.status(404).send('Project not found');
+        if (!projects || projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
 
         const project = projects[0];
         const tasks = await Task.find({ project_id: projectId }).populate('assigned_to', 'name');
         const projectMembers = await ProjectMember.find({ project_id: projectId }).populate({ path: 'user_id', select: 'name email' }).lean();
-        const userProjects = await Project.find({ user_id: userId });
+        const userProjects = await Project.find({ user_id: userId }); 
 
-        res.render('project-details', {
-            user: req.session.user, project, tasks: tasks || [], projectMembers: projectMembers || [],
-            projects: userProjects || [], navLinks: getNavLinks(req.session.user), homeUrl: navData.homeUrl
+        // Return JSON payload (SUCCESS)
+        res.json({
+            success: true,
+            project, 
+            tasks: tasks || [], 
+            projectMembers: projectMembers || [],
+            userProjects: userProjects || [] 
         });
     } catch (err) {
+        // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching project details:', err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({ success: false, error: 'Server Error during fetch.' });
     }
 };
 
 // =========================================================================
-// 4. Topic Specific Projects (GET /web-dev, /cyb, etc.)
+// 4. Topic Specific Projects (GET /web-dev, /cyb, etc.) - CONVERTED TO JSON
 // =========================================================================
 exports.getTopicProjects = async (req, res) => {
     const userId = req.session.user.id;
-    const { navData, topics } = require('../config/constants'); 
     
-    const path = req.originalUrl;
+    // NOTE: Requires parsing the topic path from the original URL
+    const path = req.originalUrl.split('/api')[1];
     const topicData = topics[path];
 
-    if (!topicData) return res.status(404).send('Topic not found');
-
-    const { file, topic } = topicData;
+    if (!topicData) return res.status(404).json({ success: false, error: 'Topic not found' });
+    const { topic } = topicData;
 
     try {
         const projects = await Project.aggregate([
@@ -169,23 +182,22 @@ exports.getTopicProjects = async (req, res) => {
             { $project: { members: 0, join_requests: 0, creator: 0 } }
         ]);
 
-        res.render(file, {
-            user: req.session.user, projects: projects || [], navLinks: getNavLinks(req.session.user), homeUrl: navData.homeUrl
-        });
+        // Return JSON payload (SUCCESS)
+        res.json({ success: true, projects: projects || [], topic });
     } catch (err) {
+        // CRITICAL FIX: Always return JSON on error
         console.error(`Error fetching projects for ${topic}:`, err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({ success: false, error: 'Server Error' });
     }
 };
 
 // =========================================================================
-// 5. Create Project View (GET /e)
+// 5. Create Project View (GET /e) - CONVERTED TO JSON
 // =========================================================================
 exports.getCreateProjectView = async (req, res) => {
+    // This endpoint now serves the list of created projects needed for the form's dashboard pane.
     const userId = req.session.user.id;
-    const { navData } = require('../config/constants');
-    const homeUrl = navData.homeUrl;
-
+    
     try {
         const createdProjects = await Project.aggregate([
             { $match: { user_id: new mongoose.Types.ObjectId(userId) } },
@@ -194,18 +206,15 @@ exports.getCreateProjectView = async (req, res) => {
             { $project: { id: '$_id', title: 1, description: 1, capacity: 1, memberCount: 1, topic: 1, deadline: { $dateToString: { format: '%Y-%m-%d', date: '$deadline' } } } }
         ]);
 
-        res.render('create_proj', {
-            user: req.session.user, projects: createdProjects || [], homeUrl,
-            navLinks: getNavLinks(req.session.user), error: null
-        });
+        // Return JSON payload (SUCCESS)
+        res.json({ success: true, projects: createdProjects || [] });
     } catch (err) {
+        // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching created projects:', err.message);
-        res.render('create_proj', { 
-            user: req.session.user, projects: [], homeUrl, 
-            navLinks: getNavLinks(req.session.user), error: 'Failed to load projects' 
-        });
+        res.status(500).json({ success: false, error: 'Failed to load projects' });
     }
 };
+
 
 // =========================================================================
 // 6. Create Project API (POST /create-project)

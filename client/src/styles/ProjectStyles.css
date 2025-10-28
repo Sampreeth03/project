@@ -1,0 +1,239 @@
+/* client/src/styles/ProjectStyles.css (FINAL UI FIDELITY RESTORATION) */
+
+:root {
+    --primary-color: #3a86ff;
+    --secondary-color: #b5c9f7;
+    --danger-color: #FF5252;
+    --dark-bg: #181a1b;
+    --card-bg: #232526;
+    --card-hover: #23272b;
+    --border-color: #292929;
+    --light-text: #f3f3f3;
+    --medium-text: #b0b0b0;
+    --shadow-color: rgba(0, 0, 0, 0.12);
+    --success-color: #388E3C;
+    --review-color: #90CAF9;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a1a 100%);
+    color: var(--light-text);
+    padding-top: 60px;
+    min-height: 100vh;
+}
+
+/* --- Layout and Container --- */
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 16px;
+}
+
+.projects-title { 
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    letter-spacing: 0.5px;
+    position: relative;
+    padding-bottom: 8px;
+}
+.projects-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--secondary-color);
+    border-radius: 2px;
+}
+
+/* --- Project Card Styling (Lists) --- */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+.project-card {
+    background: var(--card-bg);
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+.project-card:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 6px 18px var(--shadow-color);
+}
+.project-card h2, .project-card h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--light-text);
+}
+.project-card p {
+    color: var(--medium-text);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+.project-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Subtle available projects tweaks */
+.available-project-card .project-title.subtle-title {
+    color: var(--light-text);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+.available-project-card .project-description.subtle-desc {
+    color: var(--medium-text);
+    font-size: 15px;
+    margin-bottom: 10px;
+    min-height: 36px;
+}
+.available-project-card .project-meta.subtle-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #a0a0a0;
+    margin-bottom: 12px;
+}
+.available-project-card .project-members {
+    font-weight: 500;
+}
+.available-project-card .project-topic {
+    font-style: italic;
+}
+.available-project-card .project-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+}
+
+/* Button variants for subtle look */
+.btn-outline {
+    background: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    transition: background 0.2s, color 0.2s;
+    font-size: 13px;
+    padding: 6px 12px;
+    min-width: 0;
+    height: 32px;
+    line-height: 1.2;
+}
+.btn-outline:hover {
+    background: #23272b;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.btn-ghost {
+    background: transparent;
+    color: var(--medium-text);
+    border: 1px solid #444444;
+    transition: background 0.2s, color 0.2s;
+    font-size: 13px;
+    padding: 6px 12px;
+    min-width: 0;
+    height: 32px;
+    line-height: 1.2;
+}
+.btn-ghost:hover {
+    background: #23272b;
+    color: var(--primary-color);
+}
+
+/* --- General Button Styling --- */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+.btn-white { background: #ffffff; color: var(--dark-bg); border: 1px solid #444; }
+.btn-secondary:hover { background: rgba(0, 104, 255, 0.1); transform: translateY(-1px); }
+
+/* --- Project Details Specifics --- */
+.tasks-container { background-color: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1); padding: 24px; margin-bottom: 24px; }
+.tasks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.new-task-btn { background-color: var(--primary-color); color: white; border: none; border-radius: 4px; padding: 8px 16px; font-weight: 500; cursor: pointer; }
+
+/* Task Card Styling */
+.task-card { border: 1px solid var(--border-color); border-radius: 6px; padding: 16px; margin-bottom: 16px; background-color: #1A1A1A; }
+.task-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.task-meta { display: flex; justify-content: space-between; margin-bottom: 16px; color: var(--medium-text); font-size: 14px; }
+.task-actions { display: flex; gap: 8px; }
+.task-description { margin-bottom: 16px; line-height: 1.5; color: var(--light-text); }
+.task-link { margin-bottom: 16px; display: block; color: var(--primary-color); }
+.task-feedback { margin-top: 10px; font-size: 14px; color: var(--medium-text); }
+
+/* --- Status Labels (Exact Colors) --- */
+.status-label { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.status-label.completed { background-color: var(--success-color); color: white; } 
+.status-label.in-progress { background-color: #3D3000; color: #FFC107; } 
+.status-label.review { background-color: #202639; color: var(--review-color); } 
+.status-label.assigned { background-color: #002447; color: var(--primary-color); } 
+.status-label.rejected { background-color: var(--danger-color); color: white; } 
+
+/* --- Modals and Forms (CRITICAL FIX FOR FORM INPUTS) --- */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 2000; align-items: center; justify-content: center; }
+.modal.open { display: flex; } /* FIX: Makes modal visible */
+
+.modal-content { background-color: var(--card-bg); margin: 10% auto; padding: 24px; border-radius: 8px; width: 80%; max-width: 600px; color: white; position: relative; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.close { color: #888888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+.modal-buttons { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+.cancel-btn { background-color: #555555; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; }
+.confirm-btn { background-color: var(--success-color); color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; }
+
+/* FIX: Ensure form inputs inside modal are visible and styled */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--light-text); }
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 10px;
+    background-color: #333333; /* Input background MUST be dark */
+    border: 1px solid #444444; /* Border color */
+    border-radius: 4px;
+    font-size: 14px;
+    color: white !important; /* White text */
+    box-sizing: border-box; /* Maintain proper sizing */
+}
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* --- Member List Styling --- */
+.team-members { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: var(--card-hover); }
+.member { display: flex; align-items: center; gap: 8px; background-color: #222222; padding: 10px; border-radius: 8px; }
+.member-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; background-color: var(--primary-color); }
+.member-name { font-weight: 500; color: white; }
+.member-role { font-size: 12px; color: var(--medium-text); }
+.view-profile-btn { background-color: transparent; color: #80B3FF; border: 1px solid #2a4b80; border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; margin-left: auto; }
+.remove-member-btn { background-color: var(--danger-color); color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 14px; cursor: pointer; margin-left: 10px; }

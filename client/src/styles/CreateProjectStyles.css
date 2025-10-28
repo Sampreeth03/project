@@ -1,0 +1,263 @@
+/* client/src/styles/CreateProjectStyles.css (FINAL UI FIX) */
+
+:root {
+    --blue: #3a86ff;
+    --black: #121212;
+    --white: #ffffff;
+    --grey: #2a2a2a;
+    --light-grey: #000000;
+    --yellow: #ffbe0b;
+    --shadow-color: rgba(0, 0, 0, 0.25);
+    --card-bg: #252525;
+    --red: #ff4d4d;
+    --success: #28a745;
+}
+
+/* Global Reset and Box Model (Retained) */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+}
+
+/* --- Container and Header (Retained) --- */
+.create-project-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.new-project-btn {
+    background-color: var(--blue);
+    color: var(--white);
+    border: none;
+    padding: 12px 18px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 16px;
+    width: 150px;
+    align-self: flex-start;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.new-project-btn:hover { background-color: #4c90ff; }
+
+/* --- Form Container (The visible panel) --- */
+.project-form {
+    background-color: var(--card-bg);
+    padding: 30px; /* INCREASED PADDING */
+    border-radius: 8px;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.project-form.active {
+    display: block;
+}
+
+.project-form h2 {
+    margin-bottom: 25px; /* INCREASED SPACING */
+    color: var(--blue);
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* --- Form Groups and Inputs (Finalized Spacing) --- */
+.form-group {
+    margin-bottom: 25px; /* INCREASED SPACING */
+    position: relative;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px; /* INCREASED SPACING */
+    font-weight: 500;
+    color: var(--white);
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 14px 12px; /* INCREASED VERTICAL PADDING */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
+    color: var(--white);
+    border-radius: 6px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--blue); 
+}
+
+/* Invalid State */
+input.invalid, textarea.invalid, select.invalid {
+    border-color: var(--red);
+    background-color: rgba(255, 77, 77, 0.05);
+}
+
+/* --- Capacity Control --- */
+.capacity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.capacity-btn {
+    background: var(--blue);
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+.capacity-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* --- Submission Button --- */
+button[type="submit"] {
+    background-color: var(--blue);
+    color: var(--white);
+    border: none;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    width: 100%;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+button[type="submit"]:hover { background-color: #4c90ff; }
+button[type="submit"][disabled] { background-color: #666; cursor: not-allowed; opacity: 0.5; }
+
+/* --- VALIDATION FEEDBACK (CRITICAL FOR UI) --- */
+.char-counter {
+    font-size: 12px;
+    color: #888;
+    text-align: right;
+    margin-top: 4px;
+}
+.char-counter.warning { color: var(--yellow); }
+.char-counter.danger { color: var(--red); }
+.char-counter.good { color: var(--success); }
+
+.field-valid-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%; 
+    transform: translateY(-50%);
+    color: var(--success);
+    font-size: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.field-valid-icon.show { opacity: 1; }
+.field-error {
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 6px; /* Final spacing for error messages */
+    min-height: 18px;
+    display: block; 
+}
+
+/* --- Auto Save Indicator --- */
+.auto-save-indicator {
+    position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 10px 20px; border-radius: 25px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0; transform: translateY(20px); transition: all 0.3s ease; z-index: 9999;
+}
+.auto-save-indicator.show { opacity: 1; transform: translateY(0); }
+
+/* --- Projects Section STYLES (Restoring List Layout) --- */
+.projects-section {
+    margin-top: 50px; /* INCREASED SPACE ABOVE LIST */
+    flex: 1;
+    margin-bottom: 50px; /* FIX: Added margin below the list section */
+}
+
+.projects-section h2 {
+    margin-bottom: 25px; 
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--white);
+    background: linear-gradient(90deg, var(--blue), var(--yellow)); 
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.projects-container {
+    /* CRITICAL FIX: Enforce Grid layout for proper spacing and wrapping */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+    gap: 30px; /* INCREASED GAP */
+}
+
+.project-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column; 
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    height: 100%; 
+}
+.project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.project-content {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.project-title { color: var(--blue); font-size: 18px; font-weight: 600; flex: 1; }
+.delete-btn { background: none; border: none; color: #888; font-size: 22px; cursor: pointer; line-height: 1; padding: 0 5px; border-radius: 4px; transition: all 0.2s ease; width: 26px; height: 26px; }
+.delete-btn:hover { color: var(--red); background-color: rgba(255, 77, 77, 0.1); }
+
+
+.project-description {
+    color: #cccccc;
+    margin-bottom: 15px;
+    font-size: 14px;
+    flex: 1;
+}
+
+.project-meta {
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    font-size: 13px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.view-btn {
+    background-color: var(--yellow);
+    color: var(--black);
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    border: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: block;
+}
+.view-btn:hover { background-color: #ffc72c; }
