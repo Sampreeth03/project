@@ -1,9 +1,10 @@
 // controllers/projectController.js
 
 const mongoose = require("mongoose");
-const { User, UserMetrics, Project, ProjectMember, JoinRequest, Task, Notification } = require("../database"); 
+const { User, UserMetrics, Project, ProjectMember, JoinRequest, Task, Notification, JoinRequestMessage } = require("../database"); 
 const { getTimeAgo } = require("../services/helperService");
 const { topics, topicNormalizationMap } = require("../config/constants");
+const { upload } = require("../middleware/uploadMiddleware");
 
 // =========================================================================
 // 1. All Projects View (GET /project - Created & Available) - CONVERTED TO JSON
@@ -23,7 +24,33 @@ exports.getAllProjects = async (req, res) => {
             { $addFields: {
                 member_count: { $size: '$members' },
                 is_member: { $in: [new mongoose.Types.ObjectId(userId), '$members.user_id'] },
-                has_pending_request: { $in: [new mongoose.Types.ObjectId(userId), '$join_requests.user_id'] }
+                user_join_request: {
+                    $filter: {
+                        input: '$join_requests',
+                        as: 'req',
+                        cond: { $eq: ['$$req.user_id', new mongoose.Types.ObjectId(userId)] }
+                    }
+                }
+            } },
+            { $addFields: {
+                has_pending_request: {
+                    $gt: [{
+                        $size: {
+                            $filter: {
+                                input: '$user_join_request',
+                                as: 'req',
+                                cond: { $eq: ['$$req.status', 'pending'] }
+                            }
+                        }
+                    }, 0]
+                },
+                request_status: {
+                    $cond: {
+                        if: { $gt: [{ $size: '$user_join_request' }, 0] },
+                        then: { $arrayElemAt: ['$user_join_request.status', 0] },
+                        else: null
+                    }
+                }
             } },
             { $match: {
                 user_id: { $ne: new mongoose.Types.ObjectId(userId) },
@@ -125,10 +152,36 @@ exports.getProjectDetails = async (req, res) => {
                 id: '$_id', 
                 memberCount: { $size: '$members' }, 
                 hasJoined: { $in: [new mongoose.Types.ObjectId(userId), '$members.user_id'] },
-                hasPendingRequest: { $in: [new mongoose.Types.ObjectId(userId), '$join_requests.user_id'] },
+                user_join_request: {
+                    $filter: {
+                        input: '$join_requests',
+                        as: 'req',
+                        cond: { $eq: ['$$req.user_id', new mongoose.Types.ObjectId(userId)] }
+                    }
+                },
                 createdBy: '$creator.name'
             } },
-            { $project: { members: 0, join_requests: 0, creator: 0 } }
+            { $addFields: {
+                hasPendingRequest: {
+                    $gt: [{
+                        $size: {
+                            $filter: {
+                                input: '$user_join_request',
+                                as: 'req',
+                                cond: { $eq: ['$$req.status', 'pending'] }
+                            }
+                        }
+                    }, 0]
+                },
+                request_status: {
+                    $cond: {
+                        if: { $gt: [{ $size: '$user_join_request' }, 0] },
+                        then: { $arrayElemAt: ['$user_join_request.status', 0] },
+                        else: null
+                    }
+                }
+            } },
+            { $project: { members: 0, join_requests: 0, creator: 0, user_join_request: 0 } }
         ]);
 
         if (!projects || projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
@@ -376,6 +429,12 @@ exports.rejectJoinRequest = async (req, res) => {
         joinRequest.status = 'rejected';
         await joinRequest.save();
 
+        await Notification.create({
+            user_id: joinRequest.user_id,
+            message: `Your request to join project "${project.title}" has been rejected`,
+            type: 'join_request_rejected'
+        });
+
         res.json({ success: true, message: 'Join request rejected successfully' });
     } catch (err) {
         console.error('Error rejecting join request:', err.message);
@@ -458,7 +517,14 @@ exports.createTask = async (req, res) => {
         const task = new Task({ project_id: projectId, title, description, assigned_to: assignedTo, due_date: new Date(dueDate), status: 'In Progress' });
         await task.save();
         
-        // ... Notification logic ...
+        // Create notification for the assigned user
+        await Notification.create({
+            user_id: assignedTo,
+            message: `New task "${title}" has been assigned to you in project "${project.title}"`,
+            type: 'task',
+            task_id: task._id,
+            task_title: title
+        });
         
         res.json({ success: true, task: { id: task._id, title, status: task.status } });
     } catch (err) {
@@ -581,4 +647,145 @@ exports.finishProject = async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
+};
+
+// =========================================================================
+// Get Task Project (GET /get-task-project/:taskId)
+// =========================================================================
+exports.getTaskProject = async (req, res) => {
+    try {
+        const taskId = req.params.taskId;
+        const task = await Task.findById(taskId).select('project_id');
+        
+        if (!task) {
+            return res.status(404).json({ success: false, message: 'Task not found' });
+        }
+
+        return res.json({ success: true, projectId: task.project_id });
+    } catch (err) {
+        console.error('Error getting task project:', err.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// =========================================================================
+// Get Join Request Messages (GET /join-request-messages/:requestId)
+// =========================================================================
+exports.getJoinRequestMessages = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { requestId } = req.params;
+    const userId = req.session.user.id;
+
+    try {
+        const joinRequest = await JoinRequest.findById(requestId).populate('project_id').populate('user_id', 'name');
+        if (!joinRequest) return res.status(404).json({ success: false, message: 'Join request not found' });
+
+        // Verify user is either the applicant or the project creator
+        const isApplicant = joinRequest.user_id._id.toString() === userId;
+        const isCreator = joinRequest.project_id.user_id.toString() === userId;
+        
+        if (!isApplicant && !isCreator) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const messages = await JoinRequestMessage.find({ join_request_id: requestId })
+            .populate('sender_id', 'name')
+            .sort({ created_at: 1 })
+            .lean();
+
+        return res.json({ 
+            success: true, 
+            messages,
+            joinRequest: {
+                id: joinRequest._id,
+                applicantName: joinRequest.user_id.name,
+                projectName: joinRequest.project_id.title,
+                status: joinRequest.status
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching messages:', err.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// =========================================================================
+// Send Join Request Message (POST /send-join-request-message)
+// =========================================================================
+exports.sendJoinRequestMessage = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { requestId, message } = req.body;
+    const userId = req.session.user.id;
+
+    try {
+        const joinRequest = await JoinRequest.findById(requestId).populate('project_id');
+        if (!joinRequest) return res.status(404).json({ success: false, message: 'Join request not found' });
+
+        // Determine sender and receiver
+        const isApplicant = joinRequest.user_id.toString() === userId;
+        const receiverId = isApplicant ? joinRequest.project_id.user_id : joinRequest.user_id;
+
+        const newMessage = await JoinRequestMessage.create({
+            join_request_id: requestId,
+            sender_id: userId,
+            receiver_id: receiverId,
+            message,
+            created_at: new Date()
+        });
+
+        const populatedMessage = await JoinRequestMessage.findById(newMessage._id).populate('sender_id', 'name');
+
+        return res.json({ success: true, message: populatedMessage });
+    } catch (err) {
+        console.error('Error sending message:', err.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// =========================================================================
+// Upload Join Request File (POST /upload-join-request-file)
+// =========================================================================
+exports.uploadJoinRequestFile = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    upload.single('file')(req, res, async (err) => {
+        if (err) {
+            console.error('File upload error:', err);
+            return res.status(400).json({ success: false, message: 'File upload failed' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        const { requestId } = req.body;
+        const userId = req.session.user.id;
+
+        try {
+            const joinRequest = await JoinRequest.findById(requestId).populate('project_id');
+            if (!joinRequest) return res.status(404).json({ success: false, message: 'Join request not found' });
+
+            const isApplicant = joinRequest.user_id.toString() === userId;
+            const receiverId = isApplicant ? joinRequest.project_id.user_id : joinRequest.user_id;
+
+            const newMessage = await JoinRequestMessage.create({
+                join_request_id: requestId,
+                sender_id: userId,
+                receiver_id: receiverId,
+                file_url: `/uploads/${req.file.filename}`,
+                file_name: req.file.originalname,
+                message: `Shared file: ${req.file.originalname}`,
+                created_at: new Date()
+            });
+
+            const populatedMessage = await JoinRequestMessage.findById(newMessage._id).populate('sender_id', 'name');
+
+            return res.json({ success: true, message: populatedMessage });
+        } catch (error) {
+            console.error('Error saving file message:', error.message);
+            return res.status(500).json({ success: false, message: 'Server error' });
+        }
+    });
 };

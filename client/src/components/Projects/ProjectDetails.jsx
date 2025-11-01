@@ -137,6 +137,22 @@ const ProjectDetails = () => {
     const isCreator = currentUserId === String(project.user_id); 
 
     // --- Handlers ---
+    const handleJoinProject = async () => {
+        try {
+            const response = await axios.post('/api/join-project', { projectId });
+            if (response.data.success) {
+                alert(response.data.message || 'Join request sent successfully!');
+                // Refresh project details
+                window.location.reload();
+            } else {
+                alert(response.data.message || 'Failed to send join request');
+            }
+        } catch (err) {
+            console.error('Error joining project:', err);
+            alert('An error occurred while sending the join request');
+        }
+    };
+
     const handleTaskSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -198,10 +214,14 @@ const ProjectDetails = () => {
                         {/* Join Button (Simplified) */}
                         {!isCreator && (
                             <button className="join-btn" 
-                                disabled={project.hasJoined || project.hasPendingRequest || project.memberCount >= project.capacity}
-                                // onClick={() => handleJoinProject()} 
+                                disabled={project.hasJoined || project.request_status === 'pending' || project.memberCount >= project.capacity}
+                                onClick={() => handleJoinProject()} 
                             >
-                                {project.hasJoined ? 'Joined' : project.hasPendingRequest ? 'Request Pending' : 'Request to Join Project'}
+                                {project.hasJoined ? 'Joined' : 
+                                 project.request_status === 'pending' ? 'Request Pending' :
+                                 project.request_status === 'rejected' ? 'Rejected' :
+                                 project.request_status === 'approved' ? 'Approved' :
+                                 'Request to Join Project'}
                             </button>
                         )}
                     </div>

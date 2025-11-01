@@ -11,6 +11,28 @@ const ProjectsList = () => {
     const [error, setError] = useState(null);
     const [projectData, setProjectData] = useState({ createdProjects: [], availableProjects: [] });
 
+    const handleJoinProject = async (projectId) => {
+        try {
+            const response = await axios.post('/api/join-project', { projectId });
+            if (response.data.success) {
+                alert(response.data.message || 'Join request sent successfully!');
+                // Refresh the project list to update the button state
+                const refreshResponse = await axios.get('/api/project');
+                if (refreshResponse.data.success) {
+                    setProjectData({
+                        createdProjects: refreshResponse.data.createdProjects,
+                        availableProjects: refreshResponse.data.availableProjects,
+                    });
+                }
+            } else {
+                alert(response.data.message || 'Failed to send join request');
+            }
+        } catch (err) {
+            console.error('Error joining project:', err);
+            alert('An error occurred while sending the join request');
+        }
+    };
+
     useEffect(() => {
         // ... (data fetching logic remains the same) ...
         const fetchProjects = async () => {
@@ -101,11 +123,14 @@ const ProjectsList = () => {
                                         <div className="project-actions">
                                             <Link to={`/project/${project._id}`} className="btn btn-outline">View Details</Link>
                                             <button
-                                                disabled={project.hasPendingRequest}
+                                                disabled={project.has_pending_request || project.request_status === 'pending'}
                                                 className="btn btn-ghost"
-                                                onClick={() => alert(`Logic to join project ${project._id}`)}
+                                                onClick={() => handleJoinProject(project._id)}
                                             >
-                                                {project.hasPendingRequest ? 'Request Pending' : 'Join Project'}
+                                                {project.request_status === 'pending' ? 'Request Pending' : 
+                                                 project.request_status === 'rejected' ? 'Rejected' : 
+                                                 project.request_status === 'approved' ? 'Approved' : 
+                                                 'Join Project'}
                                             </button>
                                         </div>
                                     </div>

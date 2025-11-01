@@ -26,6 +26,11 @@ router.post('/approve-join-request', jsonParser, projectController.approveJoinRe
 router.post('/reject-join-request', jsonParser, projectController.rejectJoinRequest);
 router.post('/delete-join-request', jsonParser, projectController.deleteJoinRequest);
 
+// --- Join Request Chat APIs ---
+router.get('/join-request-messages/:requestId', projectController.getJoinRequestMessages);
+router.post('/send-join-request-message', jsonParser, projectController.sendJoinRequestMessage);
+router.post('/upload-join-request-file', projectController.uploadJoinRequestFile);
+
 // --- Project Completion / Status (Paths are correct) ---
 router.post('/project/:id/finish', jsonParser, projectController.finishProject);
 router.get('/project/:id/pending-tasks', projectController.getPendingTasks);
@@ -36,6 +41,7 @@ router.post('/task/extend-deadline', jsonParser, projectController.extendDeadlin
 router.post('/task/submit-github-link', jsonParser, projectController.submitGithubLink);
 router.post('/task/review-submission', jsonParser, projectController.reviewSubmission);
 router.post('/task/:id/feedback', jsonParser, projectController.reviewSubmission); 
+router.get('/get-task-project/:taskId', projectController.getTaskProject); 
 
 // --- Dynamic Topic Routes (Paths are correct) ---
 Object.keys(topics).forEach(path => {

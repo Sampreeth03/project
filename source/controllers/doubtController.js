@@ -219,3 +219,89 @@ exports.getDoubtsJSON = async (req, res) => {
         return res.json({ success: false, message: 'Failed to fetch doubts' });
     }
 };
+
+// =========================================================================
+// 6. Project Notifications JSON API (GET /api/notifications)
+// =========================================================================
+exports.getProjectNotificationsJSON = async (req, res) => {
+    const userId = req.session.user.id;
+    
+    try {
+        // Task-related notifications (assignment, review, completion)
+        const taskNotifications = await Notification.find({ 
+            user_id: userId, 
+            type: { $in: ['task', 'task_assignment', 'join_request_approved', 'task_accepted', 'task_rejected'] } 
+        })
+            .populate('task_id', 'title')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // General project status notifications (creation, completion)
+        const projectCreationNotifications = await Notification.find({ 
+            user_id: userId, 
+            type: { $in: ['project_creation', 'project_completion'] } 
+        })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Fetch join requests SENT TO THIS USER'S projects (Team Leader - for approval/rejection)
+        const joinRequestsRaw = await JoinRequest.find({})
+            .populate('user_id', 'name')
+            .populate({ path: 'project_id', match: { user_id: userId }, select: 'title user_id' })
+            .lean();
+
+        const joinRequests = joinRequestsRaw
+            .filter(jr => jr.project_id && jr.status === 'pending')
+            .map(jr => ({
+                id: jr._id,
+                user_id: jr.user_id._id,
+                user_name: jr.user_id.name,
+                project_name: jr.project_id.title,
+                created_at: jr.created_at || jr.requested_at,
+                status: jr.status,
+                isCreator: true
+            }));
+
+        // Fetch join requests MADE BY THIS USER (Member - as applicant to other projects)
+        const myJoinRequests = await JoinRequest.find({ user_id: userId, status: 'pending' })
+            .populate('project_id', 'title user_id')
+            .populate({ path: 'project_id', populate: { path: 'user_id', select: 'name' } })
+            .lean();
+
+        const myApplications = myJoinRequests.map(jr => ({
+            id: jr._id,
+            user_id: jr.project_id.user_id._id,
+            user_name: jr.project_id.user_id.name,
+            project_name: jr.project_id.title,
+            created_at: jr.created_at || jr.requested_at,
+            status: jr.status,
+            isCreator: false,
+            isApplicant: true
+        }));
+
+        return res.json({ 
+            success: true,
+            taskNotifications: taskNotifications.map(n => ({
+                id: n._id,
+                message: n.message,
+                type: n.type,
+                created_at: n.createdAt,
+                task_title: n.task_id?.title,
+                task_id: n.task_id?._id,
+                is_read: n.is_read || false
+            })),
+            projectCreationNotifications: projectCreationNotifications.map(n => ({
+                id: n._id,
+                message: n.message,
+                type: n.type,
+                created_at: n.createdAt,
+                is_read: n.is_read || false
+            })),
+            myApplications,  // For "As a Member Inbox"
+            joinRequests     // For "Team Leader Inbox"
+        });
+    } catch (err) {
+        console.error('Error fetching project notifications (API):', err.message);
+        return res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

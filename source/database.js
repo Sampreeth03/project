@@ -134,7 +134,7 @@ const notificationSchema = new mongoose.Schema({
   task_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
   type: {
       type: String,
-  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected'], // #srih2 add job_rejected (ommtsn)
+  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'join_request_rejected', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected'],
       default: 'task'
   },
   is_read: { type: Boolean, default: false }
@@ -152,6 +152,19 @@ const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema);
 const Task = mongoose.model('Task', taskSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 
+// Join Request Message Schema (for chat between applicant and project creator)
+const joinRequestMessageSchema = new mongoose.Schema({
+  join_request_id: { type: mongoose.Schema.Types.ObjectId, ref: 'JoinRequest', required: true },
+  sender_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  receiver_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  message: { type: String },
+  file_url: { type: String },
+  file_name: { type: String },
+  created_at: { type: Date, default: Date.now }
+});
+
+const JoinRequestMessage = mongoose.model('JoinRequestMessage', joinRequestMessageSchema);
+
 // Export Models
 module.exports = {
   User,
@@ -163,7 +176,8 @@ module.exports = {
   ProjectMember,
   JoinRequest,
   Task,
-  Notification
+  Notification,
+  JoinRequestMessage
 };
 
 // ---------------------------

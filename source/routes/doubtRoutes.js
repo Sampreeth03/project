@@ -20,6 +20,9 @@ router.get('/doubts', doubtController.getDoubtsJSON);
 // --- Notification/Join Request Management View ---
 router.get('/not', doubtController.getProjectNotifications); 
 
+// --- API endpoint for React frontend ---
+router.get('/notifications', doubtController.getProjectNotificationsJSON);
+
 // --- Q&A Actions ---
 router.post("/ask", upload.single("file-input"), doubtController.postDoubt);
 router.post("/reply", jsonParser, doubtController.postReply);

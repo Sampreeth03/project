@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import '../../styles/UserHome.css'; 
 
 const Navbar = ({ onSearchChange }) => {
-    const { user } = useAuth();
+    const { user, logoutUser } = useAuth();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -22,7 +22,7 @@ const Navbar = ({ onSearchChange }) => {
         { 
             name: "Q&A", href: "/doubt",
             submenu: [
-                { name: "Ask a Doubt", href: "/ask" },
+                { name: "Ask a Doubt", href: "/doubt" },
                 { name: "Clear Doubts", href: "/clear" }
             ]
         },
