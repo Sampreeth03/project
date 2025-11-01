@@ -36,7 +36,7 @@ const getRecruiterNav = () => ({
 // 1. Recruiter Home Page (GET /recruiter-home)
 // =========================================================================
 exports.getRecruiterHome = (req, res) => {
-    res.render("recruiter-home", { user: req.session.user, ...getRecruiterNav() });
+    res.json({ user: req.session.user, ...getRecruiterNav() });
 };
 
 // =========================================================================
@@ -52,7 +52,7 @@ exports.getRecruiterJobs = async (req, res) => {
         const activeJobs = await JobApplication.countDocuments({ posted_by: recruiterId, active: 1, user_id: null });
         const postedJobs = await JobApplication.find({ posted_by: recruiterId, user_id: null }).lean();
 
-        res.render("rec-jobs", {
+        res.json({
             user: req.session.user,
             homeUrl: navData.homeUrl,
             navLinks: navData.navLinks,
@@ -63,7 +63,7 @@ exports.getRecruiterJobs = async (req, res) => {
         });
     } catch (err) {
         console.error('Error in /rec-job route:', err.message);
-        res.redirect("/login"); 
+        res.status(500).json({ error: 'Failed to fetch jobs' }); 
     }
 };
 
@@ -78,7 +78,7 @@ exports.getRecruiterDashboard = async (req, res) => {
         const jobCount = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: null });
         const participantCount = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } });
 
-        res.render("recruiter-dashboard", {
+        res.json({
             user: req.session.user,
             ...recruiterNav,
             totalJobs: jobCount || 0,
@@ -122,7 +122,7 @@ exports.getRecruiterApplications = async (req, res) => {
 
         const recruiterNav = getRecruiterNav();
 
-        res.render('rec-app', {
+        res.json({
             user: req.session.user,
             homeUrl: recruiterNav.homeUrl,
             navLinks: recruiterNav.navLinks,
@@ -130,7 +130,7 @@ exports.getRecruiterApplications = async (req, res) => {
         });
     } catch (err) {
         console.error('Error in /rec-app route:', err.message);
-        res.redirect('/recruiter-home?error=Failed to load applications');
+        res.status(500).json({ error: 'Failed to load applications' });
     }
 };
 
@@ -142,10 +142,10 @@ exports.getRecruiterNotifications = async (req, res) => {
     try {
         const notifications = await Notification.find({ user_id: recruiterId }).sort({ createdAt: -1 }).lean();
         const recruiterNav = getRecruiterNav(); 
-        res.render('rec-not', { user: req.session.user, ...recruiterNav, notifications });
+        res.json({ user: req.session.user, ...recruiterNav, notifications });
     } catch (err) {
         console.error('Error in /rec-not route:', err.message);
-        res.redirect('/recruiter-home?error=Failed to load notifications');
+        res.status(500).json({ error: 'Failed to load notifications' });
     }
 };
 
