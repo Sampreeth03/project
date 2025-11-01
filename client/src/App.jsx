@@ -6,12 +6,16 @@ import Login from './components/Auth/Login.jsx';
 // --- MAIN USER COMPONENT (Replaces user-home.ejs) ---
 import UserHome from './components/User/UserHome.jsx'; 
 
-// --- TEMPORARY IMPORTS (Required to prevent post-login crash) ---
-// Note: We need to keep RecruiterHome and AdminDashboard imports because 
-// your backend sends redirects to these paths depending on the user's role.
-import RecruiterHome from './components/RecruiterHome.jsx'; 
+// --- RECRUITER COMPONENTS (Migrated from EJS) ---
+import RecruiterHome from './components/Recruiter/RecruiterHome';
+import RecruiterDashboard from './components/Recruiter/RecruiterDashboard';
+import RecruiterJobs from './components/Recruiter/RecruiterJobs';
+import RecruiterApplications from './components/Recruiter/RecruiterApplications';
+import RecruiterNotifications from './components/Recruiter/RecruiterNotifications';
+import RecruiterProfile from './components/Recruiter/RecruiterProfile';
+
+// --- ADMIN COMPONENT ---
 import AdminDashboard from './components/AdminDashboard.jsx'; 
-// ---
 
 function App() {
   return (
@@ -22,13 +26,18 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/signupforrec" element={<Signup />} />
       
-      {/* --- AUTHENTICATED TARGETS --- */}
-      
-      {/* CRITICAL: UserHome now replaces the generic Home placeholder */}
+      {/* --- AUTHENTICATED USER ROUTES --- */}
       <Route path="/home" element={<UserHome />} /> 
       
-      {/* These placeholders are still necessary for non-user logins */}
+      {/* --- RECRUITER ROUTES (Migrated from EJS) --- */}
       <Route path="/recruiter-home" element={<RecruiterHome />} />
+      <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
+      <Route path="/rec-job" element={<RecruiterJobs />} />
+      <Route path="/rec-app" element={<RecruiterApplications />} />
+      <Route path="/rec-not" element={<RecruiterNotifications />} />
+      <Route path="/rec-prof" element={<RecruiterProfile />} />
+      
+      {/* --- ADMIN ROUTES --- */}
       <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
