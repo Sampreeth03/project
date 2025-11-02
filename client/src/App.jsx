@@ -1,4 +1,3 @@
-
 // --- MAIN USER COMPONENT ---
 
 // --- PROJECT IMPORTS (NEWLY ADDED) ---
@@ -13,6 +12,8 @@ import ProjectsList from './components/Projects/ProjectsList.jsx';
 import JoinedProjects from './components/Projects/JoinedProjects.jsx';
 import ProjectDetails from './components/Projects/ProjectDetails.jsx'; 
 import CreateProject from './components/Projects/CreateProject.jsx';
+import DoubtPage from './components/User/DoubtPage.jsx';
+import ClearDoubts from './components/User/ClearDoubts.jsx';
 
 import RecruiterHome from './components/Recruiter/RecruiterHome.jsx';
 import RecruiterDashboard from './components/Recruiter/RecruiterDashboard.jsx';
@@ -35,6 +36,8 @@ function App() {
       
       {/* User Home */}
       <Route path="/home" element={<UserHome />} /> 
+      <Route path="/doubt" element={<DoubtPage />} />
+      <Route path="/clear" element={<ClearDoubts />} />
       
       {/* --- PROJECT VIEWS --- */}
       {/* All Projects List */}
