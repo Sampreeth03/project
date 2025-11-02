@@ -14,6 +14,8 @@ router.use(isAuthenticatedAPI); // Changed to API-aware middleware
 // --- Doubt/Q&A Views ---
 router.get("/doubt", doubtController.getDoubtBoard);
 router.get("/clear", doubtController.getClearDoubts);
+// JSON endpoint for React frontend
+router.get('/doubts', doubtController.getDoubtsJSON);
 
 // --- Notification/Join Request Management View ---
 router.get('/not', doubtController.getProjectNotifications); 

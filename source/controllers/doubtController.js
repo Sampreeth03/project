@@ -175,3 +175,47 @@ exports.getProjectNotifications = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+
+// JSON provider for client-side React app
+exports.getDoubtsJSON = async (req, res) => {
+    const currentUserId = req.session.user.id;
+    try {
+        const doubts = await Doubt.find({ visible_to_all: true })
+            .populate({
+                path: 'replies',
+                populate: { path: 'user_id', select: 'name' }
+            })
+            .populate('user_id', 'name')
+            .sort({ timestamp: -1 })
+            .lean();
+
+        const formatted = doubts.map(doubt => {
+            const doubtOwnerId = doubt.user_id?._id?.toString();
+            const visibleReplies = doubt.replies?.filter(reply => {
+                const replyAuthorId = reply.user_id?._id?.toString();
+                if (reply.visible_to_all !== false) return true;
+                return currentUserId === doubtOwnerId || currentUserId === replyAuthorId;
+            }).map(reply => ({
+                _id: reply._id,
+                author: reply.user_id?.name || reply.author || 'Anonymous',
+                text: reply.text,
+                timestamp: new Date(reply.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                isPrivate: reply.visible_to_all === false
+            })) || [];
+
+            return {
+                _id: doubt._id,
+                author: doubt.user_id?.name || 'Anonymous',
+                text: doubt.text,
+                file_path: doubt.file_path,
+                timestamp: new Date(doubt.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                replies: visibleReplies
+            };
+        });
+
+        return res.json({ success: true, doubts: formatted });
+    } catch (err) {
+        console.error('Error fetching doubts (api):', err.message);
+        return res.json({ success: false, message: 'Failed to fetch doubts' });
+    }
+};
