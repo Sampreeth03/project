@@ -12,6 +12,13 @@ export default defineConfig({
         changeOrigin: true, // Needed for virtual hosting
         secure: false, 
       },
+      // Forward uploaded files to backend so /uploads/filename works in dev
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path, // keep path as-is
+      }
     }
   }
 })

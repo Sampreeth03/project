@@ -1,0 +1,312 @@
+/* Profile Page Styles */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #000;
+    margin: 0;
+    padding: 0;
+    color: #fff;
+}
+
+.profile-container {
+    background: rgb(45, 45, 45);
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 1150px;
+    max-width: calc(100% - 40px);
+    margin: 85px auto 60px;
+    position: relative;
+    border-radius: 8px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.profile-pic {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 2px solid #0068FF;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #222;
+}
+
+.profile-pic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-pic .plusButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 104, 255, 0.2);
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.profile-pic .plusButton:hover {
+    background: rgba(0, 104, 255, 0.4);
+}
+
+.profile-pic .plusIcon {
+    width: 40px;
+    height: 40px;
+    fill: #0068FF;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-info h2 {
+    margin: 10px 0;
+    color: #fff;
+    font-size: 36px;
+}
+
+.profile-info p {
+    color: #ddd;
+    font-size: 18px;
+    margin: 5px 0;
+}
+
+.details-container {
+    text-align: left;
+    margin-top: 20px;
+}
+
+.details-container h3 {
+    color: #fff;
+    margin-bottom: 8px;
+    font-size: 24px;
+}
+
+.skills,
+.interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.skill,
+.interest {
+    background: #0068FF;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.resume-container {
+    margin-top: 20px;
+    position: relative;
+}
+
+.resume-container iframe {
+    width: 100%;
+    height: 280px;
+    border: 1px solid #333;
+    margin-top: 10px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.add-resume-btn {
+    background: #0068FF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px auto;
+    transition: background 0.3s ease;
+}
+
+.add-resume-btn:hover {
+    background: #0056d4;
+}
+
+.add-resume-btn .buttonSpan {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.edit-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgb(20, 20, 20);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.16);
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.edit-button:hover {
+    background-color: rgb(40, 40, 40);
+}
+
+.edit-svgIcon {
+    width: 17px;
+}
+
+.edit-svgIcon path {
+    fill: white;
+}
+
+.edit-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.edit-mode.active {
+    display: flex;
+}
+
+.edit-mode-content {
+    background: white;
+    color: #000;
+    padding: 30px;
+    border-radius: 8px;
+    width: 520px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+.edit-mode label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.edit-mode input,
+.edit-mode textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.but-cont {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.but-cont button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+}
+
+.btn-save {
+    background: #0068FF;
+    color: #fff;
+}
+
+.btn-save:hover {
+    background: #0056d4;
+}
+
+.btn-cancel {
+    background: #444;
+    color: #fff;
+}
+
+.btn-cancel:hover {
+    background: #555;
+}
+
+.feedback {
+    color: #fff;
+    font-size: 18px;
+    margin-top: 10px;
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+hr {
+    border-color: #333;
+    margin: 18px 0;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .profile-header {
+        flex-direction: column;
+    }
+
+    .profile-pic {
+        width: 150px;
+        height: 150px;
+    }
+
+    .profile-info h2 {
+        font-size: 28px;
+    }
+
+    .edit-mode-content {
+        width: 90%;
+        padding: 20px;
+    }
+}

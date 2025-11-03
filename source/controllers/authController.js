@@ -78,7 +78,7 @@ exports.getSignup = (req, res) => {
 // 5. Handle Student/User Signup Submission (POST /signup) - CONVERTED TO JSON API
 // =========================================================================
 exports.postSignup = async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, about, skills, interests } = req.body;
     
     if (!name || !email || !password) {
         return res.status(400).json({ success: false, error: 'Name, email, and password are required' });
@@ -98,7 +98,34 @@ exports.postSignup = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({ name, email, password: hashedPassword, role: 'user', verified: false });
+        
+        // Build user object with profile fields
+        const userData = { 
+            name, 
+            email, 
+            password: hashedPassword, 
+            role: 'user', 
+            verified: false 
+        };
+        
+        // Add profile fields if provided
+        if (about) userData.about = about;
+        if (skills) userData.skills = skills.split(',').map(s => s.trim()).filter(Boolean);
+        if (interests) userData.interests = interests.split(',').map(s => s.trim()).filter(Boolean);
+        
+        // Handle file uploads from multer
+        if (req.files) {
+            if (req.files.picture && req.files.picture[0]) {
+                const f = req.files.picture[0];
+                userData.profileImageUrl = `/uploads/${f.filename}`.replace(/\\/g, '/');
+            }
+            if (req.files.resume && req.files.resume[0]) {
+                const f = req.files.resume[0];
+                userData.resumeUrl = `/uploads/${f.filename}`.replace(/\\/g, '/');
+            }
+        }
+        
+        const user = await User.create(userData);
         await UserMetrics.create({ user_id: user._id });
         
         // We do not auto-login, just return success status (201 Created)

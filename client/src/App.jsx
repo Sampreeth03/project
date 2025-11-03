@@ -15,6 +15,7 @@ import CreateProject from './components/Projects/CreateProject.jsx';
 import DoubtPage from './components/User/DoubtPage.jsx';
 import ClearDoubts from './components/User/ClearDoubts.jsx';
 import ProjectNotifications from './components/User/ProjectNotifications.jsx';
+import Profile from './components/User/Profile.jsx';
 
 import RecruiterHome from './components/Recruiter/RecruiterHome.jsx';
 import RecruiterDashboard from './components/Recruiter/RecruiterDashboard.jsx';
@@ -40,6 +41,10 @@ function App() {
       <Route path="/doubt" element={<DoubtPage />} />
       <Route path="/clear" element={<ClearDoubts />} />
       <Route path="/not" element={<ProjectNotifications />} />
+      
+      {/* Profile Routes */}
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/profile/:id" element={<Profile />} />
       
       {/* --- PROJECT VIEWS --- */}
       {/* All Projects List */}

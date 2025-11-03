@@ -13,8 +13,11 @@ router.get('/', authController.getLanding);
 router.get('/login', authController.getLogin);
 router.post('/login', authController.postLogin);
 router.get('/signup', authController.getSignup);
-// Student signup uses express.json() for the JSON body, which we add inline
-router.post('/signup', jsonParser, authController.postSignup); 
+// Student signup now accepts file uploads for profile picture and resume
+router.post('/signup', upload.fields([
+    { name: 'picture', maxCount: 1 },
+    { name: 'resume', maxCount: 1 }
+]), authController.postSignup); 
 
 // Recruiter Signup Routes (File upload logic is here)
 router.get('/signupforrec', authController.getRecruiterSignup);
