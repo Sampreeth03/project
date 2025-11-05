@@ -285,6 +285,60 @@ ul {
     margin: 0;
 }
 
+/* Completed Projects & Tasks Styles */
+.completed-project-card {
+    margin-bottom: 20px;
+}
+
+.project-title-completed {
+    color: #0068FF;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.completed-tasks-list {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.completed-task-item {
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.task-icon {
+    color: #00ff00;
+    margin-right: 8px;
+}
+
+.task-title-text {
+    color: #ddd;
+}
+
+.task-description {
+    color: #999;
+    font-size: 14px;
+    margin: 5px 0 0 28px;
+}
+
+.project-description {
+    color: #ccc;
+    font-size: 15px;
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+/* Completed Projects as Team Leader Styles */
+.leader-project {
+    margin-bottom: 20px;
+}
+
+.leader-badge {
+    color: #FFD700;
+    font-size: 14px;
+    margin: 8px 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .profile-container {
@@ -308,5 +362,9 @@ ul {
     .edit-mode-content {
         width: 90%;
         padding: 20px;
+    }
+    
+    .completed-task-item {
+        flex-direction: column;
     }
 }

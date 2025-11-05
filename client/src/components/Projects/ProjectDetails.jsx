@@ -14,7 +14,8 @@ const TaskCard = ({ task, projectId, isCreator, handleExtendDeadline, openReview
     
     const isAssignedToUser = task.assigned_to?._id === currentUserId;
     const needsReview = task.status === 'Review' && isCreator;
-    const canSubmitLink = (task.status === 'Assigned' || task.status === 'In Progress') && isAssignedToUser;
+    // Allow submission if task is In Progress (including after rejection) and assigned to current user
+    const canSubmitLink = (task.status === 'In Progress') && isAssignedToUser;
 
     const [githubLink, setGithubLink] = useState(task.github_link || '');
     const [isSubmitting, setIsSubmitting] = useState(false);

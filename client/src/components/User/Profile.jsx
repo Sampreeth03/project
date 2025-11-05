@@ -31,25 +31,44 @@ const Profile = () => {
 
     // Determine which user ID to fetch (from URL param or current user)
     const targetUserId = id || (currentUser?.id || currentUser?._id);
-    const isOwnProfile = !id || targetUserId === (currentUser?.id || currentUser?._id);
+    const isOwnProfile = !id || (currentUser && targetUserId === (currentUser?.id || currentUser?._id));
 
     useEffect(() => {
+        // Always fetch profile data, even if currentUser is not loaded yet
         fetchProfileData();
-    }, [targetUserId]);
+    }, [id, currentUser?.id]);
 
     const fetchProfileData = async () => {
-        if (!targetUserId) {
-            setError('No user ID available');
+        // If no target user ID and no URL param, try to get current user's profile from session
+        let userIdToFetch = targetUserId;
+        
+        if (!userIdToFetch && !id) {
+            try {
+                // Try to get current user from session
+                const sessionResponse = await axios.get('/api/home');
+                if (sessionResponse.data.success && sessionResponse.data.user) {
+                    userIdToFetch = sessionResponse.data.user.id;
+                }
+            } catch (err) {
+                console.error('Failed to get session user:', err);
+            }
+        }
+        
+        if (!userIdToFetch) {
+            setError('Please login to view profile');
             setLoading(false);
             return;
         }
 
         try {
             setLoading(true);
-            const response = await axios.get(`/api/profile-data/${targetUserId}`);
+            const response = await axios.get(`/api/profile-data/${userIdToFetch}`);
             
             if (response.data.success && response.data.user) {
                 const userData = response.data.user;
+                console.log('Profile data received:', userData);
+                console.log('Completed projects:', userData.completedProjects);
+                console.log('Total completed tasks:', userData.totalCompletedTasks);
                 setUser(userData);
                 
                 // Pre-fill form data for editing
@@ -194,8 +213,8 @@ const Profile = () => {
         return (
             <div>
                 <NavBar />
-                <div style={{ marginTop: '100px', textAlign: 'center', color: '#fff' }}>
-                    Loading profile...
+                <div style={{ marginTop: '100px', textAlign: 'center', color: '#fff', fontSize: '18px' }}>
+                    <div style={{ marginBottom: '10px' }}>Loading profile...</div>
                 </div>
             </div>
         );
@@ -205,8 +224,13 @@ const Profile = () => {
         return (
             <div>
                 <NavBar />
-                <div style={{ marginTop: '100px', textAlign: 'center', color: '#ff4444' }}>
-                    {error}
+                <div style={{ marginTop: '100px', textAlign: 'center', color: '#ff4444', fontSize: '18px' }}>
+                    <div style={{ marginBottom: '10px' }}>{error}</div>
+                    {error.includes('login') && (
+                        <a href="/login" style={{ color: '#0068FF', textDecoration: 'underline' }}>
+                            Click here to login
+                        </a>
+                    )}
                 </div>
             </div>
         );
@@ -283,6 +307,9 @@ const Profile = () => {
                         <p id="displayEmail">Email: {user?.email || ''}</p>
                         <div className="feedback">
                             <span>Joined: <strong>{user?.joinedAgo || 'N/A'}</strong></span>
+                            {user?.totalCompletedTasks !== undefined && (
+                                <span>Completed Tasks: <strong>{user.totalCompletedTasks}</strong></span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -324,6 +351,69 @@ const Profile = () => {
                     </div>
 
                     <hr />
+                    
+                    {/* Completed Projects and Tasks Section */}
+                    <div className="details-container">
+                        <h3>Completed Tasks in Projects:</h3>
+                        
+                        {user?.completedProjects && user.completedProjects.length > 0 ? (
+                            <>
+                                <p style={{ color: '#0068FF', fontSize: '16px', marginBottom: '15px' }}>
+                                    Total Completed Tasks: <strong>{user.totalCompletedTasks || 0}</strong>
+                                </p>
+                                
+                                {user.completedProjects.map((project, index) => (
+                                    <div key={project.projectId || index} className="completed-project-card">
+                                        <h4 className="project-title-completed">{project.projectTitle}</h4>
+                                        <div className="completed-tasks-list">
+                                            {project.tasks.map((task, taskIndex) => (
+                                                <div key={task.taskId || taskIndex} className="completed-task-item">
+                                                    <div>
+                                                        <span className="task-title-text">{task.title}</span>
+                                                    </div>
+                                                    {task.description && (
+                                                        <p className="task-description">{task.description}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            <p style={{ color: '#888' }}>No completed tasks yet</p>
+                        )}
+                    </div>
+                    
+                    <hr />
+
+                    {/* Completed Projects as Team Leader Section */}
+                    <div className="details-container">
+                        <h3>Completed Projects as Team Leader:</h3>
+                        
+                        {user?.completedAsLeader && user.completedAsLeader.length > 0 ? (
+                            <>
+                                <p style={{ color: '#0068FF', fontSize: '16px', marginBottom: '15px' }}>
+                                    Total Projects Led: <strong>{user.completedAsLeader.length}</strong>
+                                </p>
+                                
+                                {user.completedAsLeader.map((project, index) => (
+                                    <div key={project.projectId || index} className="completed-project-card leader-project">
+                                        <h4 className="project-title-completed">{project.projectTitle}</h4>
+                                        {project.description && (
+                                            <p className="project-description">{project.description}</p>
+                                        )}
+                                        <p className="leader-badge">Completed this project as the team leader</p>
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            <p style={{ color: '#888' }}>No projects completed as team leader yet</p>
+                        )}
+                    </div>
+                    
+                    <hr />
+                    
                     <h3 style={{ color: '#fff', fontSize: '24px' }}>Resume:</h3>
                     <div className="resume-container">
                         {isOwnProfile && !resumePreview && (
