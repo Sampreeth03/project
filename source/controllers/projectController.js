@@ -535,7 +535,11 @@ exports.createTask = async (req, res) => {
 exports.getPendingTasks = async (req, res) => {
     try {
         const projectId = req.params.id;
-        const pendingTasks = await Task.countDocuments({ project_id: projectId, status: { $ne: 'Completed' } });
+        // Exclude both Completed and Rejected tasks from pending count
+        const pendingTasks = await Task.countDocuments({ 
+            project_id: projectId, 
+            status: { $nin: ['Completed', 'Rejected'] } 
+        });
         res.json({ pendingTasks });
     } catch (err) {
         res.json({ pendingTasks: 0 });
@@ -589,12 +593,12 @@ exports.reviewSubmission = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Task not found or not in review status' });
         }
 
-        const newStatus = action === 'accept' ? 'Completed' : 'Rejected';
+        const newStatus = action === 'accept' ? 'Completed' : 'In Progress';
         
         const update = {
             feedback,
             status: newStatus,
-            github_link: action === 'accept' ? task.github_link : null
+            github_link: action === 'reject' ? null : task.github_link
         };
 
         const updatedTask = await Task.findByIdAndUpdate(taskId, update, { new: true });
@@ -605,14 +609,28 @@ exports.reviewSubmission = async (req, res) => {
                 { $inc: { completed_tasks: 1 } },
                 { upsert: true }
             );
+            
+            // Notification for accepted task
+            await Notification.create({
+                user_id: task.assigned_to._id,
+                message: `Your task "${task.title}" has been accepted! Feedback: ${feedback}`,
+                type: 'task_accepted',
+                task_id: taskId
+            });
+        } else if (action === 'reject' && task.assigned_to) {
+            // Notification for rejected task - user can resubmit
+            await Notification.create({
+                user_id: task.assigned_to._id,
+                message: `Your task "${task.title}" needs revision. Feedback: ${feedback}. Please update and resubmit.`,
+                type: 'task_rejected',
+                task_id: taskId
+            });
         }
-        
-        // ... (Notification logic to assigned user) ...
         
         // FINAL SUCCESS RESPONSE
         return res.json({ 
             success: true, 
-            message: `Task successfully marked as ${newStatus}`,
+            message: action === 'accept' ? 'Task accepted successfully' : 'Task sent back for revision',
             task: { 
                 id: updatedTask._id,
                 status: updatedTask.status,
@@ -629,22 +647,56 @@ exports.reviewSubmission = async (req, res) => {
 exports.finishProject = async (req, res) => {
     try {
         const projectId = req.params.id;
+        const userId = req.session.user.id;
+        
         const project = await Project.findById(projectId);
         if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+        
+        // Check if user is the project creator
+        if (project.user_id.toString() !== userId) {
+            return res.status(403).json({ success: false, message: 'Only project creator can finish the project' });
+        }
+        
+        // Check if project is already completed
+        if (project.status === 'completed') {
+            return res.status(400).json({ success: false, message: 'Project is already completed' });
+        }
 
-        await Project.findByIdAndUpdate(projectId, { status: 'completed' });
-        await Task.updateMany({ project_id: projectId, status: { $ne: 'Completed' } }, { status: 'Completed' });
+        // Update project status and set completion timestamp
+        await Project.findByIdAndUpdate(projectId, { 
+            status: 'completed',
+            completedAt: new Date()
+        });
+        
+        // Mark all non-completed tasks as completed (but don't count rejected tasks)
+        await Task.updateMany(
+            { project_id: projectId, status: { $nin: ['Completed'] } }, 
+            { status: 'Completed' }
+        );
 
+        // Get all project members and update their metrics
         const projectMembers = await ProjectMember.find({ project_id: projectId }).select('user_id');
         
         const memberUpdates = projectMembers.map(async (member) => {
-            await UserMetrics.findOneAndUpdate({ user_id: member.user_id }, { $inc: { active_projects: -1 } }, { new: true });
-            await Notification.create({ user_id: member.user_id, message: `Project "${project.title}" has been successfully completed.`, type: 'project_completion' });
+            await UserMetrics.findOneAndUpdate(
+                { user_id: member.user_id }, 
+                { $inc: { active_projects: -1 } }, 
+                { new: true, upsert: true }
+            );
+            
+            await Notification.create({ 
+                user_id: member.user_id, 
+                message: `Project "${project.title}" has been successfully completed.`, 
+                type: 'project_completion' 
+            });
         });
+        
         await Promise.all(memberUpdates);
 
-        res.json({ success: true });
+        console.log(`[Finish Project] Project ${projectId} completed by user ${userId}`);
+        res.json({ success: true, message: 'Project completed successfully' });
     } catch (err) {
+        console.error('[Finish Project] Error:', err);
         res.status(500).json({ success: false, message: err.message });
     }
 };

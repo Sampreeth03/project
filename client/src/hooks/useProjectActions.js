@@ -103,11 +103,30 @@ const useProjectActions = (projectId) => {
         }
     };
     
+    // 5. Remove Member
+    const handleRemoveMember = async (userId, userName) => {
+        const confirmed = window.confirm(`Are you sure you want to remove ${userName} from this project?`);
+        if (!confirmed) return;
+
+        try {
+            const response = await axios.post('/api/project/remove-member', { projectId, userId });
+            if (response.data.success) {
+                showNotification(`${userName} has been removed from the project`);
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                showNotification(response.data.message || 'Failed to remove member', 'error');
+            }
+        } catch (err) {
+            showNotification('Error removing member: Network error', 'error');
+        }
+    };
+
     return {
         handleCreateTask,
-        handleFinishProject,
+        confirmFinishProject: handleFinishProject, // Alias for compatibility
         handleExtendDeadline,
         handleReviewSubmission,
+        handleRemoveMember,
         isFinishing
     };
 };

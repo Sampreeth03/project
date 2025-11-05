@@ -19,15 +19,11 @@ const isAuthenticated = (req, res, next) => {
 // =========================================================================
 exports.getHome = (req, res) => {
     // Note: Authentication is handled by isAuthenticatedAPI middleware
-    if (req.session.user.role !== "user") {
-        // Return JSON 403 Forbidden if user role is wrong
-        return res.status(403).json({ success: false, error: "Forbidden: Not a user role." });
-    }
-    // React handles all rendering for the home page shell.
+    // Return user data for session checking
     res.json({ 
         success: true, 
         message: "User home data requested.",
-        user: { id: req.session.user.id, name: req.session.user.name, role: req.session.user.role }
+        user: { id: req.session.user.id, name: req.session.user.name, role: req.session.user.role, email: req.session.user.email }
     });
 };
 
@@ -162,13 +158,68 @@ exports.getProfileData = async (req, res) => {
         const u = await User.findById(id).lean();
         if (!u) return res.status(404).json({ success: false, message: 'User not found' });
 
+        // Fetch completed tasks for this user
+        const { Task, Project } = require("../database");
+        const completedTasks = await Task.find({ 
+            assigned_to: id, 
+            status: 'Completed' 
+        }).populate('project_id', 'title').lean();
+
+        console.log(`[Profile] Fetching tasks for user ${id}`);
+        console.log(`[Profile] Found ${completedTasks.length} completed tasks`);
+        if (completedTasks.length > 0) {
+            console.log('[Profile] Sample task:', completedTasks[0]);
+        }
+
+        // Group tasks by project
+        const tasksByProject = {};
+        completedTasks.forEach(task => {
+            const projectId = task.project_id?._id?.toString();
+            const projectTitle = task.project_id?.title || 'Unknown Project';
+            
+            if (!tasksByProject[projectId]) {
+                tasksByProject[projectId] = {
+                    projectId: projectId,
+                    projectTitle: projectTitle,
+                    tasks: []
+                };
+            }
+            
+            tasksByProject[projectId].tasks.push({
+                taskId: task._id,
+                title: task.title,
+                description: task.description,
+                completedAt: task.updatedAt,
+                githubLink: task.github_link,
+                feedback: task.feedback
+            });
+        });
+
+        // Fetch projects where the user is the leader (creator) and the project is completed
+        const leaderProjects = await Project.find({ 
+            user_id: id, 
+            status: 'completed' 
+        }).select('_id title description completedAt updatedAt').lean();
+
+        console.log(`[Profile] Found ${leaderProjects.length} completed projects as leader`);
+
+        const completedAsLeader = leaderProjects.map(project => ({
+            projectId: project._id,
+            projectTitle: project.title,
+            description: project.description,
+            completedAt: project.completedAt || project.updatedAt
+        }));
+
         const user = {
             id: u._id, name: u.name || 'Unknown', email: u.email || '', 
             avatarUrl: u.profileImageUrl || u.profileImage || null, bio: u.about || u.bio || '',
             skills: Array.isArray(u.skills) ? u.skills : (u.skills ? String(u.skills).split(',').map(s => s.trim()).filter(Boolean) : []),
             interests: Array.isArray(u.interests) ? u.interests : (u.interests ? String(u.interests).split(',').map(s => s.trim()).filter(Boolean) : []),
             resumeUrl: u.resumeUrl || null, joinedAt: u.createdAt || u.created_at || null,
-            joinedAgo: u.createdAt ? getTimeAgo(u.createdAt) : 'N/A' // Use helper function
+            joinedAgo: u.createdAt ? getTimeAgo(u.createdAt) : 'N/A', // Use helper function
+            completedProjects: Object.values(tasksByProject),
+            totalCompletedTasks: completedTasks.length,
+            completedAsLeader: completedAsLeader
         };
 
         return res.json({ success: true, user });

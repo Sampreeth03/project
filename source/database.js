@@ -99,7 +99,8 @@ const projectSchema = new mongoose.Schema({
   capacity: { type: Number, required: true, min: 1 },
   topic: { type: String, required: true },
   deadline: { type: Date, required: true },
-  status: { type: String, enum: ['active', 'completed'], default: 'active' }
+  status: { type: String, enum: ['active', 'completed'], default: 'active' },
+  completedAt: { type: Date }
 }, { timestamps: true });
 
 
