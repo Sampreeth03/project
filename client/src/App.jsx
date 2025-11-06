@@ -16,6 +16,7 @@ import DoubtPage from './components/User/DoubtPage.jsx';
 import ClearDoubts from './components/User/ClearDoubts.jsx';
 import ProjectNotifications from './components/User/ProjectNotifications.jsx';
 import Profile from './components/User/Profile.jsx';
+import Dashboard from './components/User/Dashboard.jsx';
 
 import RecruiterHome from './components/Recruiter/RecruiterHome.jsx';
 import RecruiterDashboard from './components/Recruiter/RecruiterDashboard.jsx';
@@ -54,6 +55,9 @@ function App() {
       {/* Individual Project Details */}
       <Route path="/project/:id" element={<ProjectDetails />} />
       <Route path="/e" element={<CreateProject />} /> {/* Mapped original EJS route for direct link */}
+
+      {/* Dashboard Route */}
+      <Route path="/dashboard" element={<Dashboard />} />
       
       {/* RECRUITER ROUTES */}
       <Route path="/recruiter-home" element={<RecruiterHome />} />
