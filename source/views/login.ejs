@@ -234,6 +234,11 @@
       .email-suggestion:hover strong {
         color: white;
       }
+
+      /* Forgot password placement */
+      .forgot-password-row { display: flex; justify-content: flex-end; margin-top: 8px; margin-bottom: 8px; }
+      .forgot-password-row a { color: #c9d1d9; text-decoration: none; font-size: 0.9rem; }
+      .forgot-password-row a:hover { color: #0068ff; text-decoration: underline; }
     </style>
   </head>
   <body>
@@ -266,7 +271,10 @@
             >Show</span
           >
           <div id="password-error" class="field-error" aria-live="polite"></div>
-          <a href="/login" >Forgot Password?</a>
+        </div>
+
+        <div class="forgot-password-row">
+          <a href="#" role="button" aria-label="Forgot your password (coming soon)">Forgot your password?</a>
         </div>
 
         <button type="submit" id="login-btn" class="login-btn" aria-disabled="true" disabled>Login</button>
