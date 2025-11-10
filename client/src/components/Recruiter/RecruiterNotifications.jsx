@@ -1,97 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import RecruiterNavbar from './RecruiterNavbar';
+import { fetchNotifications, markNotificationRead, deleteNotification as deleteNotificationAction, clearNotificationsError } from '../../store/recruiterSlice';
 import '../../styles/Recruiter.css';
 
 const RecruiterNotifications = () => {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const dispatch = useDispatch();
+    
+    // Redux state
+    const { list: notifications, loading, error } = useSelector(state => state.recruiter.notifications);
+    
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
-        fetchNotifications();
-    }, []);
+        dispatch(fetchNotifications());
+    }, [dispatch]);
 
-    const fetchNotifications = async () => {
-        try {
-            const response = await fetch('/api/rec-not', {
-                credentials: 'include'
-            });
-            const data = await response.json();
-            
-            if (response.ok) {
-                setNotifications(data.notifications || []);
-            }
-        } catch (error) {
-            console.error('Error fetching notifications:', error);
-        } finally {
-            setLoading(false);
+    // Handle Redux errors
+    useEffect(() => {
+        if (error) {
+            showToast(error, 'danger');
+            dispatch(clearNotificationsError());
         }
-    };
+    }, [error, dispatch]);
 
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
     };
 
-    const getUnreadCount = () => {
+    // Memoized unread count
+    const unreadCount = useMemo(() => {
         return notifications.filter(n => !n.is_read).length;
-    };
+    }, [notifications]);
 
-    const markAsRead = async (notificationId) => {
+    const handleMarkAsRead = async (notificationId, e) => {
+        if (e) e.stopPropagation();
         try {
-            const response = await fetch('/api/mark-notification-read', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ notificationId })
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                setNotifications(prev => prev.map(n => 
-                    n._id === notificationId ? { ...n, is_read: true } : n
-                ));
-            } else {
-                showToast('Failed to mark as read');
-            }
+            await dispatch(markNotificationRead(notificationId)).unwrap();
         } catch (error) {
-            console.error('Error marking notification as read:', error);
-            showToast('An error occurred');
+            showToast('Failed to mark as read');
         }
     };
 
-    const deleteNotification = async (notificationId, e) => {
+    const handleDeleteNotification = async (notificationId, e) => {
         e.stopPropagation();
-        
         try {
-            const response = await fetch('/api/delete-notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ notificationId })
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                setNotifications(prev => prev.filter(n => n._id !== notificationId));
-                showToast('Notification deleted');
-            } else {
-                showToast('Failed to delete');
-            }
+            await dispatch(deleteNotificationAction(notificationId)).unwrap();
+            showToast('Notification deleted');
         } catch (error) {
-            console.error('Error deleting notification:', error);
-            showToast('An error occurred');
+            showToast('Failed to delete');
         }
     };
 
     const handleCardClick = (notificationId) => {
-        markAsRead(notificationId);
-    };
-
-    const handleMarkAsRead = (notificationId, e) => {
-        e.stopPropagation();
-        markAsRead(notificationId);
+        handleMarkAsRead(notificationId);
     };
 
     const getNotificationTitle = (notification) => {
@@ -111,7 +75,7 @@ const RecruiterNotifications = () => {
             <div className="recruiter-notifications-container">
                 <div className="recruiter-page-header">
                     <h1>Notifications</h1>
-                    <span className="recruiter-notification-count">{getUnreadCount()}</span>
+                    <span className="recruiter-notification-count">{unreadCount}</span>
                 </div>
 
                 <div className="recruiter-nav-tabs">
@@ -161,7 +125,7 @@ const RecruiterNotifications = () => {
                                         </button>
                                         <button 
                                             className="recruiter-btn-secondary"
-                                            onClick={(e) => deleteNotification(notification._id, e)}
+                                            onClick={(e) => handleDeleteNotification(notification._id, e)}
                                         >
                                             Delete
                                         </button>

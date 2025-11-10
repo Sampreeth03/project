@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import RecruiterNavbar from './RecruiterNavbar';
+import { fetchJobs, createJob, deleteJob, toggleJobActive, clearJobsError } from '../../store/recruiterSlice';
 import '../../styles/Recruiter.css';
 
 const RecruiterJobs = () => {
-    const [stats, setStats] = useState({
-        totalJobs: 0,
-        activeJobs: 0
-    });
-    const [postedJobs, setPostedJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const dispatch = useDispatch();
+    
+    // Redux state
+    const { list: postedJobs, totalJobs, activeJobs, loading, error } = useSelector(state => state.recruiter.jobs);
+    
     const [notification, setNotification] = useState({ show: false, message: '' });
 
     // Form state
@@ -25,29 +26,16 @@ const RecruiterJobs = () => {
     const MAX_DESC = 2000;
 
     useEffect(() => {
-        fetchJobsData();
-    }, []);
+        dispatch(fetchJobs());
+    }, [dispatch]);
 
-    const fetchJobsData = async () => {
-        try {
-            const response = await fetch('/api/rec-job', {
-                credentials: 'include'
-            });
-            const data = await response.json();
-            
-            if (response.ok) {
-                setStats({
-                    totalJobs: data.totalJobs || 0,
-                    activeJobs: data.activeJobs || 0
-                });
-                setPostedJobs(data.postedJobs || []);
-            }
-        } catch (error) {
-            console.error('Error fetching jobs data:', error);
-        } finally {
-            setLoading(false);
+    // Handle Redux errors
+    useEffect(() => {
+        if (error) {
+            showNotification(error);
+            dispatch(clearJobsError());
         }
-    };
+    }, [error, dispatch]);
 
     const showNotification = (message) => {
         setNotification({ show: true, message });
@@ -164,18 +152,11 @@ const RecruiterJobs = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('/api/create-recruiter-job', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ jobTitle: title, description, salaryRange, skills })
-            });
-            const result = await response.json();
-            
+            const result = await dispatch(createJob({ jobTitle: title, description, salaryRange, skills })).unwrap();
             if (result.success) {
                 showNotification('Job created successfully!');
                 setFormData({ jobTitle: '', description: '', salaryRange: '', skills: '' });
-                fetchJobsData();
+                dispatch(fetchJobs()); // Refresh jobs list
             } else {
                 showNotification(result.error || 'Failed to create job');
             }
@@ -191,19 +172,8 @@ const RecruiterJobs = () => {
         if (!window.confirm('Are you sure you want to delete this job?')) return;
 
         try {
-            const response = await fetch(`/api/delete-recruiter-job/${jobId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                showNotification('Job deleted successfully!');
-                fetchJobsData();
-            } else {
-                showNotification(result.error || 'Failed to delete job');
-            }
+            await dispatch(deleteJob(jobId)).unwrap();
+            showNotification('Job deleted successfully!');
         } catch (error) {
             console.error('Error deleting job:', error);
             showNotification('An error occurred');
@@ -215,20 +185,8 @@ const RecruiterJobs = () => {
         if (!window.confirm(`Are you sure you want to ${action} this job?`)) return;
 
         try {
-            const response = await fetch(`/api/toggle-job-active/${jobId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ active: !currentActive })
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                showNotification(`Job ${action}d successfully!`);
-                fetchJobsData();
-            } else {
-                showNotification(result.error || `Failed to ${action} job`);
-            }
+            await dispatch(toggleJobActive({ jobId, active: !currentActive })).unwrap();
+            showNotification(`Job ${action}d successfully!`);
         } catch (error) {
             console.error(`Error ${action}ing job:`, error);
             showNotification('An error occurred');
@@ -242,11 +200,11 @@ const RecruiterJobs = () => {
             <div className="recruiter-jobs-container">
                 <div className="recruiter-stats-section">
                     <div className="recruiter-stat-box">
-                        <div className="recruiter-stat-number">{stats.totalJobs}</div>
+                        <div className="recruiter-stat-number">{totalJobs}</div>
                         <div className="recruiter-stat-title">Total Jobs</div>
                     </div>
                     <div className="recruiter-stat-box">
-                        <div className="recruiter-stat-number">{stats.activeJobs}</div>
+                        <div className="recruiter-stat-number">{activeJobs}</div>
                         <div className="recruiter-stat-title">Active Jobs</div>
                     </div>
                 </div>
@@ -337,7 +295,7 @@ const RecruiterJobs = () => {
                                     <button 
                                         type="submit" 
                                         className="recruiter-submit-btn"
-                                        disabled={!isFormValid() || isSubmitting}
+                                        disabled={!isFormValid() || isSubmitting || loading}
                                     >
                                         {isSubmitting ? 'Creating...' : 'Create Job'}
                                     </button>
