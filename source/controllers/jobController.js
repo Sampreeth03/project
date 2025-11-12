@@ -6,17 +6,21 @@ const { getNavLinks } = require("../services/helperService");
 const { navData, userNav } = require("../config/constants");
 
 // =========================================================================
-// 1. Job Listings View (GET /apply) - FIX APPLIED HERE
+// 1. Job Listings View (GET /apply) - React & EJS Support
 // =========================================================================
 exports.getJobApplyPage = async (req, res) => {
     const userId = req.session.user.id;
     try {
-        // Fetch all active listings (user_id is null/missing)
+        // Fetch all active listings (user_id is null/missing) excluding rejected applications
         const jobs = await JobApplication.find({
-            $and: [{ $or: [ { user_id: null }, { user_id: { $exists: false } } ] }, { $or: [ { active: true }, { active: 1 } ] }]
+            $and: [
+                { $or: [ { user_id: null }, { user_id: { $exists: false } } ] }, 
+                { $or: [ { active: true }, { active: 1 } ] },
+                { status: { $ne: 'Rejected' } }
+            ]
         }).select('_id job_title company_name salary_range description skills').lean();
 
-        // --- FIX: Map _id to id for EJS Template Access ---
+        // --- FIX: Map _id to id for Frontend Access ---
         const formattedJobs = jobs.map(job => ({
             ...job,
             id: job._id.toString() // Ensure the 'id' property exists for the frontend
@@ -27,15 +31,27 @@ exports.getJobApplyPage = async (req, res) => {
         const userApplications = await JobApplication.find({ user_id: userId }).select('job_title company_name').lean();
         const appliedKeySet = new Set((userApplications || []).map(a => `${a.job_title}||${a.company_name}`));
 
+        const jobsWithStatus = formattedJobs.map(job => ({ 
+            ...job, 
+            hasApplied: appliedKeySet.has(`${job.job_title}||${job.company_name}`) 
+        }));
+
+        // Check if request expects JSON (React) or HTML (EJS)
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ jobs: jobsWithStatus });
+        }
+
         res.render('applyjobs', {
             user: req.session.user,
             homeUrl: userNav.homeUrl,
             navLinks: userNav.navLinks,
-            // Pass the formatted list with the correct 'id' property
-            jobs: formattedJobs.map(job => ({ ...job, hasApplied: appliedKeySet.has(`${job.job_title}||${job.company_name}`) }))
+            jobs: jobsWithStatus
         });
     } catch (err) {
         console.error('Error fetching jobs for /apply:', err.message);
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.status(500).json({ error: 'Failed to load jobs' });
+        }
         res.redirect('/home?error=Failed to load jobs');
     }
 };
@@ -89,29 +105,115 @@ exports.applyForJob = async (req, res) => {
 exports.getStudentApplications = async (req, res) => {
     const userId = req.session.user.id;
     try {
-        const applications = await JobApplication.find({ user_id: userId, status: { $in: ['Waiting', 'Approved'] } })
+        // Only show Waiting and Approved applications, rejected ones are removed
+        const applications = await JobApplication.find({ 
+            user_id: userId, 
+            status: { $in: ['Waiting', 'Approved'] } 
+        })
             .select('job_title company_name salary_range description skills date_applied status posted_by')
             .populate('posted_by', 'email name').lean();
 
+        const formattedApplications = applications.map(app => ({ 
+            ...app, 
+            recruiter_email: app.posted_by?.email || null, 
+            date_applied: app.date_applied || new Date()
+        }));
+
+        // Check if request expects JSON (React) or HTML (EJS)
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ applications: formattedApplications });
+        }
+
         res.render("job-applications", {
-            user: req.session.user, homeUrl: navData.homeUrl, navLinks: navData.navLinks,
-            applications: applications.map(app => ({ 
-                ...app, recruiter_email: app.posted_by?.email || null, 
-                date_applied: app.date_applied || new Date()
-            }))
+            user: req.session.user, 
+            homeUrl: navData.homeUrl, 
+            navLinks: navData.navLinks,
+            applications: formattedApplications
         });
     } catch (err) {
         console.error("Error fetching applications:", err.message);
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
         res.status(500).send("Internal Server Error");
     }
 };
 
-exports.getJobNotifications = (req, res) => {
-    res.render('job_notiffinal', {
-        user: req.session.user,
-        navLinks: getNavLinks(req.session.user),
-        homeUrl: navData.homeUrl
-    });
+exports.getJobNotifications = async (req, res) => {
+    const userId = req.session.user.id;
+    try {
+        // Fetch all job applications by this user including rejected ones
+        const applications = await JobApplication.find({ user_id: userId })
+            .select('job_title company_name salary_range description skills status date_applied posted_by')
+            .populate('posted_by', 'email name')
+            .sort({ date_applied: -1 })
+            .lean();
+
+        // Also fetch rejection notifications
+        const rejectionNotifications = await Notification.find({
+            user_id: userId,
+            type: 'job_rejected'
+        }).sort({ createdAt: -1 }).lean();
+
+        const jobsNotifications = applications.map(app => ({
+            id: app._id.toString(),
+            title: app.job_title,
+            content: app.status === 'Approved' 
+                ? `Congratulations! You have been shortlisted for ${app.job_title}.`
+                : app.status === 'Rejected'
+                ? `Your application for ${app.job_title} was not selected.`
+                : `You applied for the job ${app.job_title}. Below is its job description.`,
+            description: app.description,
+            pay: app.salary_range,
+            date: app.date_applied || app.createdAt,
+            company: app.company_name,
+            type: app.status === 'Approved' ? 'approved' : app.status === 'Rejected' ? 'rejected' : 'applied',
+            status: app.status.toLowerCase(),
+            recruiter_email: app.posted_by?.email || null,
+            recruiter_name: app.posted_by?.name || null
+        }));
+
+        // Add rejection notifications for deleted applications
+        const rejectionNotifs = rejectionNotifications.map(notif => {
+            const titleMatch = notif.message.match(/\"([^\"]+)\"/);
+            const jobTitle = titleMatch ? titleMatch[1] : 'Unknown Position';
+            return {
+                id: notif._id.toString(),
+                title: jobTitle,
+                content: `Your application for ${jobTitle} was not selected.`,
+                description: 'The recruiter has decided not to move forward with your application.',
+                pay: 'N/A',
+                date: notif.createdAt,
+                company: 'N/A',
+                type: 'rejected',
+                status: 'rejected',
+                recruiter_email: null,
+                recruiter_name: null
+            };
+        });
+
+        // Merge and sort by date
+        const allNotifications = [...jobsNotifications, ...rejectionNotifs].sort((a, b) => 
+            new Date(b.date) - new Date(a.date)
+        );
+
+        // Check if request expects JSON (React) or HTML (EJS)
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ jobsNotifications: allNotifications });
+        }
+
+        res.render('job_notiffinal', {
+            user: req.session.user,
+            navLinks: getNavLinks(req.session.user),
+            homeUrl: navData.homeUrl
+        });
+    } catch (err) {
+        console.error("Error in getJobNotifications:", err.message);
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+        res.status(500).send("Internal Server Error");
+    }
 };
 
 exports.markNotificationRead = async (req, res) => {

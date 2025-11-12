@@ -173,6 +173,22 @@ export const deleteNotification = createAsyncThunk(
     }
 );
 
+// Fetch User Profile for Recruiter
+export const fetchUserProfile = createAsyncThunk(
+    'recruiter/fetchUserProfile',
+    async (userId, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`/api/user-profile-for-recruiter/${userId}`, {
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('Failed to fetch user profile');
+            return await response.json();
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 // ============================================
 // Initial State
 // ============================================
@@ -204,6 +220,12 @@ const initialState = {
         totalParticipants: 0,
         loading: false,
         error: null
+    },
+    // User Profile State
+    userProfile: {
+        data: null,
+        loading: false,
+        error: null
     }
 };
 
@@ -223,6 +245,13 @@ const recruiterSlice = createSlice({
         },
         clearNotificationsError: (state) => {
             state.notifications.error = null;
+        },
+        clearUserProfileError: (state) => {
+            state.userProfile.error = null;
+        },
+        clearUserProfile: (state) => {
+            state.userProfile.data = null;
+            state.userProfile.error = null;
         },
         // Reset state on logout
         resetRecruiterState: () => initialState
@@ -350,6 +379,20 @@ const recruiterSlice = createSlice({
                 state.notifications.list = state.notifications.list.filter(
                     n => n._id !== action.payload.notificationId
                 );
+            })
+
+            // ============ Fetch User Profile ============
+            .addCase(fetchUserProfile.pending, (state) => {
+                state.userProfile.loading = true;
+                state.userProfile.error = null;
+            })
+            .addCase(fetchUserProfile.fulfilled, (state, action) => {
+                state.userProfile.loading = false;
+                state.userProfile.data = action.payload;
+            })
+            .addCase(fetchUserProfile.rejected, (state, action) => {
+                state.userProfile.loading = false;
+                state.userProfile.error = action.payload;
             });
     }
 });
@@ -359,6 +402,8 @@ export const {
     clearJobsError, 
     clearApplicationsError, 
     clearNotificationsError,
+    clearUserProfileError,
+    clearUserProfile,
     resetRecruiterState 
 } = recruiterSlice.actions;
 

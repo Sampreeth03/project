@@ -14,7 +14,7 @@ const Navbar = ({ onSearchChange }) => {
         { 
             name: "Projects", href: "/project", 
             submenu: [
-                { name: "My Created Projects", href: "/project" },
+                { name: "Projects", href: "/project" },
                 { name: "Joined Projects", href: "/joined-projects" },
                  { name: "Interact", href: "/messages" }
             ]
@@ -26,7 +26,13 @@ const Navbar = ({ onSearchChange }) => {
                 { name: "Clear Doubts", href: "/clear" }
             ]
         },
-        { name: "Jobs", href: "/apply", submenu: [] },
+        { 
+            name: "Jobs", href: "/apply",
+            submenu: [
+                { name: "Apply for Jobs", href: "/apply" },
+                { name: "My Applications", href: "/job" }
+            ]
+        },
         { 
             name: "Profile",
             href: "/profile",

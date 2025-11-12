@@ -8,23 +8,23 @@ const { upload } = require("../middleware/uploadMiddleware");
 
 const jsonParser = express.json();
 
-// Apply Authentication to all routes
-router.use(isAuthenticatedAPI); // Changed to API-aware middleware
-
 // --- Doubt/Q&A Views ---
+// Public GET endpoints so users can browse doubts without logging in
 router.get("/doubt", doubtController.getDoubtBoard);
 router.get("/clear", doubtController.getClearDoubts);
 // JSON endpoint for React frontend
 router.get('/doubts', doubtController.getDoubtsJSON);
 
 // --- Notification/Join Request Management View ---
-router.get('/not', doubtController.getProjectNotifications); 
+// Auth-required: notifications are user-specific
+router.get('/not', isAuthenticatedAPI, doubtController.getProjectNotifications); 
 
 // --- API endpoint for React frontend ---
-router.get('/notifications', doubtController.getProjectNotificationsJSON);
+router.get('/notifications', isAuthenticatedAPI, doubtController.getProjectNotificationsJSON);
 
 // --- Q&A Actions ---
-router.post("/ask", upload.single("file-input"), doubtController.postDoubt);
-router.post("/reply", jsonParser, doubtController.postReply);
+// Auth-required for posting/ replying
+router.post("/ask", isAuthenticatedAPI, upload.single("file-input"), doubtController.postDoubt);
+router.post("/reply", isAuthenticatedAPI, jsonParser, doubtController.postReply);
 
 module.exports = router;

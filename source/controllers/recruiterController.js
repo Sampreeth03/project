@@ -115,6 +115,7 @@ exports.getRecruiterApplications = async (req, res) => {
                 badge: 'Application',
                 status: statusLower,
                 applicantName: app.user_id.name,
+                applicantId: app.user_id._id.toString(),
                 resumeId: app._id.toString(),
                 jobTitle: app.job_title
             };
@@ -212,8 +213,8 @@ exports.updateApplicationStatus = async (req, res) => {
             const recruiter = await User.findById(recruiterId).select('email name').lean();
             await Notification.create({
                 user_id: application.user_id,
-                message: `You got hired for "${application.job_title}". Recruiter email: ${recruiter?.email || 'N/A'}.`,
-                type: 'job_hired',
+                message: `You have been shortlisted for "${application.job_title}". Recruiter email: ${recruiter?.email || 'N/A'}.`,
+                type: 'job_shortlisted',
                 is_read: false
             });
             res.json({ success: true });
@@ -296,5 +297,110 @@ exports.toggleJobActive = async (req, res) => {
     } catch (err) {
         console.error("Error toggling job active status:", err.message);
         res.status(500).json({ success: false, error: "Database error" });
+    }
+};
+
+// =========================================================================
+// 11. Get User Profile for Recruiter (GET /user-profile-for-recruiter/:userId)
+// =========================================================================
+exports.getUserProfileForRecruiter = async (req, res) => {
+    const recruiterId = req.session.user.id;
+    const userId = req.params.userId;
+
+    try {
+        // Verify the recruiter has access to this user (they applied to one of their jobs)
+        const application = await JobApplication.findOne({ 
+            posted_by: recruiterId, 
+            user_id: userId 
+        });
+        
+        if (!application) {
+            return res.status(403).json({ success: false, error: 'You do not have access to this user profile' });
+        }
+
+        // Fetch user data
+        const user = await User.findById(userId).select('-password').lean();
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        // Fetch user metrics
+        const { UserMetrics, Task, Project, ProjectMember } = require("../database");
+        const metrics = await UserMetrics.findOne({ user_id: userId }).lean() || {
+            total_collaborations: 0,
+            active_projects: 0,
+            completed_tasks: 0,
+            leadership_roles: 0,
+            inquiriesInitiated: 0,
+            job_applications: 0,
+            projects_as_member: 0,
+            solutions_provided: 0
+        };
+
+        // Fetch completed tasks grouped by project
+        const completedTasks = await Task.find({ 
+            assigned_to: userId, 
+            status: 'Completed' 
+        }).populate('project_id', 'title').lean();
+
+        const tasksByProject = {};
+        completedTasks.forEach(task => {
+            const projectId = task.project_id?._id?.toString();
+            const projectTitle = task.project_id?.title || 'Unknown Project';
+            
+            if (!tasksByProject[projectId]) {
+                tasksByProject[projectId] = {
+                    projectId: projectId,
+                    projectTitle: projectTitle,
+                    tasks: []
+                };
+            }
+            
+            tasksByProject[projectId].tasks.push({
+                _id: task._id.toString(),
+                title: task.title,
+                description: task.description,
+                status: task.status,
+                github_link: task.github_link
+            });
+        });
+
+        // Get projects where user is a member (both active and completed)
+        const projectMembers = await ProjectMember.find({ user_id: userId })
+            .populate('project_id', 'title description user_id status')
+            .lean();
+        
+        const projects = projectMembers
+            .filter(pm => pm.project_id) // Filter out null project_id
+            .map(pm => ({
+                _id: pm.project_id._id,
+                title: pm.project_id.title,
+                description: pm.project_id.description,
+                status: pm.project_id.status,
+                role: pm.project_id.user_id.toString() === userId ? 'leader' : 'member'
+            }));
+
+        res.json({
+            success: true,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                about: user.about || '',
+                skills: user.skills || [],
+                interests: user.interests || [],
+                profileImageUrl: user.profileImageUrl,
+                resumeUrl: user.resumeUrl,
+                questionsAnswered: user.questionsAnswered || 0,
+                thumbsUp: user.thumbsUp || 0,
+                thumbsDown: user.thumbsDown || 0
+            },
+            metrics: metrics,
+            completedTasks: Object.values(tasksByProject),
+            projects: projects
+        });
+    } catch (err) {
+        console.error('Error fetching user profile for recruiter:', err.message);
+        res.status(500).json({ success: false, error: 'Failed to fetch user profile' });
     }
 };

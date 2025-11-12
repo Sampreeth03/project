@@ -1,0 +1,145 @@
+/* ApplyJobs.css */
+
+.apply-jobs-page {
+    font-family: "Poppins", sans-serif;
+    background-color: #121212;
+    color: white;
+    min-height: 100vh;
+}
+
+.apply-jobs-container {
+    margin: 0 auto;
+    padding: 100px 20px 20px;
+    text-align: center;
+    max-width: 1200px;
+}
+
+.apply-jobs-container h1 {
+    margin-bottom: 30px;
+    font-size: 32px;
+}
+
+.jobs-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    max-width: 100%;
+}
+
+.job-card {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 600px;
+    text-align: left;
+    position: relative;
+}
+
+.job-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #0068ff;
+    margin-bottom: 8px;
+}
+
+.job-poster {
+    font-size: 14px;
+    color: #888;
+    margin: 5px 0;
+}
+
+.salary-range {
+    font-size: 16px;
+    color: #00cc00;
+    margin: 5px 0;
+}
+
+.job-desc {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #bbb;
+    line-height: 1.5;
+}
+
+.resume-upload {
+    margin: 10px 0;
+}
+
+.resume-upload label {
+    display: block;
+    margin-bottom: 5px;
+    color: white;
+    font-size: 14px;
+}
+
+.resume-upload input[type="file"] {
+    color: white;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    padding: 8px;
+    border-radius: 5px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.resume-upload input[type="file"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.apply-btn {
+    background-color: #0068ff;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.apply-btn:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+.apply-btn:hover:not(:disabled) {
+    background-color: #0c408e;
+}
+
+.apply-btn.applied {
+    background-color: #444;
+    color: white;
+}
+
+.applied-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #2e7d32;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.no-jobs {
+    color: #888;
+    font-size: 18px;
+    margin-top: 40px;
+}
+
+@media (max-width: 768px) {
+    .apply-jobs-container {
+        padding: 80px 10px 10px;
+    }
+
+    .job-card {
+        max-width: 100%;
+    }
+}

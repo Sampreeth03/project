@@ -8,44 +8,41 @@ const { topics } = require('../config/constants');
 
 const jsonParser = express.json();
 
-// Apply Authentication to all project routes
-router.use(isAuthenticatedAPI); // Changed to API-aware middleware
-
 // --- Core Project Views ---
-router.get('/project', projectController.getAllProjects);
-router.get('/joined-projects', projectController.getJoinedProjects);
-router.get('/project/:id', projectController.getProjectDetails);
-router.get('/e', projectController.getCreateProjectView); 
+router.get('/project', isAuthenticatedAPI, projectController.getAllProjects);
+router.get('/joined-projects', isAuthenticatedAPI, projectController.getJoinedProjects);
+router.get('/project/:id', isAuthenticatedAPI, projectController.getProjectDetails);
+router.get('/e', isAuthenticatedAPI, projectController.getCreateProjectView); 
 
 // --- Project CRUD & Membership APIs (Paths are correct) ---
-router.post('/create-project', jsonParser, projectController.createProject);
-router.post('/delete-project', jsonParser, projectController.deleteProject);
+router.post('/create-project', isAuthenticatedAPI, jsonParser, projectController.createProject);
+router.post('/delete-project', isAuthenticatedAPI, jsonParser, projectController.deleteProject);
 // ... (rest of CRUD routes remain the same) ...
-router.post('/join-project', jsonParser, projectController.joinProject);
-router.post('/approve-join-request', jsonParser, projectController.approveJoinRequest);
-router.post('/reject-join-request', jsonParser, projectController.rejectJoinRequest);
-router.post('/delete-join-request', jsonParser, projectController.deleteJoinRequest);
+router.post('/join-project', isAuthenticatedAPI, jsonParser, projectController.joinProject);
+router.post('/approve-join-request', isAuthenticatedAPI, jsonParser, projectController.approveJoinRequest);
+router.post('/reject-join-request', isAuthenticatedAPI, jsonParser, projectController.rejectJoinRequest);
+router.post('/delete-join-request', isAuthenticatedAPI, jsonParser, projectController.deleteJoinRequest);
 
 // --- Join Request Chat APIs ---
-router.get('/join-request-messages/:requestId', projectController.getJoinRequestMessages);
-router.post('/send-join-request-message', jsonParser, projectController.sendJoinRequestMessage);
-router.post('/upload-join-request-file', projectController.uploadJoinRequestFile);
+router.get('/join-request-messages/:requestId', isAuthenticatedAPI, projectController.getJoinRequestMessages);
+router.post('/send-join-request-message', isAuthenticatedAPI, jsonParser, projectController.sendJoinRequestMessage);
+router.post('/upload-join-request-file', isAuthenticatedAPI, projectController.uploadJoinRequestFile);
 
 // --- Project Completion / Status (Paths are correct) ---
-router.post('/project/:id/finish', jsonParser, projectController.finishProject);
+router.post('/project/:id/finish', isAuthenticatedAPI, jsonParser, projectController.finishProject);
 router.get('/project/:id/pending-tasks', projectController.getPendingTasks);
 
 // --- Task Management APIs (Paths are correct) ---
-router.post('/task/create', jsonParser, projectController.createTask);
-router.post('/task/extend-deadline', jsonParser, projectController.extendDeadline);
-router.post('/task/submit-github-link', jsonParser, projectController.submitGithubLink);
-router.post('/task/review-submission', jsonParser, projectController.reviewSubmission);
-router.post('/task/:id/feedback', jsonParser, projectController.reviewSubmission); 
-router.get('/get-task-project/:taskId', projectController.getTaskProject); 
+router.post('/task/create', isAuthenticatedAPI, jsonParser, projectController.createTask);
+router.post('/task/extend-deadline', isAuthenticatedAPI, jsonParser, projectController.extendDeadline);
+router.post('/task/submit-github-link', isAuthenticatedAPI, jsonParser, projectController.submitGithubLink);
+router.post('/task/review-submission', isAuthenticatedAPI, jsonParser, projectController.reviewSubmission);
+router.post('/task/:id/feedback', isAuthenticatedAPI, jsonParser, projectController.reviewSubmission); 
+router.get('/get-task-project/:taskId', isAuthenticatedAPI, projectController.getTaskProject); 
 
 // --- Dynamic Topic Routes (Paths are correct) ---
 Object.keys(topics).forEach(path => {
-    router.get(path, projectController.getTopicProjects);
+    router.get(path, isAuthenticatedAPI, projectController.getTopicProjects);
 });
 
 

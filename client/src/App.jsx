@@ -17,6 +17,9 @@ import ClearDoubts from './components/User/ClearDoubts.jsx';
 import ProjectNotifications from './components/User/ProjectNotifications.jsx';
 import Profile from './components/User/Profile.jsx';
 import Dashboard from './components/User/Dashboard.jsx';
+import ApplyJobs from './components/User/ApplyJobs.jsx';
+import JobApplications from './components/User/JobApplications.jsx';
+import JobNotifications from './components/User/JobNotifications.jsx';
 
 import RecruiterHome from './components/Recruiter/RecruiterHome.jsx';
 import RecruiterDashboard from './components/Recruiter/RecruiterDashboard.jsx';
@@ -24,7 +27,14 @@ import RecruiterJobs from './components/Recruiter/RecruiterJobs.jsx';
 import RecruiterApplications from './components/Recruiter/RecruiterApplications.jsx';
 import RecruiterNotifications from './components/Recruiter/RecruiterNotifications.jsx';
 import RecruiterProfile from './components/Recruiter/RecruiterProfile.jsx';
-import AdminDashboard from './components/AdminDashboard.jsx';
+
+import AdminDashboard from './components/Admin/AdminDashboard.jsx';
+import AdminStudents from './components/Admin/AdminStudents.jsx';
+import AdminRecruiters from './components/Admin/AdminRecruiters.jsx';
+import AdminProjects from './components/Admin/AdminProjects.jsx';
+import AdminDoubts from './components/Admin/AdminDoubts.jsx';
+import AdminMessages from './components/Admin/AdminMessages.jsx';
+import AdminProfile from './components/Admin/AdminProfile.jsx';
 
 function App() {
   return (
@@ -42,6 +52,11 @@ function App() {
       <Route path="/doubt" element={<DoubtPage />} />
       <Route path="/clear" element={<ClearDoubts />} />
       <Route path="/not" element={<ProjectNotifications />} />
+      
+      {/* Job Routes */}
+      <Route path="/apply" element={<ApplyJobs />} />
+      <Route path="/job" element={<JobApplications />} />
+      <Route path="/job_not" element={<JobNotifications />} />
       
       {/* Profile Routes */}
       <Route path="/profile" element={<Profile />} />
@@ -67,8 +82,14 @@ function App() {
       <Route path="/rec-not" element={<RecruiterNotifications />} />
       <Route path="/rec-prof" element={<RecruiterProfile />} />
 
-      {/* ADMIN ROUTE */}
+      {/* ADMIN ROUTES */}
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/students" element={<AdminStudents />} />
+      <Route path="/admin/recruiters" element={<AdminRecruiters />} />
+      <Route path="/admin/projects" element={<AdminProjects />} />
+      <Route path="/admin/doubts" element={<AdminDoubts />} />
+      <Route path="/admin/messages" element={<AdminMessages />} />
+      <Route path="/admin/profile" element={<AdminProfile />} />
     </Routes>
   );
 }

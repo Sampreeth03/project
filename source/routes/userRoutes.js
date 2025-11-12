@@ -8,8 +8,9 @@ const { upload } = require("../middleware/uploadMiddleware");
 const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); 
 
 // --- Core User/Home Routes ---
-router.get('/home', isAuthenticatedAPI, userController.getHome);
-router.get('/home/topics', isAuthenticatedAPI, userController.getHomeTopics);
+// Public endpoints for session-check and topics to avoid 401/403 on initial load
+router.get('/home', userController.getHome);
+router.get('/home/topics', userController.getHomeTopics);
 router.get('/dashboard', isAuthenticatedAPI, userController.getDashboard);
 router.get('/dashboard-metrics', isAuthenticatedAPI, userController.getDashboardMetrics); // CORRECTED Path (No /api)
 

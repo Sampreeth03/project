@@ -1,0 +1,152 @@
+/* JobApplications.css */
+
+:root {
+    --dark-bg: #121212;
+    --primary-blue: #0068ff;
+    --text-color: #ffffff;
+    --card-bg: #1e1e1e;
+}
+
+.job-applications-page {
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.job-applications-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 100px 20px 20px;
+}
+
+.applications-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.applications-header h1 {
+    color: var(--primary-blue);
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+}
+
+.applications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.job-card {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.job-header {
+    margin-bottom: 15px;
+}
+
+.company-name {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 5px;
+}
+
+.job-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--primary-blue);
+    margin-bottom: 5px;
+}
+
+.salary {
+    font-size: 18px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.job-description {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.skill-tag {
+    background-color: rgba(0, 104, 255, 0.2);
+    color: var(--primary-blue);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.job-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.date-applied {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.status-badge {
+    background-color: rgba(0, 104, 255, 0.15);
+    color: var(--primary-blue);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-approved {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.recruiter-email {
+    margin-top: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.recruiter-email strong {
+    color: var(--text-color);
+}
+
+.no-applications {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 18px;
+    margin-top: 40px;
+}
+
+@media (max-width: 600px) {
+    .job-applications-container {
+        padding: 80px 10px 10px;
+    }
+
+    .job-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}

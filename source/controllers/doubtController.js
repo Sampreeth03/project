@@ -181,7 +181,7 @@ exports.getProjectNotifications = async (req, res) => {
 
 // JSON provider for client-side React app
 exports.getDoubtsJSON = async (req, res) => {
-    const currentUserId = req.session.user.id;
+    const currentUserId = (req.session && req.session.user && req.session.user.id) ? req.session.user.id : null;
     try {
         const doubts = await Doubt.find({ visible_to_all: true })
             .populate({
@@ -197,7 +197,7 @@ exports.getDoubtsJSON = async (req, res) => {
             const visibleReplies = doubt.replies?.filter(reply => {
                 const replyAuthorId = reply.user_id?._id?.toString();
                 if (reply.visible_to_all !== false) return true;
-                return currentUserId === doubtOwnerId || currentUserId === replyAuthorId;
+                return currentUserId && (currentUserId === doubtOwnerId || currentUserId === replyAuthorId);
             }).map(reply => ({
                 _id: reply._id,
                 author: reply.user_id?.name || reply.author || 'Anonymous',
