@@ -4,6 +4,7 @@ const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser"); // Retained for compatibility, but express.json is primary
 const path = require("path");
+const cors = require("cors");
 
 // --- Import ALL Routers ---
 const authRoutes = require('./routes/authRoutes');
@@ -25,13 +26,19 @@ const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember,
 const app = express();
 
 // -------------------------------------------------------------------------
-//                    GLOBAL MIDDLEWARE SETUP
+//                    GLOBAL MIDDLEWARE SETUP
 // -------------------------------------------------------------------------
+
+// 0. CORS Configuration
+app.use(cors({
+  origin: 'http://localhost:5173', // Vite default port
+  credentials: true
+}));
 
 // 1. Core Parsers
 app.use(express.json()); // Essential for API requests
 // Keep urlencoded for form data handling if needed, but JSON is primary for API
-app.use(bodyParser.urlencoded({ extended: true })); 
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // 2. View Engine and Static Assets
 // REMOVED: app.set('view engine', 'ejs');
@@ -44,7 +51,13 @@ app.use(
 session({
  secret: "your-secret-key", 
  resave: false,
- saveUninitialized: true,
+ saveUninitialized: false,
+ cookie: {
+   httpOnly: true,
+   secure: false, // set to true in production with HTTPS
+   sameSite: 'lax',
+   maxAge: 24 * 60 * 60 * 1000 // 24 hours
+ }
  })
 );
 

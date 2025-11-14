@@ -16,14 +16,23 @@ const isAuthenticated = (req, res, next) => {
 
 // =========================================================================
 // 1. User Home Page (GET /home) - CONVERTED TO JSON API
+//    Public endpoint: returns user if session exists, else null
 // =========================================================================
 exports.getHome = (req, res) => {
-    // Note: Authentication is handled by isAuthenticatedAPI middleware
-    // Return user data for session checking
-    res.json({ 
-        success: true, 
+    const hasSession = !!(req.session && req.session.user);
+    const user = hasSession
+        ? {
+            id: req.session.user.id,
+            name: req.session.user.name,
+            role: req.session.user.role,
+            email: req.session.user.email
+          }
+        : null;
+
+    res.json({
+        success: true,
         message: "User home data requested.",
-        user: { id: req.session.user.id, name: req.session.user.name, role: req.session.user.role, email: req.session.user.email }
+        user
     });
 };
 

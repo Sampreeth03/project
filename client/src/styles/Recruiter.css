@@ -844,6 +844,11 @@
     color: white;
 }
 
+.recruiter-btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
 .recruiter-resume-link {
     display: flex;
     align-items: center;

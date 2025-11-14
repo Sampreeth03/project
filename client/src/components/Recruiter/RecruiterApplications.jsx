@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import RecruiterNavbar from './RecruiterNavbar';
+import UserProfileModal from './UserProfileModal';
 import { fetchApplications, updateApplicationStatus, clearApplicationsError } from '../../store/recruiterSlice';
 import '../../styles/Recruiter.css';
 
@@ -14,6 +15,7 @@ const RecruiterApplications = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const [selectedUserProfile, setSelectedUserProfile] = useState(null);
 
     useEffect(() => {
         dispatch(fetchApplications());
@@ -94,12 +96,27 @@ const RecruiterApplications = () => {
         // For now, this is handled by the Redux state update in updateApplicationStatus
     };
 
+    const handleViewProfile = (userId, userName, e) => {
+        e.stopPropagation();
+        setSelectedUserProfile({ userId, userName });
+    };
+
+    const handleCloseProfile = () => {
+        setSelectedUserProfile(null);
+    };
+
     const renderActionButtons = (application) => {
         const status = application.status;
         
         if (status === 'approved') {
             return (
                 <>
+                    <button 
+                        className="recruiter-action-btn recruiter-btn-info"
+                        onClick={(e) => handleViewProfile(application.applicantId, application.applicantName, e)}
+                    >
+                        View Profile
+                    </button>
                     <a 
                         href={`/api/view-resume/${application.resumeId}`} 
                         target="_blank" 
@@ -115,6 +132,12 @@ const RecruiterApplications = () => {
         } else if (status === 'pending') {
             return (
                 <>
+                    <button 
+                        className="recruiter-action-btn recruiter-btn-info"
+                        onClick={(e) => handleViewProfile(application.applicantId, application.applicantName, e)}
+                    >
+                        View Profile
+                    </button>
                     <a 
                         href={`/api/view-resume/${application.resumeId}`} 
                         target="_blank" 
@@ -142,6 +165,12 @@ const RecruiterApplications = () => {
         } else if (status === 'rejected') {
             return (
                 <>
+                    <button 
+                        className="recruiter-action-btn recruiter-btn-info"
+                        onClick={(e) => handleViewProfile(application.applicantId, application.applicantName, e)}
+                    >
+                        View Profile
+                    </button>
                     <a 
                         href={`/api/view-resume/${application.resumeId}`} 
                         target="_blank" 
@@ -157,6 +186,12 @@ const RecruiterApplications = () => {
         } else {
             return (
                 <>
+                    <button 
+                        className="recruiter-action-btn recruiter-btn-info"
+                        onClick={(e) => handleViewProfile(application.applicantId, application.applicantName, e)}
+                    >
+                        View Profile
+                    </button>
                     <a 
                         href={`/api/view-resume/${application.resumeId}`} 
                         target="_blank" 
@@ -273,6 +308,14 @@ const RecruiterApplications = () => {
             <div className={`recruiter-toast ${toast.show ? 'show' : ''} ${toast.type}`}>
                 {toast.message}
             </div>
+
+            {selectedUserProfile && (
+                <UserProfileModal
+                    userId={selectedUserProfile.userId}
+                    userName={selectedUserProfile.userName}
+                    onClose={handleCloseProfile}
+                />
+            )}
         </div>
     );
 };
