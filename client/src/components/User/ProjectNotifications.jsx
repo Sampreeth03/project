@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import NavBar from './NavBar';
 import { useAuth } from '../../context/AuthContext';
+
 import '../../styles/ProjectNotifications.css';
+import MemberNotificationBox from './MemberNotificationBox';
+import LeaderNotificationBox from './LeaderNotificationBox';
 
 const ProjectNotifications = () => {
     const { user } = useAuth();
@@ -393,250 +396,35 @@ const ProjectNotifications = () => {
                             <h2>As a Member Inbox</h2>
                             <span className="badge">{getMemberBadgeCount()}</span>
                         </div>
-                        <div className="notification-list">
-                            {taskNotifications.length === 0 && myApplications.length === 0 ? (
-                                <div className="empty-state">No member notifications available</div>
-                            ) : (
-                                <>
-                                    {taskNotifications.map(notification => (
-                                        <div 
-                                            key={notification.id} 
-                                            className={`notification-card ${!notification.is_read ? 'unread' : ''}`}
-                                            data-id={notification.id}
-                                        >
-                                            <div className="notification-header">
-                                                <h3 className="notification-title">
-                                                    {notification.type === 'join_request_approved' 
-                                                        ? 'Join Request Approved' 
-                                                        : (notification.task_title ? `Task: ${notification.task_title}` : 'Project Update')}
-                                                </h3>
-                                                <span className="notification-date">
-                                                    {formatDate(notification.created_at)}
-                                                </span>
-                                            </div>
-                                            <div className="notification-content">
-                                                <p>{notification.message}</p>
-                                            </div>
-                                            <div className="notification-footer">
-                                                {notification.type === 'task' && 
-                                                 !notification.message.includes('approved') && 
-                                                 !notification.message.includes('rejected') && (
-                                                    <button 
-                                                        className="view-review-btn" 
-                                                        onClick={() => viewTask(notification.task_id, notification.id)}
-                                                        aria-label="View Task"
-                                                    >
-                                                        View Task
-                                                    </button>
-                                                )}
-                                                {!notification.is_read && (
-                                                    <button 
-                                                        className="view-review-btn approve" 
-                                                        onClick={() => markAsRead(notification.id)}
-                                                        aria-label="Mark as Read"
-                                                    >
-                                                        Mark as Read
-                                                    </button>
-                                                )}
-                                                <button 
-                                                    className="delete-btn" 
-                                                    onClick={() => deleteNotification(notification.id)}
-                                                    aria-label="Delete Notification"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {/* My Join Applications (as member/applicant) */}
-                                    {myApplications.map(request => (
-                                        <div 
-                                            key={request.id} 
-                                            className="notification-card"
-                                            data-id={request.id}
-                                        >
-                                            <div className="notification-header">
-                                                <h3 className="notification-title">Your Join Request</h3>
-                                                <span className="notification-date">
-                                                    {formatDate(request.created_at)}
-                                                </span>
-                                            </div>
-                                            <div className="notification-content">
-                                                <div 
-                                                    className="team-member-profile" 
-                                                    onClick={() => viewProfile(request.user_id)}
-                                                >
-                                                    <div className="team-member-avatar">
-                                                        {request.user_name ? request.user_name.charAt(0).toUpperCase() : 'U'}
-                                                    </div>
-                                                    <span className="team-member-name">{request.user_name}</span>
-                                                </div>
-                                                <p>You requested to join project: {request.project_name} (Owner: {request.user_name})</p>
-                                            </div>
-                                            <div className="notification-footer">
-                                                {request.status === 'pending' ? (
-                                                    <>
-                                                        <button 
-                                                            className="view-review-btn" 
-                                                            onClick={() => openChatModal(request)}
-                                                            aria-label="Chat with Owner"
-                                                            style={{background: '#2196F3'}}
-                                                        >
-                                                            💬 Chat
-                                                        </button>
-                                                        <span className="view-review-btn info" style={{cursor: 'default', background: '#FF9800'}}>
-                                                            Pending Approval
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <span className="view-review-btn info" style={{cursor: 'default'}}>
-                                                        {request.status === 'approved' ? 'Approved' : 'Rejected'}
-                                                    </span>
-                                                )}
-                                                <button 
-                                                    className="delete-btn" 
-                                                    onClick={() => deleteRequest(request.id)}
-                                                    aria-label="Delete Request"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-                        </div>
+                        <MemberNotificationBox
+                            taskNotifications={taskNotifications}
+                            myApplications={myApplications}
+                            formatDate={formatDate}
+                            viewTask={viewTask}
+                            markAsRead={markAsRead}
+                            deleteNotification={deleteNotification}
+                            viewProfile={viewProfile}
+                            openChatModal={openChatModal}
+                            deleteRequest={deleteRequest}
+                        />
                     </div>
-
                     {/* Team Leader Inbox */}
                     <div className="notification-column">
                         <div className="column-header">
                             <h2>Team Leader Inbox</h2>
                             <span className="badge">{getLeaderBadgeCount()}</span>
                         </div>
-                        <div className="notification-list">
-                            {joinRequests.length === 0 && projectCreationNotifications.length === 0 ? (
-                                <div className="empty-state">No team leader notifications available</div>
-                            ) : (
-                                <>
-                                    {projectCreationNotifications.map(notification => (
-                                        <div 
-                                            key={notification.id} 
-                                            className={`notification-card ${!notification.is_read ? 'unread' : ''}`}
-                                            data-id={notification.id}
-                                        >
-                                            <div className="notification-header">
-                                                <h3 className="notification-title">
-                                                    {notification.type === 'project_creation' 
-                                                        ? 'Project Creation' 
-                                                        : notification.type === 'project_completion' 
-                                                            ? 'Project Completion' 
-                                                            : 'Join Request Approved'}
-                                                </h3>
-                                                <span className="notification-date">
-                                                    {formatDate(notification.created_at)}
-                                                </span>
-                                            </div>
-                                            <div className="notification-content">
-                                                <p>{notification.message}</p>
-                                            </div>
-                                            <div className="notification-footer">
-                                                <button 
-                                                    className="delete-btn" 
-                                                    onClick={() => deleteNotification(notification.id)}
-                                                    aria-label="Delete Notification"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {joinRequests.map(request => (
-                                        <div 
-                                            key={request.id} 
-                                            className="notification-card"
-                                            data-id={request.id}
-                                        >
-                                            <div className="notification-header">
-                                                <h3 className="notification-title">
-                                                    {request.isApplicant ? 'Your Join Request' : 'Join Request'}
-                                                </h3>
-                                                <span className="notification-date">
-                                                    {formatDate(request.created_at)}
-                                                </span>
-                                            </div>
-                                            <div className="notification-content">
-                                                <div 
-                                                    className="team-member-profile" 
-                                                    onClick={() => viewProfile(request.user_id)}
-                                                >
-                                                    <div className="team-member-avatar">
-                                                        {request.user_name ? request.user_name.charAt(0).toUpperCase() : 'U'}
-                                                    </div>
-                                                    <span className="team-member-name">{request.user_name}</span>
-                                                </div>
-                                                <p>
-                                                    {request.isApplicant 
-                                                        ? `You requested to join project: ${request.project_name} (Owner: ${request.user_name})`
-                                                        : `${request.user_name} wants to join your project: ${request.project_name}`
-                                                    }
-                                                </p>
-                                            </div>
-                                            <div className="notification-footer" id={`footer-${request.id}`}>
-                                                {request.status === 'pending' ? (
-                                                    <>
-                                                        <button 
-                                                            className="view-review-btn" 
-                                                            onClick={() => openChatModal(request)}
-                                                            aria-label={request.isApplicant ? "Chat with Owner" : "Chat with Applicant"}
-                                                            style={{background: '#2196F3'}}
-                                                        >
-                                                            💬 Chat
-                                                        </button>
-                                                        {request.isCreator && (
-                                                            <>
-                                                                <button 
-                                                                    className="view-review-btn approve" 
-                                                                    onClick={(e) => approveRequest(request.id, e)}
-                                                                    aria-label="Approve Request"
-                                                                >
-                                                                    Approve
-                                                                </button>
-                                                                <button 
-                                                                    className="view-review-btn reject" 
-                                                                    onClick={(e) => rejectRequest(request.id, e)}
-                                                                    aria-label="Reject Request"
-                                                                >
-                                                                    Reject
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        {request.isApplicant && (
-                                                            <span className="view-review-btn info" style={{cursor: 'default', background: '#FF9800'}}>
-                                                                Pending Approval
-                                                            </span>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <span className="view-review-btn info" style={{cursor: 'default'}}>
-                                                        {request.status === 'approved' ? 'Approved' : 'Rejected'}
-                                                    </span>
-                                                )}
-                                                <button 
-                                                    className="delete-btn" 
-                                                    onClick={() => deleteRequest(request.id)}
-                                                    aria-label="Delete Request"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-                        </div>
+                        <LeaderNotificationBox
+                            joinRequests={joinRequests}
+                            projectCreationNotifications={projectCreationNotifications}
+                            formatDate={formatDate}
+                            viewProfile={viewProfile}
+                            openChatModal={openChatModal}
+                            approveRequest={approveRequest}
+                            rejectRequest={rejectRequest}
+                            deleteNotification={deleteNotification}
+                            deleteRequest={deleteRequest}
+                        />
                     </div>
                 </div>
             </main>
