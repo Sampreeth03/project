@@ -1,0 +1,196 @@
+/* client/src/styles/AuthFormStyles.css (FINALIZED FORM STYLES) */
+
+/* --- GLOBAL & BODY STYLES --- */
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    /* Restore body centering to support vertical alignment */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+* {
+    color: white;
+}
+.error { /* Server Error Message */
+    color: #ff4d4d;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+/* --- CONTAINER & FORM STYLES (CRITICAL CENTERING FIX) --- */
+.login-container, .signup-container2 { /* Targeting the renamed class */
+    background-color: #1e1e1e;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    width: 400px;
+    transition: 0.3s;
+    /* FIX: This centers the form block horizontally */
+    margin: 50px auto; 
+}
+.login-form h2, .signup-form h2 {
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 24px;
+}
+
+
+/* --- INPUT FIELD STYLES --- */
+.input-group, .password-group {
+    position: relative;
+    width: 100%;
+    margin-bottom: 20px;
+}
+.input-group input, .password-group input {
+    width: 100%;
+    height: 48px; 
+    box-sizing: border-box;
+    padding: 0 60px 0 15px; 
+    border: 1px solid #1079e9;
+    border-radius: 5px;
+    background-color: transparent;
+    color: #ffffff;
+    outline: none;
+    font-size: 16px;
+}
+
+/* --- ERROR DISPLAY & UI (Shake, Glow, Toggles) --- */
+.field-error {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    min-height: 18px;
+    display: none; 
+}
+input.input-error::placeholder {
+    color: #ff4d4d;
+    opacity: 1;
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+.shake {
+    animation: shake 0.5s;
+}
+.input-group.focused::before, .password-group.focused::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(90deg, #0068ff, #00d4ff, #0068ff);
+    border-radius: 7px;
+    z-index: -1;
+    opacity: 0.5;
+    animation: glow 2s infinite;
+}
+@keyframes glow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 10px; 
+    cursor: pointer;
+    color: #0068ff;
+    font-size: 14px;
+    font-weight: bold;
+    user-select: none;
+    z-index: 10;
+}
+
+/* --- CAPS LOCK WARNING (Login) --- */
+.caps-lock-warning {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffa500;
+    font-size: 20px;
+    display: none; 
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* --- EMAIL SUGGESTION (Login) --- */
+.email-suggestion {
+    position: absolute;
+    background: #2a2a2a;
+    border: 1px solid #0068ff;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 2px;
+    font-size: 13px;
+    color: #ccc;
+    cursor: pointer;
+    z-index: 1000;
+    display: none;
+    width: calc(100% - 2px);
+}
+.email-suggestion:hover {
+    background: #0068ff;
+    color: white;
+}
+.email-suggestion strong {
+    color: #0068ff;
+}
+.email-suggestion:hover strong {
+    color: white;
+}
+
+/* --- BUTTONS & LINKS --- */
+.login-btn, .signup-btn {
+    width: 100%;
+    background-color: #0068ff;
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+.login-btn:hover, .signup-btn:hover {
+    background-color: #144289;
+}
+.login-btn[disabled], .signup-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(10%);
+}
+.forgot-password-row { 
+    display: flex; 
+    justify-content: flex-end; 
+    margin-top: 8px; 
+    margin-bottom: 8px; 
+}
+.forgot-password-row a { color: #c9d1d9; text-decoration: none; font-size: 0.9rem; }
+.forgot-password-row a:hover { color: #0068ff; text-decoration: underline; }
+
+/* --- SIGNUP SPECIFIC (Progress & Strength) --- */
+.password-strength-bar { height: 4px; background-color: #333; border-radius: 2px; }
+.password-strength-fill {height: 100%; transition: width 0.3s ease;background-color : 0.3s ease;}
+.password-strength-fill.weak { background-color: #ff4444; }
+.password-strength-fill.medium { background-color: #ffa500; }
+.password-strength-fill.strong { background-color: #00ff00; }
+.password-match-indicator { font-size: 0.85rem; margin-top: 4px; display: none; }
+.password-match-indicator.match { color: #00ff00; display: block; }
+.password-match-indicator.no-match { color: #ff4444; display: block; }
+.progress-bar-container { height: 6px; background-color: #333; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, #0068ff, #00d4ff); }
+.file-group { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.file-group label { color: #ffffff; margin-right: 15px; }
+.file-group input[type="file"] { flex-grow: 1; padding: 8px; border: 1px solid #1079e9; height: auto; }

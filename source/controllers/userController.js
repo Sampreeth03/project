@@ -1,14 +1,13 @@
-// controllers/userController.js
+// controllers/userController.js (UPDATED FOR API)
 
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-// NOTE: Assuming models path. Please confirm or update path to your models!
 const { User, UserMetrics, Project } = require("../database"); 
 const { getNavLinks, getTimeAgo } = require("../services/helperService"); 
-const { upload } = require("../middleware/uploadMiddleware"); // Used in postProfile
+const { upload } = require("../middleware/uploadMiddleware"); 
 
 // =========================================================================
-// Middleware Helper (Temporary check, will be centralized later)
+// Middleware Helper (Left as placeholder, as API checks are in userRoutes.js)
 // =========================================================================
 const isAuthenticated = (req, res, next) => {
     if (!req.session.user) return res.redirect('/login');
@@ -16,35 +15,35 @@ const isAuthenticated = (req, res, next) => {
 };
 
 // =========================================================================
-// 1. User Home Page (GET /home)
+// 1. User Home Page (GET /home) - CONVERTED TO JSON API
 // =========================================================================
 exports.getHome = (req, res) => {
-    if (!req.session.user || req.session.user.role !== "user") {
-        return res.redirect("/login");
+    // Note: Authentication is handled by isAuthenticatedAPI middleware
+    if (req.session.user.role !== "user") {
+        // Return JSON 403 Forbidden if user role is wrong
+        return res.status(403).json({ success: false, error: "Forbidden: Not a user role." });
     }
-    // Access navData via direct require (since it's not a route handler argument)
-    const { navData } = require('../config/constants');
-    res.render("user-home", { 
-        user: req.session.user, 
-        homeUrl: navData.homeUrl, 
-        navLinks: navData.navLinks 
+    // React handles all rendering for the home page shell.
+    res.json({ 
+        success: true, 
+        message: "User home data requested.",
+        user: { id: req.session.user.id, name: req.session.user.name, role: req.session.user.role }
     });
 };
 
 // =========================================================================
-// 2. Dashboard Page (GET /dashboard)
+// 2. Dashboard Page (GET /dashboard) - CONVERTED TO JSON API
 // =========================================================================
 exports.getDashboard = (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    const { navData } = require('../config/constants');
-    res.render('dashboard', {
-        homeUrl: navData.homeUrl,
-        navLinks: navData.navLinks
+    // Authentication handled by middleware. React handles rendering.
+    res.json({ 
+        success: true, 
+        message: "User dashboard shell loaded."
     });
 };
 
 // =========================================================================
-// 3. Dashboard Metrics API (GET /api/dashboard-metrics)
+// 3. Dashboard Metrics API (GET /api/dashboard-metrics) - NO CHANGE NEEDED
 // =========================================================================
 exports.getDashboardMetrics = async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
@@ -74,7 +73,7 @@ exports.getDashboardMetrics = async (req, res) => {
 };
 
 // =========================================================================
-// 4. User Topics API (GET /home/topics)
+// 4. User Topics API (GET /home/topics) - NO CHANGE NEEDED
 // =========================================================================
 exports.getHomeTopics = (req, res) => {
     const topicsList = [
@@ -89,40 +88,24 @@ exports.getHomeTopics = (req, res) => {
 };
 
 // =========================================================================
-// 5. User Profile Page (GET /profile and GET /profile/:id)
+// 5. User Profile Page (GET /profile and GET /profile/:id) - CONVERTED TO JSON API
 // =========================================================================
 exports.getProfile = async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    // Allows viewing personal profile or public profile of another user
+    // This endpoint now serves only as the shell trigger. Data is fetched separately.
     const targetId = req.params.id || req.session.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(targetId)) {
-        return res.status(400).send('Invalid user id');
+        return res.status(400).json({ success: false, error: 'Invalid user id' });
     }
     
-    try {
-        const user = await User.findById(targetId).lean();
-        if (!user) return res.status(404).send('User not found');
-        
-        const { navData } = require('../config/constants');
-
-        res.render('profile', {
-            user,
-            homeUrl: navData.homeUrl,
-            navLinks: getNavLinks(req.session.user),
-            query: req.query || {}
-        });
-    } catch (err) {
-        console.error('Error loading profile:', err.message);
-        res.redirect('/home?error=Failed to load profile');
-    }
+    // React fetches data using /api/profile-data/:id, this endpoint serves the shell.
+    res.json({ success: true, message: "User profile shell loaded." });
 };
 
 // =========================================================================
-// 6. Update Profile (POST /profile)
+// 6. Update Profile (POST /profile) - NO CHANGE NEEDED
 // =========================================================================
 exports.postProfile = async (req, res) => {
-    // Multer upload logic is run before this controller function
     const userId = (req.session && req.session.user && req.session.user.id) || null;
     if (!userId) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
@@ -168,7 +151,7 @@ exports.postProfile = async (req, res) => {
 };
 
 // =========================================================================
-// 7. Lightweight Profile Data API (GET /profile-data/:id)
+// 7. Lightweight Profile Data API (GET /profile-data/:id) - NO CHANGE NEEDED
 // =========================================================================
 exports.getProfileData = async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
@@ -196,14 +179,14 @@ exports.getProfileData = async (req, res) => {
 };
 
 // =========================================================================
-// 8. Simple Content Routes (FAQ, Messages)
+// 8. Simple Content Routes (FAQ, Messages) - CONVERTED TO JSON API
 // =========================================================================
-const { navData } = require('../config/constants');
 exports.getMessages = (req, res) => {
-    // These views should typically require authentication, but original code did not.
-    res.render("group", { user: req.session.user || null, homeUrl: navData.homeUrl, navLinks: navData.navLinks });
+    // React will now fetch data and render the messages shell.
+    res.json({ success: true, message: "Messages shell loaded." });
 };
 
 exports.getFAQ = (req, res) => {
-    res.render("faqpage", { user: req.session.user || null, homeUrl: navData.homeUrl, navLinks: navData.navLinks });
+    // React will now fetch data and render the FAQ shell.
+    res.json({ success: true, message: "FAQ shell loaded." });
 };

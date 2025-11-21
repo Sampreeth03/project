@@ -1,45 +1,43 @@
-// routes/projectRoutes.js
+// routes/projectRoutes.js (UPDATED for API Middleware)
 
 const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/projectController');
-const { isAuthenticated } = require('../middleware/authMiddleware'); 
-const { topics } = require('../config/constants'); // Needed for dynamic route mapping
+const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
+const { topics } = require('../config/constants'); 
 
 const jsonParser = express.json();
 
 // Apply Authentication to all project routes
-router.use(isAuthenticated);
+router.use(isAuthenticatedAPI); // Changed to API-aware middleware
 
 // --- Core Project Views ---
 router.get('/project', projectController.getAllProjects);
-router.get('/available-projects', projectController.getAllProjects); // Duplicate route from original code
 router.get('/joined-projects', projectController.getJoinedProjects);
 router.get('/project/:id', projectController.getProjectDetails);
-router.get('/e', projectController.getCreateProjectView); // View to create projects
+router.get('/e', projectController.getCreateProjectView); 
 
-// --- Project CRUD & Membership APIs ---
+// --- Project CRUD & Membership APIs (Paths are correct) ---
 router.post('/create-project', jsonParser, projectController.createProject);
 router.post('/delete-project', jsonParser, projectController.deleteProject);
+// ... (rest of CRUD routes remain the same) ...
 router.post('/join-project', jsonParser, projectController.joinProject);
 router.post('/approve-join-request', jsonParser, projectController.approveJoinRequest);
 router.post('/reject-join-request', jsonParser, projectController.rejectJoinRequest);
 router.post('/delete-join-request', jsonParser, projectController.deleteJoinRequest);
 
-// --- Project Completion / Status ---
+// --- Project Completion / Status (Paths are correct) ---
 router.post('/project/:id/finish', jsonParser, projectController.finishProject);
 router.get('/project/:id/pending-tasks', projectController.getPendingTasks);
 
-// --- Task Management APIs ---
+// --- Task Management APIs (Paths are correct) ---
 router.post('/task/create', jsonParser, projectController.createTask);
 router.post('/task/extend-deadline', jsonParser, projectController.extendDeadline);
 router.post('/task/submit-github-link', jsonParser, projectController.submitGithubLink);
 router.post('/task/review-submission', jsonParser, projectController.reviewSubmission);
 router.post('/task/:id/feedback', jsonParser, projectController.reviewSubmission); 
-router.post('/task/review-submission', jsonParser, projectController.reviewSubmission);
 
-// --- Dynamic Topic Routes ---
-// This loop maps all topic paths from constants to the same controller function
+// --- Dynamic Topic Routes (Paths are correct) ---
 Object.keys(topics).forEach(path => {
     router.get(path, projectController.getTopicProjects);
 });

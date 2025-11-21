@@ -1,25 +1,24 @@
-// routes/doubtRoutes.js
+// routes/doubtRoutes.js (UPDATED for API Middleware)
 
 const express = require('express');
 const router = express.Router();
 const doubtController = require('../controllers/doubtController');
-const { isAuthenticated } = require('../middleware/authMiddleware'); 
+const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 const { upload } = require("../middleware/uploadMiddleware");
 
 const jsonParser = express.json();
 
 // Apply Authentication to all routes
-router.use(isAuthenticated);
+router.use(isAuthenticatedAPI); // Changed to API-aware middleware
 
 // --- Doubt/Q&A Views ---
 router.get("/doubt", doubtController.getDoubtBoard);
 router.get("/clear", doubtController.getClearDoubts);
 
 // --- Notification/Join Request Management View ---
-router.get('/not', doubtController.getProjectNotifications); // FIXES PROJECT NOTIF VIEW
+router.get('/not', doubtController.getProjectNotifications); 
 
 // --- Q&A Actions ---
-// NOTE: /ask GET is a redirect in authController.js
 router.post("/ask", upload.single("file-input"), doubtController.postDoubt);
 router.post("/reply", jsonParser, doubtController.postReply);
 

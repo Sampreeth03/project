@@ -1,12 +1,12 @@
-// routes/recruiterRoutes.js
+// routes/recruiterRoutes.js (UPDATED for API Middleware)
 
 const express = require('express');
 const router = express.Router();
 const recruiterController = require('../controllers/recruiterController');
-const { isRecruiter } = require('../middleware/authMiddleware'); // NEW IMPORT
+const { isRecruiterAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 
-// Apply isRecruiter middleware to all routes in this router
-router.use(isRecruiter);
+// Apply isRecruiterAPI middleware to all routes in this router
+router.use(isRecruiterAPI);
 const jsonParser = express.json(); 
 
 // --- Recruiter Views ---
@@ -16,12 +16,12 @@ router.get("/recruiter-dashboard", recruiterController.getRecruiterDashboard);
 router.get('/rec-app', recruiterController.getRecruiterApplications);
 router.get('/rec-not', recruiterController.getRecruiterNotifications);
 
-// --- Job Management APIs (POST/DELETE/PATCH) ---
+// --- Job Management APIs (Paths are correct) ---
 router.post("/create-recruiter-job", jsonParser, recruiterController.createRecruiterJob);
 router.delete("/delete-recruiter-job/:id", recruiterController.deleteRecruiterJob);
 router.patch("/toggle-job-active/:id", jsonParser, recruiterController.toggleJobActive);
 
-// --- Application Review APIs ---
+// --- Application Review APIs (Paths are correct) ---
 router.get('/view-resume/:id', recruiterController.viewResume);
 router.patch('/update-application-status/:id', jsonParser, recruiterController.updateApplicationStatus);
 router.post("/update-application-status", jsonParser, recruiterController.updateApplicationStatus); 
