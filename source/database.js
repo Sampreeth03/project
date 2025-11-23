@@ -135,7 +135,7 @@ const notificationSchema = new mongoose.Schema({
   task_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
   type: {
       type: String,
-  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'join_request_rejected', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected'],
+  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'join_request_rejected', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected', 'job_shortlisted'],
       default: 'task'
   },
   is_read: { type: Boolean, default: false }

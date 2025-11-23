@@ -20,6 +20,7 @@ import Dashboard from './components/User/Dashboard.jsx';
 import ApplyJobs from './components/User/ApplyJobs.jsx';
 import JobApplications from './components/User/JobApplications.jsx';
 import JobNotifications from './components/User/JobNotifications.jsx';
+import TopicProjects from './components/User/TopicProjects.jsx';
 
 import RecruiterHome from './components/Recruiter/RecruiterHome.jsx';
 import RecruiterDashboard from './components/Recruiter/RecruiterDashboard.jsx';
@@ -73,6 +74,14 @@ function App() {
 
       {/* Dashboard Route */}
       <Route path="/dashboard" element={<Dashboard />} />
+      
+      {/* TOPIC ROUTES */}
+      <Route path="/web-dev" element={<TopicProjects />} />
+      <Route path="/cyb" element={<TopicProjects />} />
+      <Route path="/dl" element={<TopicProjects />} />
+      <Route path="/robo" element={<TopicProjects />} />
+      <Route path="/ds" element={<TopicProjects />} />
+      <Route path="/blockchain" element={<TopicProjects />} />
       
       {/* RECRUITER ROUTES */}
       <Route path="/recruiter-home" element={<RecruiterHome />} />

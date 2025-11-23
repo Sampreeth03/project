@@ -192,7 +192,16 @@ exports.viewResume = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
     const applicationId = req.params.id || req.body.applicationId;
     const recruiterId = req.session.user.id;
-    const status = req.params.id ? req.body.status : (req.body.statusLc === 'approved' ? 'Approved' : (req.body.statusLc === 'rejected' ? 'Rejected' : req.body.status));
+    
+    // Handle different status formats
+    let status = req.body.status;
+    if (req.body.statusLc) {
+        status = req.body.statusLc === 'approved' ? 'Approved' : (req.body.statusLc === 'rejected' ? 'Rejected' : req.body.statusLc);
+    }
+    // Capitalize status if it's lowercase
+    if (status && typeof status === 'string') {
+        status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    }
     
     if (!['Approved', 'Rejected'].includes(status)) {
         return res.status(400).json({ success: false, error: 'Invalid status' });
