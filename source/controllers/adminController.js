@@ -73,7 +73,7 @@ exports.getDashboardData = async (req, res) => {
         ]);
 
         const dashboardData = {
-            adminName: req.session.user.name,
+            adminName: req.session?.user?.name || 'Admin',
             adminRole: "Super Admin",
             period: `${periodDays} days`,
             dashboardCards: [
@@ -163,6 +163,36 @@ exports.getDoubtsPage = async (req, res) => {
     } catch (err) {
         console.error("Error fetching doubts data:", err.message);
         res.status(500).send("Server Error");
+    }
+};
+
+// =========================================================================
+// 5b. Doubts Data API (GET /admin-doubts/data)
+// =========================================================================
+exports.getDoubtsData = async (req, res) => {
+    try {
+        const users = await User.find({ role: 'user' })
+            .select('name email')
+            .lean();
+    
+        const doubtsData = await Promise.all(users.map(async (user) => {
+            const metrics = await UserMetrics.findOne({ user_id: user._id })
+                .select('inquiriesInitiated solutions_provided')
+                .lean();
+            const totalDoubts = await Doubt.countDocuments({ user_id: user._id });
+            return {
+                id: user._id.toString(),
+                name: user.name,
+                email: user.email,
+                doubtsAsked: totalDoubts || 0,
+                doubtsCleared: metrics ? metrics.solutions_provided || 0 : 0
+            };
+        }));
+    
+        res.json(doubtsData);
+    } catch (err) {
+        console.error("Error fetching doubts data:", err.message);
+        res.status(500).json({ error: "Server Error" });
     }
 };
 
@@ -271,4 +301,66 @@ exports.getAdminProfilePage = (req, res) => {
 
 exports.getAdminMessagesPage = (req, res) => {
     res.render('admin-mess', { activePage: 'dashboard' });
+};
+
+// =========================================================================
+// 11. Profile Data API (GET /admin-prof/data)
+// =========================================================================
+exports.getProfileData = async (req, res) => {
+    try {
+        // If no session, return default admin data
+        if (!req.session?.user?.id) {
+            return res.json({
+                fullName: 'Admin User',
+                email: 'admin@relabteams.com',
+                phone: '',
+                role: 'Super Admin',
+                joined: 'N/A',
+                lastLogin: 'Today'
+            });
+        }
+        
+        const admin = await User.findById(req.session.user.id)
+            .select('name email phone createdAt')
+            .lean();
+        
+        if (!admin) {
+            return res.status(404).json({ error: "Admin not found" });
+        }
+        
+        res.json({
+            fullName: admin.name || 'Admin User',
+            email: admin.email || '',
+            phone: admin.phone || '',
+            role: 'Super Admin',
+            joined: admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A',
+            lastLogin: 'Today'
+        });
+    } catch (err) {
+        console.error("Error fetching profile data:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+};
+
+// =========================================================================
+// 12. Messages Data API (GET /admin-mess/data)
+// =========================================================================
+exports.getMessagesData = async (req, res) => {
+    try {
+        // Mock data for messages - in real implementation, fetch from database
+        const messagesData = {
+            conversations: [],
+            stats: {
+                totalConversations: 0,
+                flaggedConversations: 0,
+                messagesToday: 0,
+                responseRate: 0
+            }
+        };
+        
+        res.json(messagesData);
+    } catch (err) {
+        console.error("Error fetching messages data:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
 };

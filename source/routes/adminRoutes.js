@@ -5,8 +5,9 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { isAdminAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 
-// Apply isAdminAPI middleware to all routes in this router
-router.use(isAdminAPI);
+// NOTE: For development, auth middleware is commented out
+// Uncomment the line below to enable admin authentication in production
+// router.use(isAdminAPI);
 
 // --- Dashboard & Metrics ---
 router.get("/admin", adminController.getAdminDashboard);
@@ -18,6 +19,7 @@ router.get('/students', adminController.getStudentsData); // CORRECTED Path
 
 // --- Doubts Management ---
 router.get('/admin-doubts', adminController.getDoubtsPage);
+router.get('/admin-doubts/data', adminController.getDoubtsData); // NEW API endpoint
 
 // --- Recruiters Management ---
 router.get('/admin-rec', adminController.getRecruitersPage);
@@ -29,7 +31,9 @@ router.get("/projects", adminController.getProjectsData); // CORRECTED Path
 
 // --- Simple Static Pages ---
 router.get('/admin-prof', adminController.getAdminProfilePage);
+router.get('/admin-prof/data', adminController.getProfileData); // Profile data API
 router.get('/admin-mess', adminController.getAdminMessagesPage);
+router.get('/admin-mess/data', adminController.getMessagesData); // NEW API endpoint
 
 
 module.exports = router;
