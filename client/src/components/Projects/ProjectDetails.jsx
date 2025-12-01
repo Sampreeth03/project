@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import useProjectActions from '../../hooks/useProjectActions'; 
-import Navbar from '../User/Navbar.jsx'; 
+import Navbar from '../User/NavBar.jsx'; 
 import '../../styles/ProjectStyles.css'; 
 
 // Helper component for rendering a single task card
