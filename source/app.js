@@ -53,13 +53,14 @@ session({
 // -------------------------------------------------------------------------
 
 // CRITICAL: Mount ALL routers under the '/api' prefix for the React frontend
+// NOTE: Order matters! Admin routes mounted first to avoid auth conflicts
 app.use('/api', authRoutes); 
+app.use('/api', adminRoutes);  // Admin routes first (no auth for development)
+app.use('/api', recruiterRoutes); 
 app.use('/api', userRoutes);
 app.use('/api', projectRoutes);
 app.use('/api', doubtRoutes);
 app.use('/api', jobRoutes);
-app.use('/api', recruiterRoutes); 
-app.use('/api', adminRoutes);
 
 
 // -------------------------------------------------------------------------
