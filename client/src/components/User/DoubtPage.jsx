@@ -11,14 +11,20 @@ const DoubtPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchDoubts();
-  }, []);
+    if (user) {
+      fetchDoubts();
+    }
+  }, [user]);
 
   const fetchDoubts = async () => {
     try {
       const res = await fetch('/api/doubts', { credentials: 'include' });
       const data = await res.json();
-      if (data.success) setDoubts(data.doubts || []);
+      if (data.success) {
+        // Filter to only show doubts posted by the current user
+        const userDoubts = (data.doubts || []).filter(d => d.author === user?.name);
+        setDoubts(userDoubts);
+      }
     } catch (err) {
       console.error('Failed to fetch doubts', err);
     }

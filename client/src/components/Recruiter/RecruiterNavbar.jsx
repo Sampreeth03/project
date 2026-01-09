@@ -18,11 +18,11 @@ const RecruiterNavbar = () => {
             ]
         },
         {
-            name: "Profile",
+            name: "Dashboard",
             href: "/recruiter-dashboard",
-            submenu: [
-                { name: "Dashboard", href: "/recruiter-dashboard" }
-            ]
+            // submenu: [
+            //     { name: "Dashboard", href: "/recruiter-dashboard" }
+            // ]
         },
     ];
 

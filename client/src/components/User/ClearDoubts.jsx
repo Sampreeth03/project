@@ -89,7 +89,7 @@ const ClearDoubts = () => {
         </div>
 
         <div style={{padding:'16px', borderTop:'1px solid #2D2D2D'}}>
-          <form id="ask-doubt-form" onSubmit={handleSubmit} encType="multipart/form-data">
+          {/* <form id="ask-doubt-form" onSubmit={handleSubmit} encType="multipart/form-data">
             <div className="messageBox" style={{alignItems:'center'}}>
               <div className="fileUploadWrapper">
                 <label htmlFor="file-input"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 16v4H8v-4" stroke="#9AA1A6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="tooltip">Attach a file (optional)</span></label>
@@ -98,7 +98,7 @@ const ClearDoubts = () => {
               <input className="messageInput" name="message" id="ask-message" type="text" placeholder="Ask your doubt here..." value={message} onChange={e=>setMessage(e.target.value)} required />
               <button type="submit" className="sendButton"><svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="#6c6c6c" strokeWidth="33.67" strokeLinecap="round" strokeLinejoin="round"></path></svg></button>
             </div>
-          </form>
+          </form> */}
         </div>
       </div>
     </div>
