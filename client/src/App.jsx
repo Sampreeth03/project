@@ -25,6 +25,7 @@ import ApplyJobs from './components/User/ApplyJobs.jsx';
 import JobApplications from './components/User/JobApplications.jsx';
 import JobNotifications from './components/User/JobNotifications.jsx';
 import TopicProjects from './components/User/TopicProjects.jsx';
+import Friends from './components/User/Friends.jsx';
 
 import RecruiterHome from './components/Recruiter/RecruiterHome.jsx';
 import RecruiterDashboard from './components/Recruiter/RecruiterDashboard.jsx';
@@ -82,6 +83,9 @@ function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/messages" element={<GroupChat />} />
       <Route path="/group-chat/:projectId" element={<GroupChat />} />
+
+      {/* Friends */}
+      <Route path="/friends" element={<Friends />} />
       
       {/* TOPIC ROUTES */}
       <Route path="/web-dev" element={<TopicProjects />} />

@@ -16,6 +16,7 @@ const ProjectNotifications = () => {
     const [joinRequests, setJoinRequests] = useState([]);
     const [projectCreationNotifications, setProjectCreationNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [projectInvites, setProjectInvites] = useState([]);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [profileData, setProfileData] = useState(null);
     const [chatModalOpen, setChatModalOpen] = useState(false);
@@ -38,12 +39,42 @@ const ProjectNotifications = () => {
                 setMyApplications(response.data.myApplications || []);
                 setJoinRequests(response.data.joinRequests || []);
                 setProjectCreationNotifications(response.data.projectCreationNotifications || []);
+                setProjectInvites(response.data.projectInvites || []);
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
             showToast('Failed to load notifications', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+    // Accept/Reject Project Invite
+    const respondToInvite = async (inviteId, action, event) => {
+        const button = event?.target;
+        if (!button) return;
+        if (buttonStates.current.get(inviteId)) return;
+        buttonStates.current.set(inviteId, true);
+        button.disabled = true;
+        button.textContent = action === 'accept' ? 'Accepting...' : 'Rejecting...';
+        try {
+            const response = await axios.post('/api/project/invite/respond', { inviteId, action });
+            if (response.data.success) {
+                showToast(`Invite ${action === 'accept' ? 'accepted' : 'rejected'} successfully`);
+                setProjectInvites(prev => prev.filter(inv => inv.id !== inviteId));
+                // Optionally refresh notifications to update project membership
+                fetchNotifications();
+            } else {
+                showToast(response.data.message || `Failed to ${action} invite`, 'error');
+                button.disabled = false;
+                button.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+            }
+        } catch (error) {
+            console.error('Error responding to invite:', error);
+            showToast('An error occurred while responding to the invite', 'error');
+            button.disabled = false;
+            button.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+        } finally {
+            buttonStates.current.delete(inviteId);
         }
     };
 
@@ -399,6 +430,7 @@ const ProjectNotifications = () => {
                         <MemberNotificationBox
                             taskNotifications={taskNotifications}
                             myApplications={myApplications}
+                            projectInvites={projectInvites}
                             formatDate={formatDate}
                             viewTask={viewTask}
                             markAsRead={markAsRead}
@@ -406,6 +438,7 @@ const ProjectNotifications = () => {
                             viewProfile={viewProfile}
                             openChatModal={openChatModal}
                             deleteRequest={deleteRequest}
+                            respondToInvite={respondToInvite}
                         />
                     </div>
                     {/* Team Leader Inbox */}

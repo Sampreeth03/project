@@ -3,19 +3,63 @@ import React from 'react';
 const MemberNotificationBox = ({
     taskNotifications = [],
     myApplications = [],
+    projectInvites = [],
     formatDate,
     viewTask,
     markAsRead,
     deleteNotification,
     viewProfile,
     openChatModal,
-    deleteRequest
+    deleteRequest,
+    respondToInvite
 }) => (
     <div className="notification-list">
-        {taskNotifications.length === 0 && myApplications.length === 0 ? (
+        {taskNotifications.length === 0 && myApplications.length === 0 && projectInvites.length === 0 ? (
             <div className="empty-state">No member notifications available</div>
         ) : (
             <>
+                                {/* Project Invites (as invitee) */}
+                                {projectInvites.map(invite => (
+                                    <div
+                                        key={invite.id}
+                                        className="notification-card"
+                                        data-id={invite.id}
+                                    >
+                                        <div className="notification-header">
+                                            <h3 className="notification-title">Project Invitation</h3>
+                                            <span className="notification-date">
+                                                {formatDate(invite.created_at)}
+                                            </span>
+                                        </div>
+                                        <div className="notification-content">
+                                            <div className="team-member-profile">
+                                                <div className="team-member-avatar">
+                                                    {invite.from_user_name ? invite.from_user_name.charAt(0).toUpperCase() : 'U'}
+                                                </div>
+                                                <span className="team-member-name">{invite.from_user_name}</span>
+                                            </div>
+                                            <p>
+                                                {invite.from_user_name} invited you to join project: {invite.project_name}
+                                            </p>
+                                        </div>
+                                        <div className="notification-footer">
+                                            <button
+                                                className="view-review-btn approve"
+                                                onClick={e => respondToInvite(invite.id, 'accept', e)}
+                                                aria-label="Accept Invite"
+                                            >
+                                                Accept
+                                            </button>
+                                            <button
+                                                className="view-review-btn reject"
+                                                onClick={e => respondToInvite(invite.id, 'reject', e)}
+                                                aria-label="Reject Invite"
+                                            >
+                                                Reject
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                 {taskNotifications.map(notification => (
                     <div 
                         key={notification.id} 

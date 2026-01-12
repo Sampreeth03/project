@@ -48,6 +48,9 @@ const Navbar = ({ onSearchChange }) => {
                 { name: "Project Notifications", href: "/not" },
                 { name: "Job Notifications", href: "/job_not" }
             ]
+        },
+        {
+            name: 'Friends', href: '/friends', submenu: []
         }
     ];
 

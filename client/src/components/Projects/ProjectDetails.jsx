@@ -109,6 +109,11 @@ const ProjectDetails = () => {
     const [reviewAction, setReviewAction] = useState({ taskId: null, action: null });
     const [pendingTasksCount, setPendingTasksCount] = useState(0);
 
+    // Invite friends state
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [myFriends, setMyFriends] = useState([]);
+    const [isInviting, setIsInviting] = useState(false);
+
     const unreadCount = getUnreadCount(projectId);
 
     // Debug logging
@@ -233,9 +238,20 @@ const ProjectDetails = () => {
 
                         {/* Finish Project Button (Restored) */}
                         {isCreator && project.status !== 'completed' && (
-                            <button className="finish-project-btn" onClick={() => setIsFinishModalOpen(true)}>
-                                Finish Project
-                            </button>
+                            <>
+                                <button className="finish-project-btn" onClick={() => setIsFinishModalOpen(true)}>
+                                    Finish Project
+                                </button>
+                                <button className="invite-friends-btn" style={{ marginLeft: '8px' }} onClick={async () => {
+                                    setIsInviteModalOpen(true);
+                                    try {
+                                        const res = await axios.get('/api/friends');
+                                        setMyFriends(res.data.friends || []);
+                                    } catch (err) {
+                                        console.error('Failed to fetch friends', err);
+                                    }
+                                }}>Invite Friends</button>
+                            </>
                         )}
                         
                         {/* Join Button (Simplified) */}
@@ -369,6 +385,38 @@ const ProjectDetails = () => {
                             <button type="submit" className="confirm-btn">Confirm</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            {/* Invite Friends Modal */}
+            <div id="inviteModal" className={`modal ${isInviteModalOpen ? 'open' : ''}`}>
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h2>Invite Friends to "{project.title}"</h2>
+                        <span className="close" onClick={() => setIsInviteModalOpen(false)}>×</span>
+                    </div>
+                    <div style={{ padding: '10px' }}>
+                        {myFriends.length === 0 && <div>No friends found. Add some friends first.</div>}
+                        {myFriends.map(f => (
+                            <div key={f._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #333' }}>
+                                <div>
+                                    <div style={{ fontWeight: 'bold' }}>{f.name}</div>
+                                    <div style={{ fontSize: '12px', opacity: 0.8 }}>{f.email}</div>
+                                </div>
+                                <div>
+                                    <button className="btn btn-white" disabled={isInviting} onClick={async () => {
+                                        setIsInviting(true);
+                                        try {
+                                            const res = await axios.post('/api/project/invite-friend', { projectId, toUserId: f._id });
+                                            if (res.data.success) alert('Invite sent');
+                                            else alert(res.data.message || 'Failed to send invite');
+                                        } catch (err) { alert('Error'); }
+                                        setIsInviting(false);
+                                    }}>Invite</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
