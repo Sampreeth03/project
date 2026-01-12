@@ -10,9 +10,9 @@ export function validateName(v) {
 
 export function validateEmail(v) {
     if (!v) return 'Email is required.';
-    // Regex based on EJS: /^[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+$/
-    const re = /^[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+$/; 
-    return re.test(v) ? '' : 'Enter a valid email address.';
+    const value = String(v).trim();
+    const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    return re.test(value) ? '' : 'Enter a valid email address.';
 }
 
 export function validatePassword(v) {

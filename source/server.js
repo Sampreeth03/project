@@ -1,5 +1,7 @@
 // server.js (FINALIZED CORE)
 
+require('dotenv').config();
+
 // Imports the configured Express app and the database connection logic
 const { app } = require("./app");
 

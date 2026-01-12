@@ -12,6 +12,10 @@ const jsonParser = express.json();
 router.get('/', authController.getLanding);
 router.get('/login', authController.getLogin);
 router.post('/login', authController.postLogin);
+router.post('/login/request-otp', authController.postLoginRequestOtp);
+router.post('/login/verify-otp', authController.postLoginVerifyOtp);
+router.post('/forgot-password/request-otp', authController.postForgotPasswordRequestOtp);
+router.post('/forgot-password/reset', authController.postForgotPasswordReset);
 router.get('/signup', authController.getSignup);
 // Student signup now accepts file uploads for profile picture and resume
 router.post('/signup', upload.fields([
