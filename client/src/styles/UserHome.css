@@ -1,5 +1,7 @@
 /* client/src/styles/UserHome.css (FINALIZED LAYOUT & POSITIONING) */
 
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap');
+
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tenorite', sans-serif; }
 body { 
     background-color: #121212; 
@@ -114,6 +116,10 @@ body {
 .banner-para { 
     font-size: 30px;
     font-family: "Doto", sans-serif; 
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-style: normal;
+    font-variation-settings: "ROND" 0;
     margin-top: 50px; 
     position: relative;
     z-index: 2;

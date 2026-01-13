@@ -81,6 +81,7 @@ function App() {
       {/* Dashboard Route */}
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/messages" element={<GroupChat />} />
+      <Route path="/group-chat/:projectId" element={<GroupChat />} />
       
       {/* TOPIC ROUTES */}
       <Route path="/web-dev" element={<TopicProjects />} />
