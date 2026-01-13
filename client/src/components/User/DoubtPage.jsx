@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import NavBar from './NavBar.jsx';
+import { ClearDoubtsToast } from './OnboardingToast.jsx';
 import '../../styles/Doubts.css';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 const DoubtPage = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [doubts, setDoubts] = useState([]);
   const [message, setMessage] = useState('');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showClearToast, setShowClearToast] = useState(false);
+
+  // Check if coming from projects page with toast param
+  useEffect(() => {
+    if (searchParams.get('showClearToast') === 'true') {
+      setShowClearToast(true);
+      // Remove the param from URL
+      searchParams.delete('showClearToast');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (user) {
@@ -176,6 +190,11 @@ const DoubtPage = () => {
           </form>
         </div>
       </div>
+
+      {/* Clear Doubts Toast - shown when coming from projects Ask Doubts */}
+      {showClearToast && (
+        <ClearDoubtsToast onComplete={() => setShowClearToast(false)} />
+      )}
     </div>
   );
 };

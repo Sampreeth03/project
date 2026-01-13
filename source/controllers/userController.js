@@ -18,22 +18,114 @@ const isAuthenticated = (req, res, next) => {
 // 1. User Home Page (GET /home) - CONVERTED TO JSON API
 //    Public endpoint: returns user if session exists, else null
 // =========================================================================
-exports.getHome = (req, res) => {
+exports.getHome = async (req, res) => {
     const hasSession = !!(req.session && req.session.user);
-    const user = hasSession
-        ? {
+    
+    if (!hasSession) {
+        return res.json({
+            success: true,
+            message: "User home data requested.",
+            user: null
+        });
+    }
+    
+    try {
+        // Fetch user from database to get onboardingCompleted status and profile fields
+        const dbUser = await User.findById(req.session.user.id).select('onboardingCompleted about skills interests resumeUrl profileImageUrl');
+        
+        // Debug: Log the actual database values
+        console.log('[Profile Check] User ID:', req.session.user.id);
+        console.log('[Profile Check] DB User fields:', {
+            about: dbUser?.about,
+            skills: dbUser?.skills,
+            interests: dbUser?.interests,
+            profileImageUrl: dbUser?.profileImageUrl,
+            resumeUrl: dbUser?.resumeUrl
+        });
+        
+        // Check each profile field individually (true = filled, false = not filled)
+        const profileFields = {
+            aboutMe: !!(dbUser?.about && dbUser.about.trim().length > 0),
+            skills: !!(dbUser?.skills && dbUser.skills.length > 0),
+            interests: !!(dbUser?.interests && dbUser.interests.length > 0),
+            profilePicture: !!(dbUser?.profileImageUrl && dbUser.profileImageUrl.trim().length > 0),
+            resume: !!(dbUser?.resumeUrl && dbUser.resumeUrl.trim().length > 0)
+        };
+        
+        console.log('[Profile Check] Field status:', profileFields);
+        
+        // Profile is complete only if ALL fields are true
+        const isProfileComplete = profileFields.aboutMe && 
+            profileFields.skills && 
+            profileFields.interests && 
+            profileFields.profilePicture && 
+            profileFields.resume;
+        
+        // Determine which fields are missing (false)
+        const missingFields = [];
+        if (!profileFields.aboutMe) missingFields.push('About Me');
+        if (!profileFields.skills) missingFields.push('Skills');
+        if (!profileFields.interests) missingFields.push('Interests');
+        if (!profileFields.profilePicture) missingFields.push('Profile Picture');
+        if (!profileFields.resume) missingFields.push('Resume');
+        
+        const user = {
             id: req.session.user.id,
             name: req.session.user.name,
             role: req.session.user.role,
-            email: req.session.user.email
-          }
-        : null;
+            email: req.session.user.email,
+            onboardingCompleted: dbUser?.onboardingCompleted === true, // false if undefined or false
+            isProfileComplete: isProfileComplete,
+            profileFields: profileFields, // Individual field status
+            missingFields: missingFields
+        };
 
-    res.json({
-        success: true,
-        message: "User home data requested.",
-        user
-    });
+        res.json({
+            success: true,
+            message: "User home data requested.",
+            user
+        });
+    } catch (err) {
+        console.error('Error fetching user for home:', err);
+        res.json({
+            success: true,
+            message: "User home data requested.",
+            user: {
+                id: req.session.user.id,
+                name: req.session.user.name,
+                role: req.session.user.role,
+                email: req.session.user.email,
+                onboardingCompleted: true, // Default to true on error to prevent repeated onboarding
+                isProfileComplete: true,
+                profileFields: {
+                    aboutMe: true,
+                    skills: true,
+                    interests: true,
+                    profilePicture: true,
+                    resume: true
+                },
+                missingFields: []
+            }
+        });
+    }
+};
+
+// =========================================================================
+// 1b. Complete Onboarding (POST /complete-onboarding)
+//     Marks the user's onboarding as completed
+// =========================================================================
+exports.completeOnboarding = async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        await User.findByIdAndUpdate(req.session.user.id, { onboardingCompleted: true });
+        res.json({ success: true, message: 'Onboarding completed' });
+    } catch (err) {
+        console.error('Error completing onboarding:', err);
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
 };
 
 // =========================================================================

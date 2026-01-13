@@ -11,6 +11,7 @@ const { isAuthenticatedAPI } = require('../middleware/authMiddleware');
 // Public endpoints for session-check and topics to avoid 401/403 on initial load
 router.get('/home', userController.getHome);
 router.get('/home/topics', userController.getHomeTopics);
+router.post('/complete-onboarding', isAuthenticatedAPI, userController.completeOnboarding);
 router.get('/dashboard', isAuthenticatedAPI, userController.getDashboard);
 router.get('/dashboard-metrics', isAuthenticatedAPI, userController.getDashboardMetrics); // CORRECTED Path (No /api)
 

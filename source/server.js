@@ -1,4 +1,5 @@
-// server.js (FINALIZED CORE)
+// Load environment variables from .env file
+require('dotenv').config();
 
 require('dotenv').config();
 

@@ -11,7 +11,8 @@ export function validateName(v) {
 export function validateEmail(v) {
     if (!v) return 'Email is required.';
     const value = String(v).trim();
-    const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    // Updated regex to allow numbers, dots, underscores, and hyphens in email
+    const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return re.test(value) ? '' : 'Enter a valid email address.';
 }
 

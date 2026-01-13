@@ -7,7 +7,9 @@ import { Routes, Route } from 'react-router-dom';
 import Landing from './components/landing/Landing.jsx';
 import Signup from './components/Auth/signup.jsx';
 import Login from './components/Auth/Login.jsx';
+import RecruiterSignup from './components/Recruiter/RecruiterSignup.jsx';
 import ForgotPassword from './components/Auth/ForgotPassword.jsx';
+import ResetPassword from './components/Auth/ResetPassword.jsx';
 import UserHome from './components/User/UserHome.jsx';
 import ProjectsList from './components/Projects/ProjectsList.jsx'; 
 import JoinedProjects from './components/Projects/JoinedProjects.jsx';
@@ -46,8 +48,9 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/signupforrec" element={<Signup />} />
+      <Route path="/signupforrec" element={<RecruiterSignup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       
       {/* --- AUTHENTICATED TARGETS --- */}
       

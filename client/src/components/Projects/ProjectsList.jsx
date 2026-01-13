@@ -2,14 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../User/NavBar.jsx'; 
+import { ProjectsWelcomeToast } from '../User/OnboardingToast.jsx';
 import '../../styles/ProjectStyles.css'; 
 
 const ProjectsList = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [projectData, setProjectData] = useState({ createdProjects: [], availableProjects: [] });
+    const [showWelcomeToast, setShowWelcomeToast] = useState(false);
+
+    // Check if coming from profile completion (welcome param)
+    useEffect(() => {
+        if (searchParams.get('welcome') === 'true') {
+            setShowWelcomeToast(true);
+            // Remove the param from URL
+            searchParams.delete('welcome');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
 
     const handleJoinProject = async (projectId) => {
         try {
@@ -142,6 +155,11 @@ const ProjectsList = () => {
                     )}
                 </section>
             </div>
+
+            {/* Welcome Toast - shown after profile completion */}
+            {showWelcomeToast && (
+                <ProjectsWelcomeToast onComplete={() => setShowWelcomeToast(false)} />
+            )}
         </>
     );
 };

@@ -1,18 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext.jsx';
 import NavBar from './NavBar.jsx';
 import UserFooter from './UserFooter.jsx';
+import { ProfileOnboardingToast, ProfileSuccessToast } from './OnboardingToast.jsx';
 import '../../styles/Profile.css';
 
 const Profile = () => {
     const { id } = useParams(); // Get user ID from URL if viewing another user's profile
-    const { user: currentUser } = useAuth();
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const { user: currentUser, markOnboardingComplete } = useAuth();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+    
+    // Onboarding states
+    const isOnboardingFlow = searchParams.get('onboarding') === 'true';
+    const [showOnboardingGuide, setShowOnboardingGuide] = useState(false);
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [previousProfileComplete, setPreviousProfileComplete] = useState(false);
     
     // Form state for editing
     const [formData, setFormData] = useState({
@@ -37,6 +46,40 @@ const Profile = () => {
         // Always fetch profile data, even if currentUser is not loaded yet
         fetchProfileData();
     }, [id, currentUser?.id]);
+
+    // Show onboarding guide when coming from onboarding flow
+    useEffect(() => {
+        if (isOnboardingFlow && isOwnProfile && !loading && user) {
+            // Check if profile is incomplete
+            const isComplete = checkProfileComplete(user);
+            setPreviousProfileComplete(isComplete);
+            if (!isComplete) {
+                setShowOnboardingGuide(true);
+            }
+        }
+    }, [isOnboardingFlow, isOwnProfile, loading, user]);
+
+    // Helper to check if profile is complete (ALL 5 fields must be true)
+    const checkProfileComplete = (userData) => {
+        const hasAbout = !!(userData?.bio?.trim() || userData?.about?.trim());
+        const hasSkills = !!(userData?.skills && userData.skills.length > 0);
+        const hasInterests = !!(userData?.interests && userData.interests.length > 0);
+        const hasProfilePicture = !!(userData?.avatarUrl?.trim() || userData?.profileImageUrl?.trim());
+        const hasResume = !!(userData?.resumeUrl?.trim());
+        
+        return hasAbout && hasSkills && hasInterests && hasProfilePicture && hasResume;
+    };
+
+    // Get missing fields for onboarding guidance
+    const getMissingFields = () => {
+        const missing = [];
+        if (!user?.bio?.trim() && !user?.about?.trim()) missing.push('About Me');
+        if (!user?.skills || user.skills.length === 0) missing.push('Skills');
+        if (!user?.interests || user.interests.length === 0) missing.push('Interests');
+        if (!user?.avatarUrl?.trim() && !user?.profileImageUrl?.trim()) missing.push('Profile Picture');
+        if (!user?.resumeUrl?.trim()) missing.push('Resume');
+        return missing;
+    };
 
     const fetchProfileData = async () => {
         // If no target user ID and no URL param, try to get current user's profile from session
@@ -182,7 +225,7 @@ const Profile = () => {
             if (response.data.success && response.data.user) {
                 // Update local state with new user data
                 const updatedUser = response.data.user;
-                setUser({
+                const newUserState = {
                     ...user,
                     name: updatedUser.name,
                     email: updatedUser.email,
@@ -193,13 +236,58 @@ const Profile = () => {
                     avatarUrl: updatedUser.profileImageUrl || user?.avatarUrl,
                     profileImageUrl: updatedUser.profileImageUrl || user?.profileImageUrl,
                     resumeUrl: updatedUser.resumeUrl || user?.resumeUrl
-                });
+                };
+                setUser(newUserState);
 
                 setProfileImagePreview(updatedUser.profileImageUrl || profileImagePreview);
                 setResumePreview(updatedUser.resumeUrl || resumePreview);
                 
                 setIsEditMode(false);
-                alert('Profile updated successfully!');
+                
+                // Re-evaluate profile completion from backend for accurate status
+                try {
+                    const homeResponse = await axios.get('/api/home');
+                    if (homeResponse.data.success && homeResponse.data.user) {
+                        const backendProfileComplete = homeResponse.data.user.isProfileComplete === true;
+                        const backendMissingFields = homeResponse.data.user.missingFields || [];
+                        
+                        console.log('Profile check after save:', { 
+                            backendProfileComplete, 
+                            backendMissingFields,
+                            profileFields: homeResponse.data.user.profileFields 
+                        });
+                        
+                        // Profile is complete if explicitly true OR if no missing fields
+                        const isComplete = backendProfileComplete || backendMissingFields.length === 0;
+                        
+                        if (isComplete) {
+                            // Profile is now complete - show success toast
+                            console.log('Profile is complete! Showing success toast...');
+                            setShowOnboardingGuide(false);
+                            setShowSuccessToast(true);
+                        } else {
+                            // Still incomplete - show remaining fields or alert
+                            console.log('Profile still incomplete. Missing:', backendMissingFields);
+                            if (isOnboardingFlow) {
+                                setShowOnboardingGuide(true);
+                            }
+                            alert(`Profile updated! Still missing: ${backendMissingFields.join(', ')}`);
+                        }
+                    } else {
+                        alert('Profile updated successfully!');
+                    }
+                } catch (checkErr) {
+                    console.error('Error checking profile status:', checkErr);
+                    // Fallback to local check
+                    const isNowComplete = checkProfileComplete(newUserState);
+                    console.log('Fallback check - isNowComplete:', isNowComplete);
+                    if (isNowComplete) {
+                        setShowOnboardingGuide(false);
+                        setShowSuccessToast(true);
+                    } else {
+                        alert('Profile updated successfully!');
+                    }
+                }
             } else {
                 alert('Failed to update profile');
             }
@@ -549,6 +637,24 @@ const Profile = () => {
                 )}
             </div>
             <UserFooter />
+            
+            {/* Onboarding Guide Toast - shown when coming from onboarding flow */}
+            {showOnboardingGuide && isOwnProfile && (
+                <ProfileOnboardingToast 
+                    missingFields={getMissingFields()}
+                    onComplete={() => setShowOnboardingGuide(false)}
+                />
+            )}
+            
+            {/* Success Toast - shown after completing profile during onboarding */}
+            {showSuccessToast && (
+                <ProfileSuccessToast 
+                    onComplete={() => {
+                        setShowSuccessToast(false);
+                        markOnboardingComplete();
+                    }}
+                />
+            )}
         </div>
     );
 };
