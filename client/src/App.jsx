@@ -6,7 +6,8 @@
 import { Routes, Route } from 'react-router-dom';
 import Landing from './components/landing/Landing.jsx';
 import Signup from './components/Auth/signup.jsx';
-import Login from './components/Auth/login.jsx';
+import Login from './components/Auth/Login.jsx';
+import ForgotPassword from './components/Auth/ForgotPassword.jsx';
 import UserHome from './components/User/UserHome.jsx';
 import ProjectsList from './components/Projects/ProjectsList.jsx'; 
 import JoinedProjects from './components/Projects/JoinedProjects.jsx';
@@ -46,6 +47,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/signupforrec" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       
       {/* --- AUTHENTICATED TARGETS --- */}
       

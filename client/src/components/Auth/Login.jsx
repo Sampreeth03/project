@@ -11,6 +11,8 @@ const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', '
 
 function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });
+    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState('credentials'); // 'credentials' | 'otp'
     const [clientError, setClientError] = useState('');
     const [serverError, setServerError] = useState('');
     const [capsWarning, setCapsWarning] = useState(false);
@@ -22,14 +24,32 @@ function Login() {
 
     // --- Validation and Button State Management ---
     useEffect(() => {
-        const emailValid = !validateEmail(formData.email.trim());
-        const passValid = !validatePassword(formData.password);
-        
-        setIsButtonDisabled(!(emailValid && passValid));
-    }, [formData]);
+        if (step === 'credentials') {
+            const emailValid = !validateEmail(formData.email.trim());
+            const passValid = !validatePassword(formData.password);
+            setIsButtonDisabled(!(emailValid && passValid));
+            return;
+        }
+
+        // OTP step
+        setIsButtonDisabled(!/^\d{4}$/.test(String(otp).trim()));
+    }, [formData, otp, step]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        setServerError('');
+        setClientError('');
+
+        // If user edits credentials after requesting OTP, reset OTP step.
+        if (step === 'otp') {
+            setStep('credentials');
+            setOtp('');
+        }
+    };
+
+    const handleOtpChange = (e) => {
+        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 4);
+        setOtp(digitsOnly);
         setServerError('');
         setClientError('');
     };
@@ -86,31 +106,82 @@ function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const emailMsg = validateEmail(formData.email.trim());
-        const passMsg = validatePassword(formData.password);
 
-        if (emailMsg || passMsg) {
-            setClientError(emailMsg || passMsg);
-            // Replicates EJS submit error shake/focus logic
-            const targetId = emailMsg ? 'email' : 'password';
-            shakeElement(`${targetId}-group`); 
-            document.getElementById(targetId).focus();
+        // STEP 1: Continue -> request OTP
+        if (step === 'credentials') {
+            const emailMsg = validateEmail(formData.email.trim());
+            const passMsg = validatePassword(formData.password);
+
+            if (emailMsg || passMsg) {
+                setClientError(emailMsg || passMsg);
+                const targetId = emailMsg ? 'email' : 'password';
+                shakeElement(`${targetId}-group`);
+                document.getElementById(targetId).focus();
+                return;
+            }
+
+            setServerError('');
+
+            try {
+                const response = await axios.post('/api/login/request-otp', {
+                    email: formData.email,
+                    password: formData.password
+                });
+
+                if (response.data.success) {
+                    // Check if OTP should be skipped (for default users)
+                    if (response.data.skipOtp) {
+                        loginUser(response.data.user);
+                        navigate(response.data.redirectPath || '/home');
+                        return;
+                    }
+                    
+                    setStep('otp');
+                    setOtp('');
+                    setTimeout(() => document.getElementById('otp')?.focus(), 0);
+                }
+            } catch (err) {
+                shakeElement('login-container');
+                const apiError = err.response?.data?.error;
+                const status = err.response?.status;
+                if (apiError) {
+                    setServerError(apiError);
+                } else if (!err.response) {
+                    setServerError('Cannot reach backend server. Start the API on http://localhost:5000 and restart Vite.');
+                } else if (status === 404) {
+                    setServerError('OTP endpoint not found (404). Restart the backend server so the new /api/login/request-otp route is loaded.');
+                } else {
+                    setServerError('Unable to send verification code.');
+                }
+            }
+
+            return;
+        }
+
+        // STEP 2: Verify OTP -> login
+        const code = String(otp).trim();
+        if (!/^\d{4}$/.test(code)) {
+            setClientError('Verification code must be 4 digits.');
+            shakeElement('otp-group');
+            document.getElementById('otp')?.focus();
             return;
         }
 
         setServerError('');
-        
+
         try {
-            const response = await axios.post('/api/login', formData);
+            const response = await axios.post('/api/login/verify-otp', {
+                email: formData.email,
+                otp: code
+            });
 
             if (response.data.success) {
                 loginUser(response.data.user);
-                navigate(response.data.redirectPath || '/home'); 
+                navigate(response.data.redirectPath || '/home');
             }
         } catch (err) {
-            shakeElement('login-container'); 
-            setServerError(err.response?.data?.error || 'Login failed. Check your credentials.');
+            shakeElement('login-container');
+            setServerError(err.response?.data?.error || 'Verification failed.');
         }
     };
 
@@ -134,6 +205,7 @@ function Login() {
                         value={formData.email}
                         onBlur={handleBlur}
                         onChange={handleEmailInput}
+                        disabled={step === 'otp'}
                         className={clientError && !formData.password ? 'input-error' : ''}
                     />
                     {/* Email Suggestion Block */}
@@ -161,6 +233,7 @@ function Login() {
                         onBlur={handleBlur}
                         onChange={handleChange}
                         onKeyUp={handlePasswordKeyUp}
+                        disabled={step === 'otp'}
                         className={clientError && formData.password ? 'input-error' : ''}
                     />
                     {/* Caps Lock Warning */}
@@ -178,8 +251,32 @@ function Login() {
                     </div>
                 </div>
 
+                {step === 'otp' && (
+                    <>
+                        <div className="input-group" id="otp-group"
+                             onMouseEnter={() => document.getElementById('otp-group')?.classList.add('focused')}
+                             onMouseLeave={() => document.getElementById('otp-group')?.classList.remove('focused')}>
+                            <input
+                                id="otp"
+                                type="text"
+                                name="otp"
+                                placeholder="Enter 4-digit code"
+                                value={otp}
+                                onChange={handleOtpChange}
+                                maxLength={4}
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
+                                required
+                            />
+                            <div className="field-error" style={{ display: clientError ? 'block' : 'none' }} aria-live="polite">
+                                {clientError}
+                            </div>
+                        </div>
+                    </>
+                )}
+
                 <div className="forgot-password-row">
-                    <a href="#" role="button" aria-label="Forgot your password (coming soon)">Forgot your password?</a>
+                    <a href="/forgot-password" role="button" aria-label="Forgot your password">Forgot your password?</a>
                 </div>
 
                 <button 
@@ -189,7 +286,9 @@ function Login() {
                     aria-disabled={isButtonDisabled} 
                     disabled={isButtonDisabled}
                 >
-                    {isButtonDisabled ? 'Enter Details' : 'Login'}
+                    {step === 'credentials'
+                        ? (isButtonDisabled ? 'Enter Details' : 'Continue')
+                        : (isButtonDisabled ? 'Enter Code' : 'Verify & Login')}
                 </button>
 
                 <p className="signup-text">
