@@ -1,7 +1,4 @@
 // services/helperService.js
-
-const { navData } = require('../config/constants'); // We need navData here for getNavLinks
-
 // 1. Password Validation Utility
 const validatePassword = (password) => {
     const regex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;

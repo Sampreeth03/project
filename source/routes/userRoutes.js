@@ -6,6 +6,15 @@ const userController = require('../controllers/userController');
 const { upload } = require("../middleware/uploadMiddleware");
 // *** Use the new API-aware middleware ***
 const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); 
+const jsonParser = require('express').json();
+
+// User/Friends search & friend APIs
+router.get('/users/search', isAuthenticatedAPI, userController.searchUsers);
+router.post('/friend-request/send', isAuthenticatedAPI, jsonParser, userController.sendFriendRequest);
+router.post('/friend-request/respond', isAuthenticatedAPI, jsonParser, userController.respondFriendRequest);
+router.get('/friends', isAuthenticatedAPI, userController.getFriends);
+router.get('/friend-requests', isAuthenticatedAPI, userController.getFriendRequests);
+
 
 // --- Core User/Home Routes ---
 // Public endpoints for session-check and topics to avoid 401/403 on initial load

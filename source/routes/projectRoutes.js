@@ -1,3 +1,4 @@
+
 // routes/projectRoutes.js (UPDATED for API Middleware)
 
 const express = require('express');
@@ -27,6 +28,11 @@ router.post('/delete-join-request', isAuthenticatedAPI, jsonParser, projectContr
 router.get('/join-request-messages/:requestId', isAuthenticatedAPI, projectController.getJoinRequestMessages);
 router.post('/send-join-request-message', isAuthenticatedAPI, jsonParser, projectController.sendJoinRequestMessage);
 router.post('/upload-join-request-file', isAuthenticatedAPI, projectController.uploadJoinRequestFile);
+
+// --- Project Invite (owner invites friend) ---
+router.post('/project/invite-friend', isAuthenticatedAPI, jsonParser, projectController.inviteFriendToProject);
+router.get('/project/invites', isAuthenticatedAPI, projectController.getProjectInvites);
+router.post('/project/invite/respond', isAuthenticatedAPI, jsonParser, projectController.respondProjectInvite);
 
 // --- Project Completion / Status (Paths are correct) ---
 router.post('/project/:id/finish', isAuthenticatedAPI, jsonParser, projectController.finishProject);

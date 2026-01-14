@@ -282,6 +282,24 @@ exports.getProjectNotificationsJSON = async (req, res) => {
             isApplicant: true
         }));
 
+        // Fetch project invites sent to this user (as invitee)
+        const ProjectInvite = require('../database').ProjectInvite;
+        const invitesRaw = await ProjectInvite.find({ to_user: userId, status: 'pending' })
+            .populate('project_id', 'title')
+            .populate('from_user', 'name')
+            .lean();
+
+        const projectInvites = invitesRaw.map(invite => ({
+            id: invite._id,
+            project_id: invite.project_id?._id,
+            project_name: invite.project_id?.title,
+            from_user_id: invite.from_user?._id,
+            from_user_name: invite.from_user?.name,
+            created_at: invite.created_at,
+            status: invite.status,
+            type: 'project_invite'
+        }));
+
         return res.json({ 
             success: true,
             taskNotifications: taskNotifications.map(n => ({
@@ -301,7 +319,8 @@ exports.getProjectNotificationsJSON = async (req, res) => {
                 is_read: n.is_read || false
             })),
             myApplications,  // For "As a Member Inbox"
-            joinRequests     // For "Team Leader Inbox"
+            joinRequests,    // For "Team Leader Inbox"
+            projectInvites   // New: Project Invites for this user
         });
     } catch (err) {
         console.error('Error fetching project notifications (API):', err.message);

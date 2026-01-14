@@ -322,6 +322,127 @@ exports.getProfileData = async (req, res) => {
     }
 };
 
+// ========= Friends & Search APIs =========
+
+exports.searchUsers = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    const q = (req.query.q || '').trim();
+    if (!q) return res.json({ users: [] });
+
+    try {
+        const regex = new RegExp(q, 'i');
+        const users = await User.find({
+            $or: [ { name: regex }, { email: regex } ],
+            _id: { $ne: req.session.user.id }
+        }).select('name email profileImageUrl').limit(20).lean();
+
+        // Enrich with friend request status
+        const FriendRequest = require('../database').FriendRequest;
+        const currentId = req.session.user.id;
+        const userIds = users.map(u => u._id);
+        const existing = await FriendRequest.find({
+            $or: [
+                { from_user: currentId, to_user: { $in: userIds } },
+                { from_user: { $in: userIds }, to_user: currentId }
+            ]
+        }).lean();
+
+        const map = {};
+        existing.forEach(r => { map[String(r.from_user)] = r; map[String(r.to_user)] = r; });
+
+        const out = users.map(u => ({
+            ...u,
+            requestStatus: (map[String(u._id)] && String(map[String(u._id)].from_user) === currentId) ? 'pending_sent' : (map[String(u._id)] && map[String(u._id)].status === 'accepted' ? 'friends' : (map[String(u._id)] ? 'pending_received' : 'none'))
+        }));
+
+        res.json({ users: out });
+    } catch (err) {
+        console.error('Search users error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+exports.sendFriendRequest = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    const { toUserId } = req.body;
+    const fromUserId = req.session.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(toUserId)) return res.status(400).json({ success: false, message: 'Invalid user id' });
+    if (toUserId === fromUserId) return res.status(400).json({ success: false, message: 'Cannot send request to yourself' });
+
+    try {
+        const FriendRequest = require('../database').FriendRequest;
+
+        const exists = await FriendRequest.findOne({
+            $or: [
+                { from_user: fromUserId, to_user: toUserId },
+                { from_user: toUserId, to_user: fromUserId }
+            ]
+        });
+        if (exists) return res.json({ success: false, message: 'Friend request already exists' });
+
+        await FriendRequest.create({ from_user: fromUserId, to_user: toUserId });
+        await require('../database').Notification.create({ user_id: toUserId, message: `${req.session.user.name} sent you a friend request`, type: 'other' });
+        res.json({ success: true, message: 'Request sent' });
+    } catch (err) {
+        console.error('Send friend request error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+exports.getFriendRequests = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    try {
+        const FriendRequest = require('../database').FriendRequest;
+        const requests = await FriendRequest.find({ to_user: req.session.user.id, status: 'pending' }).populate('from_user', 'name email').lean();
+        res.json({ requests });
+    } catch (err) {
+        console.error('Get friend requests error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+exports.respondFriendRequest = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    const { requestId, action } = req.body;
+    if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
+
+    try {
+        const FriendRequest = require('../database').FriendRequest;
+        const reqDoc = await FriendRequest.findById(requestId);
+        if (!reqDoc) return res.status(404).json({ success: false, message: 'Request not found' });
+        if (String(reqDoc.to_user) !== req.session.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
+
+        reqDoc.status = action === 'accept' ? 'accepted' : 'rejected';
+        await reqDoc.save();
+
+        if (action === 'accept') {
+            await require('../database').Notification.create({ user_id: reqDoc.from_user, message: `${req.session.user.name} accepted your friend request`, type: 'other' });
+        } else {
+            await require('../database').Notification.create({ user_id: reqDoc.from_user, message: `${req.session.user.name} rejected your friend request`, type: 'other' });
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Respond friend request error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+exports.getFriends = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    try {
+        const FriendRequest = require('../database').FriendRequest;
+        const rels = await FriendRequest.find({ $or: [ { from_user: req.session.user.id }, { to_user: req.session.user.id } ], status: 'accepted' }).lean();
+        const friendIds = rels.map(r => (String(r.from_user) === req.session.user.id ? r.to_user : r.from_user));
+        const friends = await User.find({ _id: { $in: friendIds } }).select('name email profileImageUrl').lean();
+        res.json({ friends });
+    } catch (err) {
+        console.error('Get friends error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 // =========================================================================
 // 8. Simple Content Routes (FAQ, Messages) - CONVERTED TO JSON API
 // =========================================================================

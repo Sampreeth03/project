@@ -185,6 +185,28 @@ const ProjectMember = mongoose.model('ProjectMember', projectMemberSchema);
 const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema);
 const Task = mongoose.model('Task', taskSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
+
+// Friend Request Schema - simple one-way request model
+const friendRequestSchema = new mongoose.Schema({
+  from_user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  to_user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending','accepted','rejected'], default: 'pending' },
+  created_at: { type: Date, default: Date.now }
+});
+
+const FriendRequest = mongoose.model('FriendRequest', friendRequestSchema);
+
+// Project Invite Schema - owner invites a friend to join their project
+const projectInviteSchema = new mongoose.Schema({
+  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  from_user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  to_user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending','accepted','rejected'], default: 'pending' },
+  created_at: { type: Date, default: Date.now }
+});
+
+const ProjectInvite = mongoose.model('ProjectInvite', projectInviteSchema);
+
 const PendingRecruiter = mongoose.model('PendingRecruiter', pendingRecruiterSchema);
 const PendingStudent = mongoose.model('PendingStudent', pendingStudentSchema);
 
@@ -264,6 +286,8 @@ module.exports = {
   Task,
   Notification,
   JoinRequestMessage,
+  FriendRequest,
+  ProjectInvite,
   PendingRecruiter,
   PendingStudent,
   Channel,
