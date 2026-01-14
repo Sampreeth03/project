@@ -556,6 +556,78 @@ exports.respondProjectInvite = async (req, res, next) => {
     }
 };
 
+// ========= Project Invite (Owner -> Friend) =========
+exports.inviteFriendToProject = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { projectId, toUserId } = req.body;
+    const userId = req.session.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(toUserId)) return res.status(400).json({ success: false, message: 'Invalid ids' });
+
+    try {
+        const project = await Project.findById(projectId);
+        if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+        if (String(project.user_id) !== userId) return res.status(403).json({ success: false, message: 'Only creator can invite' });
+
+        const ProjectInvite = require('../database').ProjectInvite;
+        const existing = await ProjectInvite.findOne({ project_id: projectId, to_user: toUserId });
+        if (existing && existing.status === 'pending') return res.json({ success: false, message: 'Invite already pending' });
+
+        await ProjectInvite.create({ project_id: projectId, from_user: userId, to_user: toUserId });
+        await require('../database').Notification.create({ user_id: toUserId, message: `${req.session.user.name} invited you to join project "${project.title}"`, type: 'join_request' });
+        res.json({ success: true, message: 'Invite sent' });
+    } catch (err) {
+        console.error('Invite friend error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+exports.getProjectInvites = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    try {
+        const ProjectInvite = require('../database').ProjectInvite;
+        const invites = await ProjectInvite.find({ to_user: req.session.user.id }).populate('project_id').populate('from_user', 'name').lean();
+        res.json({ invites });
+    } catch (err) {
+        console.error('Get project invites error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+exports.respondProjectInvite = async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { inviteId, action } = req.body;
+    if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
+
+    try {
+        const ProjectInvite = require('../database').ProjectInvite;
+        const invite = await ProjectInvite.findById(inviteId).populate('project_id');
+        if (!invite) return res.status(404).json({ success: false, message: 'Invite not found' });
+        if (String(invite.to_user) !== req.session.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
+
+        invite.status = action === 'accept' ? 'accepted' : 'rejected';
+        await invite.save();
+
+        if (action === 'accept') {
+            // Add as project member if capacity allows
+            const memberCount = await ProjectMember.countDocuments({ project_id: invite.project_id._id });
+            if (memberCount >= invite.project_id.capacity) {
+                return res.json({ success: false, message: 'Project is full' });
+            }
+            await ProjectMember.create({ project_id: invite.project_id._id, user_id: req.session.user.id, joined_at: new Date() });
+            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.session.user.name} accepted your project invite for "${invite.project_id.title}"`, type: 'join_request_approved' });
+            await require('../database').Notification.create({ user_id: req.session.user.id, message: `You joined project "${invite.project_id.title}"`, type: 'project_creation' });
+        } else {
+            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.session.user.name} rejected your project invite for "${invite.project_id.title}"`, type: 'other' });
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Respond project invite error:', err.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 // =========================================================================
 // 11. Delete Project (POST /delete-project)
 // =========================================================================
