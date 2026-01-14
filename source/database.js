@@ -26,8 +26,41 @@ const userSchema = new mongoose.Schema({
   interests: { type: [String], default: [] },
   questionsAnswered: { type: Number, default: 0 },
   thumbsUp: { type: Number, default: 0 },
-  thumbsDown: { type: Number, default: 0 }
+  thumbsDown: { type: Number, default: 0 },
+  // Onboarding tracking
+  onboardingCompleted: { type: Boolean, default: false },
+  // Recruiter-specific fields
+  companyName: { type: String, default: '' },
+  companyDocumentUrl: { type: String, default: null },
+  emailVerified: { type: Boolean, default: false },
+  // Password reset
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpires: { type: Date, default: null }
 }, { timestamps: true });
+
+// Pending Recruiter Signup Schema (for OTP verification flow)
+const pendingRecruiterSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true }, // Already hashed
+  companyName: { type: String, default: '' },
+  companyDocumentUrl: { type: String, default: null },
+  otpVerified: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now, expires: 3600 } // Auto-delete after 1 hour
+});
+
+// Pending Student Signup Schema (for OTP verification flow)
+const pendingStudentSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true }, // Already hashed
+  about: { type: String, default: '' },
+  skills: { type: [String], default: [] },
+  interests: { type: [String], default: [] },
+  profileImageUrl: { type: String, default: null },
+  resumeUrl: { type: String, default: null },
+  createdAt: { type: Date, default: Date.now, expires: 3600 } // Auto-delete after 1 hour
+});
 
 const userMetricsSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -152,6 +185,8 @@ const ProjectMember = mongoose.model('ProjectMember', projectMemberSchema);
 const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema);
 const Task = mongoose.model('Task', taskSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
+const PendingRecruiter = mongoose.model('PendingRecruiter', pendingRecruiterSchema);
+const PendingStudent = mongoose.model('PendingStudent', pendingStudentSchema);
 
 // Join Request Message Schema (for chat between applicant and project creator)
 const joinRequestMessageSchema = new mongoose.Schema({
@@ -178,7 +213,9 @@ module.exports = {
   JoinRequest,
   Task,
   Notification,
-  JoinRequestMessage
+  JoinRequestMessage,
+  PendingRecruiter,
+  PendingStudent
 };
 
 // ---------------------------

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { validateEmail, validatePassword, shakeElement } from '../../hooks/useAuthValidation';
 import '../../styles/AuthFormStyles.css'; // Load EJS styles
@@ -131,7 +131,8 @@ function Login() {
                 if (response.data.success) {
                     // Check if OTP should be skipped (for default users)
                     if (response.data.skipOtp) {
-                        loginUser(response.data.user);
+                        // Returning users logging in - explicitly set isNewSignup to false
+                        loginUser({ ...response.data.user, isNewSignup: false });
                         navigate(response.data.redirectPath || '/home');
                         return;
                     }
@@ -176,7 +177,8 @@ function Login() {
             });
 
             if (response.data.success) {
-                loginUser(response.data.user);
+                // Returning users logging in - explicitly set isNewSignup to false
+                loginUser({ ...response.data.user, isNewSignup: false });
                 navigate(response.data.redirectPath || '/home');
             }
         } catch (err) {
@@ -217,10 +219,10 @@ function Login() {
                     <div id="email-error" className="field-error" style={{ display: clientError && !formData.password ? 'block' : 'none' }} aria-live="polite">
                         {clientError}
                     </div>
-                </div><br/>
+                </div>
                 
                 {/* Password Input Group */}
-                <div className="input-group" id="password-group"
+                <div className="password-group" id="password-group"
                      onMouseEnter={() => document.getElementById('password-group').classList.add('focused')}
                      onMouseLeave={() => document.getElementById('password-group').classList.remove('focused')}>
                     <input
@@ -276,7 +278,7 @@ function Login() {
                 )}
 
                 <div className="forgot-password-row">
-                    <a href="/forgot-password" role="button" aria-label="Forgot your password">Forgot your password?</a>
+                    <Link to="/forgot-password">Forgot your password?</Link>
                 </div>
 
                 <button 
@@ -292,7 +294,7 @@ function Login() {
                 </button>
 
                 <p className="signup-text">
-                    Don't have an account? <a href="/signup">Sign Up</a>
+                    Don't have an account? <Link to="/signup">Sign Up</Link>
                 </p>
             </form>
         </div>

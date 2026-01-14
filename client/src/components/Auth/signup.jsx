@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { 
     validateName, 
     validateEmail, 
@@ -27,12 +28,16 @@ function Signup() {
         profilePic: null,
         resume: null
     });
+    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState('form'); // 'form' | 'otp'
     const [clientError, setClientError] = useState('');
     const [serverError, setServerError] = useState('');
     const [isButtonDisabled, setIsButtonDisabled] = useState(true);
     const [progress, setProgress] = useState(0);
+    const [resendCooldown, setResendCooldown] = useState(0);
     
     const navigate = useNavigate();
+    const { loginUser } = useAuth();
     const isRecruiterSignup = window.location.pathname.includes('signupforrec');
 
     // --- Validation and State Management ---
@@ -59,14 +64,28 @@ function Signup() {
         setProgress(completed);
         
         const isFormValid = !nameMsg && !emailMsg && !passMsg && !confMsg;
-        setIsButtonDisabled(!isFormValid);
+        
+        if (step === 'form') {
+            setIsButtonDisabled(!isFormValid);
+        } else {
+            // OTP step - enable button if 4 digits
+            setIsButtonDisabled(!/^\d{4}$/.test(String(otp).trim()));
+        }
         
         return isFormValid;
     };
 
     useEffect(() => {
         updateProgressAndButton(formData);
-    }, [formData]);
+    }, [formData, otp, step]);
+
+    // Resend cooldown timer
+    useEffect(() => {
+        if (resendCooldown > 0) {
+            const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [resendCooldown]);
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
@@ -75,6 +94,13 @@ function Signup() {
         } else {
             setFormData({ ...formData, [name]: value });
         }
+        setServerError('');
+        setClientError('');
+    };
+
+    const handleOtpChange = (e) => {
+        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 4);
+        setOtp(digitsOnly);
         setServerError('');
         setClientError('');
     };
@@ -94,55 +120,123 @@ function Signup() {
         e.preventDefault();
         setServerError('');
         
-        const { nameMsg, emailMsg, passMsg, confMsg } = getValidationMessages(formData);
+        // STEP 1: Form submission - send OTP
+        if (step === 'form') {
+            const { nameMsg, emailMsg, passMsg, confMsg } = getValidationMessages(formData);
 
-        if (nameMsg || emailMsg || passMsg || confMsg) {
-            setClientError("Please correct the invalid fields.");
-            // Replicates EJS submit error shake/focus logic
-            const msgMap = { name: nameMsg, email: emailMsg, password: passMsg, confirmPassword: confMsg };
-            const firstInvalid = Object.keys(msgMap).find(key => msgMap[key]);
+            if (nameMsg || emailMsg || passMsg || confMsg) {
+                setClientError("Please correct the invalid fields.");
+                const msgMap = { name: nameMsg, email: emailMsg, password: passMsg, confirmPassword: confMsg };
+                const firstInvalid = Object.keys(msgMap).find(key => msgMap[key]);
+                
+                if (firstInvalid) {
+                    shakeElement(`${firstInvalid}-group`);
+                    document.getElementById(firstInvalid).focus();
+                }
+                return;
+            }
+
+            // Create FormData for file uploads
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('email', formData.email);
+            formDataToSend.append('password', formData.password);
+            formDataToSend.append('confirmPassword', formData.confirmPassword);
+            formDataToSend.append('about', formData.about || '');
+            formDataToSend.append('skills', formData.skills || '');
+            formDataToSend.append('interests', formData.interests || '');
             
-            if (firstInvalid) {
-                shakeElement(`${firstInvalid}-group`);
-                document.getElementById(firstInvalid).focus();
+            if (formData.profilePic) {
+                formDataToSend.append('picture', formData.profilePic);
+            }
+            if (formData.resume) {
+                formDataToSend.append('resume', formData.resume);
+            }
+            
+            try {
+                const response = await axios.post('/api/signup/init', formDataToSend, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                if (response.data.success) {
+                    setStep('otp');
+                    setOtp('');
+                    setResendCooldown(60);
+                    setTimeout(() => document.getElementById('otp')?.focus(), 0);
+                }
+            } catch (err) {
+                shakeElement('signup-container2'); 
+                const status = err.response?.status;
+                if (status === 429) {
+                    setServerError(err.response?.data?.error || 'Please wait before requesting another code.');
+                } else {
+                    setServerError(err.response?.data?.error || 'Failed to send verification code.');
+                }
             }
             return;
         }
 
-        const endpoint = isRecruiterSignup ? '/api/recruiter-signup' : '/api/signup';
-        
-        // Create FormData for file uploads
-        const formDataToSend = new FormData();
-        formDataToSend.append('name', formData.name);
-        formDataToSend.append('email', formData.email);
-        formDataToSend.append('password', formData.password);
-        formDataToSend.append('confirmPassword', formData.confirmPassword);
-        formDataToSend.append('about', formData.about || '');
-        formDataToSend.append('skills', formData.skills || '');
-        formDataToSend.append('interests', formData.interests || '');
-        
-        if (formData.profilePic) {
-            formDataToSend.append('picture', formData.profilePic);
+        // STEP 2: OTP verification - complete signup and auto-login
+        const code = String(otp).trim();
+        if (!/^\d{4}$/.test(code)) {
+            setClientError('Verification code must be 4 digits.');
+            shakeElement('otp-group');
+            document.getElementById('otp')?.focus();
+            return;
         }
-        if (formData.resume) {
-            formDataToSend.append('resume', formData.resume);
-        }
-        
+
         try {
-            const response = await axios.post(endpoint, formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            const response = await axios.post('/api/signup/verify-otp', {
+                email: formData.email,
+                otp: code
             });
 
             if (response.data.success) {
-                alert(response.data.message || 'Registration successful. Please log in.'); 
-                navigate('/login'); 
+                // Auto-login: Update auth context
+                loginUser({
+                    ...response.data.user,
+                    isNewSignup: true // Flag for showing onboarding
+                });
+                // Navigate directly to home page
+                navigate(response.data.redirectPath || '/home');
             }
         } catch (err) {
-            shakeElement('signup-container2'); 
-            setServerError(err.response?.data?.error || 'Registration failed.');
+            shakeElement('otp-group');
+            setServerError(err.response?.data?.error || 'Verification failed.');
         }
+    };
+
+    const handleResendOTP = async () => {
+        if (resendCooldown > 0) return;
+        
+        try {
+            const response = await axios.post('/api/signup/resend-otp', {
+                email: formData.email
+            });
+
+            if (response.data.success) {
+                setResendCooldown(60);
+                setServerError('');
+                setClientError('');
+            }
+        } catch (err) {
+            if (err.response?.status === 429) {
+                setServerError(err.response?.data?.error || 'Please wait before requesting another code.');
+            } else if (err.response?.status === 404) {
+                // Session expired, go back to form
+                setServerError('Session expired. Please fill in the form again.');
+                setStep('form');
+            } else {
+                setServerError(err.response?.data?.error || 'Failed to resend code.');
+            }
+        }
+    };
+
+    const handleBackToForm = () => {
+        setStep('form');
+        setOtp('');
+        setServerError('');
+        setClientError('');
     };
 
     // --- Render Helpers ---
@@ -171,21 +265,21 @@ function Signup() {
                 {/* Name Input */}
                 <div className="input-group" id="name-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="name">Name:</label>
-                    <input id="name" type="text" name="name" placeholder="Enter your name" required value={formData.name} onChange={handleChange} onBlur={handleBlur} />
+                    <input id="name" type="text" name="name" placeholder="Enter your name" required value={formData.name} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
                     <div id="name-error" className="field-error"></div>
                 </div>
                 
                 {/* Email Input */}
                 <div className="input-group" id="email-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="email">Email:</label>
-                    <input id="email" type="email" name="email" placeholder="Enter your email" required value={formData.email} onChange={handleChange} onBlur={handleBlur} />
+                    <input id="email" type="email" name="email" placeholder="Enter your email" required value={formData.email} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
                     <div id="email-error" className="field-error"></div>
                 </div>
                 
                 {/* Password Input */}
                 <div className="password-group" id="password-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="password">Password:</label>
-                    <input type="password" id="password" name="password" placeholder="Enter password" required value={formData.password} onChange={handleChange} onBlur={handleBlur}/>
+                    <input type="password" id="password" name="password" placeholder="Enter password" required value={formData.password} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
                     <span id="toggle-password-btn" className="toggle-password" onClick={() => {
                         const input = document.getElementById('password');
                         input.type = input.type === 'password' ? 'text' : 'password';
@@ -194,7 +288,7 @@ function Signup() {
                     <div id="password-error" className="field-error"></div>
                     
                     {/* Password Strength Meter */}
-                    <div className="password-strength-container" id="password-strength-container" style={{ display: formData.password ? 'block' : 'none' }}>
+                    <div className="password-strength-container" id="password-strength-container" style={{ display: formData.password && step === 'form' ? 'block' : 'none' }}>
                         <div className="password-strength-bar">
                             <div className={`password-strength-fill ${passStrength}`} id="password-strength-fill" style={{ width: `${(score / 6) * 100}%` }}></div>
                         </div>
@@ -205,7 +299,7 @@ function Signup() {
                 {/* Confirm Password Input */}
                 <div className="password-group" id="confirm-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="confirmPassword">Confirm Password:</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur}/>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
                     <span id="toggle-confirm-btn" className="toggle-password" onClick={() => {
                         const input = document.getElementById('confirmPassword');
                         input.type = input.type === 'password' ? 'text' : 'password';
@@ -289,6 +383,50 @@ function Signup() {
                     </div>
                 )}
 
+                {/* OTP Input - shown after form submission */}
+                {step === 'otp' && (
+                    <div className="otp-section">
+                        <div className="otp-info">
+                            <p>We've sent a 4-digit verification code to <strong>{formData.email}</strong></p>
+                            <button 
+                                type="button" 
+                                className="back-link"
+                                onClick={handleBackToForm}
+                            >
+                                ← Change email
+                            </button>
+                        </div>
+                        <div className="input-group" id="otp-group">
+                            <label htmlFor="otp">Verification Code:</label>
+                            <input
+                                id="otp"
+                                type="text"
+                                name="otp"
+                                placeholder="Enter 4-digit code"
+                                value={otp}
+                                onChange={handleOtpChange}
+                                maxLength={4}
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
+                                required
+                            />
+                        </div>
+                        <div className="resend-section">
+                            {resendCooldown > 0 ? (
+                                <span className="resend-cooldown">Resend code in {resendCooldown}s</span>
+                            ) : (
+                                <button 
+                                    type="button" 
+                                    className="resend-btn"
+                                    onClick={handleResendOTP}
+                                >
+                                    Resend Code
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 <button 
                     type="submit" 
                     id="signup-btn" 
@@ -296,11 +434,14 @@ function Signup() {
                     aria-disabled={isButtonDisabled} 
                     disabled={isButtonDisabled}
                 >
-                    {isButtonDisabled ? 'Please complete form' : 'Sign Up'}
+                    {step === 'form' 
+                        ? (isButtonDisabled ? 'Please complete form' : 'Continue')
+                        : (isButtonDisabled ? 'Enter Code' : 'Verify & Create Account')
+                    }
                 </button>
                 
                 <p className="signin-text">
-                    Already have an account? <a href="/login">Sign In</a>
+                    Already have an account? <Link to="/login">Sign In</Link>
                 </p>
             </form>
         </div>

@@ -25,18 +25,19 @@ body {
 /* --- CONTAINER & FORM STYLES (CRITICAL CENTERING FIX) --- */
 .login-container, .signup-container2 { /* Targeting the renamed class */
     background-color: #1e1e1e;
-    padding: 2rem;
+    padding: 28px 32px;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     width: 400px;
     transition: 0.3s;
     /* FIX: This centers the form block horizontally */
-    margin: 50px auto; 
+    margin: 40px auto; 
 }
 .login-form h2, .signup-form h2 {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     text-align: center;
-    font-size: 24px;
+    font-size: 22px;
+    font-weight: 600;
 }
 
 
@@ -44,19 +45,19 @@ body {
 .input-group, .password-group {
     position: relative;
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 .input-group label, .password-group label, .file-group label {
     display: block;
     color: #ffffff;
     font-size: 14px;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-align: left;
 }
 .input-group input, .password-group input, .input-group textarea {
     width: 100%;
-    height: 48px; 
+    height: 44px; 
     box-sizing: border-box;
     padding: 0 60px 0 15px; 
     border: 1px solid #1079e9;
@@ -64,7 +65,7 @@ body {
     background-color: transparent;
     color: #ffffff;
     outline: none;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 /* --- ERROR DISPLAY & UI (Shake, Glow, Toggles) --- */
@@ -106,14 +107,26 @@ input.input-error::placeholder {
 }
 .toggle-password {
     position: absolute;
-    right: 15px;
-    top: 10px; 
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     color: #0068ff;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 600;
     user-select: none;
     z-index: 10;
+    background: transparent;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+.toggle-password:hover {
+    background: rgba(0, 104, 255, 0.15);
+}
+/* Adjust toggle position when label is present */
+.password-group .toggle-password {
+    top: calc(50% + 11px);
 }
 
 /* --- CAPS LOCK WARNING (Login) --- */
@@ -182,24 +195,114 @@ input.input-error::placeholder {
 .forgot-password-row { 
     display: flex; 
     justify-content: flex-end; 
-    margin-top: 8px; 
-    margin-bottom: 8px; 
+    margin-top: 4px; 
+    margin-bottom: 12px; 
 }
-.forgot-password-row a { color: #c9d1d9; text-decoration: none; font-size: 0.9rem; }
+.forgot-password-row a { color: #c9d1d9; text-decoration: none; font-size: 0.85rem; }
 .forgot-password-row a:hover { color: #0068ff; text-decoration: underline; }
 
 /* --- SIGNUP SPECIFIC (Progress & Strength) --- */
-.password-strength-bar { height: 4px; background-color: #333; border-radius: 2px; }
-.password-strength-fill {height: 100%; transition: width 0.3s ease;background-color : 0.3s ease;}
+.form-progress {
+    margin-bottom: 16px;
+}
+.progress-text {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 6px;
+}
+.password-strength-container {
+    margin-top: 8px;
+}
+.password-strength-bar { height: 4px; background-color: #333; border-radius: 2px; margin-bottom: 4px; }
+.password-strength-fill { height: 100%; transition: width 0.3s ease; border-radius: 2px; }
 .password-strength-fill.weak { background-color: #ff4444; }
 .password-strength-fill.medium { background-color: #ffa500; }
 .password-strength-fill.strong { background-color: #00ff00; }
-.password-match-indicator { font-size: 0.85rem; margin-top: 4px; display: none; }
+.password-strength-text { font-size: 12px; color: #888; }
+.password-strength-text.weak { color: #ff4444; }
+.password-strength-text.medium { color: #ffa500; }
+.password-strength-text.strong { color: #00ff00; }
+.password-match-indicator { font-size: 0.8rem; margin-top: 6px; display: none; }
 .password-match-indicator.match { color: #00ff00; display: block; }
 .password-match-indicator.no-match { color: #ff4444; display: block; }
-.progress-bar-container { height: 6px; background-color: #333; }
-.progress-bar-fill { height: 100%; background: linear-gradient(90deg, #0068ff, #00d4ff); }
-.file-group { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; flex-direction: column; }
-.file-group label { color: #ffffff; margin-bottom: 8px; align-self: flex-start; }
-.file-group input[type="file"] { width: 100%; padding: 8px; border: 1px solid #1079e9; border-radius: 5px; background-color: transparent; color: #ffffff; }
-.input-group textarea { height: auto; min-height: 80px; padding: 12px 15px; resize: vertical; font-family: Arial, sans-serif; }
+.progress-bar-container { height: 5px; background-color: #333; border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, #0068ff, #00d4ff); transition: width 0.3s ease; }
+.file-group { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; flex-direction: column; }
+.file-group label { color: #ffffff; margin-bottom: 6px; align-self: flex-start; font-size: 14px; font-weight: 500; }
+.file-group input[type="file"] { width: 100%; padding: 8px; border: 1px solid #1079e9; border-radius: 5px; background-color: transparent; color: #ffffff; height: 44px; box-sizing: border-box; }
+.input-group textarea { height: auto; min-height: 70px; padding: 10px 15px; resize: vertical; font-family: Arial, sans-serif; }
+
+/* Signup/Signin text links */
+.signup-text, .signin-text {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #888;
+}
+.signup-text a, .signin-text a {
+    color: #0068ff;
+    text-decoration: none;
+    font-weight: 500;
+}
+.signup-text a:hover, .signin-text a:hover {
+    text-decoration: underline;
+}
+
+/* --- OTP VERIFICATION SECTION --- */
+.otp-section {
+    margin: 20px 0;
+    padding: 16px;
+    background-color: rgba(16, 121, 233, 0.1);
+    border: 1px solid #1079e9;
+    border-radius: 8px;
+}
+.otp-info {
+    margin-bottom: 12px;
+    text-align: center;
+}
+.otp-info p {
+    font-size: 14px;
+    color: #c9d1d9;
+    margin: 0 0 8px 0;
+}
+.otp-info strong {
+    color: #0068ff;
+}
+.back-link {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+.back-link:hover {
+    color: #0068ff;
+}
+.resend-section {
+    text-align: center;
+    margin-top: 12px;
+}
+.resend-cooldown {
+    font-size: 13px;
+    color: #888;
+}
+.resend-btn {
+    background: none;
+    border: none;
+    color: #0068ff;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    font-weight: 500;
+}
+.resend-btn:hover {
+    text-decoration: underline;
+}
+#otp {
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 8px;
+    font-weight: bold;
+}

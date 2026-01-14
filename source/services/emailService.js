@@ -49,7 +49,9 @@ function getTransporter() {
 
 function buildOtpHtml(otp, purpose = 'login') {
   const year = new Date().getFullYear();
-  const message = purpose === 'forgot-password' ? 'your otp for password reset is' : 'your otp for login is';
+  let message = 'your otp for login is';
+  if (purpose === 'forgot-password') message = 'your otp for password reset is';
+  if (purpose === 'signup') message = 'your otp to verify your email for signup is';
   return `<!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
@@ -68,7 +70,9 @@ function buildOtpHtml(otp, purpose = 'login') {
 
 async function sendLoginOtpEmail({ to, otp, purpose = 'login' }) {
   const subject = 'REALBTeams';
-  const message = purpose === 'forgot-password' ? 'password reset' : 'login';
+  let message = 'login';
+  if (purpose === 'forgot-password') message = 'password reset';
+  if (purpose === 'signup') message = 'email verification';
   const text = `REALBTeams\n\nyour otp for ${message} is ${otp}\n\nThis code expires in 10 minutes.`;
 
   const fromName = emailConfig.FROM_NAME || 'REALBTeams';
