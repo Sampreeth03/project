@@ -4,15 +4,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { User, UserMetrics, Project } = require("../database"); 
 const { getNavLinks, getTimeAgo } = require("../services/helperService"); 
-const { upload } = require("../middleware/uploadMiddleware"); 
-
-// =========================================================================
-// Middleware Helper (Left as placeholder, as API checks are in userRoutes.js)
-// =========================================================================
-const isAuthenticated = (req, res, next) => {
-    if (!req.session.user) return res.redirect('/login');
-    next();
-};
+const { upload } = require("../middleware/uploadMiddleware");
 
 // =========================================================================
 // 1. User Home Page (GET /home) - CONVERTED TO JSON API

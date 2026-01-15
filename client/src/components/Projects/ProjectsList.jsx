@@ -13,6 +13,7 @@ const ProjectsList = () => {
     const [error, setError] = useState(null);
     const [projectData, setProjectData] = useState({ createdProjects: [], availableProjects: [] });
     const [showWelcomeToast, setShowWelcomeToast] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Check if coming from profile completion (welcome param)
     useEffect(() => {
@@ -90,26 +91,46 @@ const ProjectsList = () => {
 
     return (
         <>
-            <Navbar />
+            <Navbar onSearchChange={setSearchQuery} />
             <div className="container" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto', color: 'white' }}>
                 
                 {/* --- REMOVED: + Create New Project Button/Toggle Logic --- */}
                 
                 {/* Section for Projects CREATED by the user */}
                 <h1 className="projects-title">My Created Projects</h1>
+                
                 <section className="created-projects" style={{ marginBottom: '40px' }}>
                     {projectData.createdProjects.length > 0 ? (
                         <div className="project-grid">
-                            {projectData.createdProjects.map(project => (
-                                <div key={project._id} className="project-card">
-                                    <h3>{project.title}</h3>
-                                    <p>{project.description}</p>
-                                    <p>Topic: {project.topic} | Capacity: {project.capacity}</p>
-                                    <div className="project-actions">
-                                        <Link to={`/project/${project._id}`} className="btn">View Details</Link>
+                            {projectData.createdProjects
+                                .filter(project => {
+                                    const query = searchQuery.toLowerCase();
+                                    return (
+                                        project.title?.toLowerCase().includes(query) ||
+                                        project.description?.toLowerCase().includes(query) ||
+                                        project.topic?.toLowerCase().includes(query)
+                                    );
+                                })
+                                .map(project => (
+                                    <div key={project._id} className="project-card">
+                                        <h3>{project.title}</h3>
+                                        <p>{project.description}</p>
+                                        <p>Topic: {project.topic} | Capacity: {project.capacity}</p>
+                                        <div className="project-actions">
+                                            <Link to={`/project/${project._id}`} className="btn">View Details</Link>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            {projectData.createdProjects.filter(project => {
+                                const query = searchQuery.toLowerCase();
+                                return (
+                                    project.title?.toLowerCase().includes(query) ||
+                                    project.description?.toLowerCase().includes(query) ||
+                                    project.topic?.toLowerCase().includes(query)
+                                );
+                            }).length === 0 && (
+                                <p className="no-projects">No projects match your search.</p>
+                            )}
                         </div>
                     ) : (
                         // Provides link to the dedicated creation page
@@ -119,36 +140,56 @@ const ProjectsList = () => {
                 
                 {/* Section for Projects AVAILABLE to join */}
                 <h1 className="projects-title">Available Projects</h1>
+                
                 <section className="available-projects">
                     {projectData.availableProjects.length > 0 ? (
                         <div className="project-grid">
-                            {projectData.availableProjects.map(project => (
-                                <div key={project._id} className="project-card available-project-card">
-                                    <div className="project-content">
-                                        <div className="project-header">
-                                            <h2 className="project-title subtle-title">{project.title}</h2>
-                                        </div>
-                                        <p className="project-description subtle-desc">{project.description}</p>
-                                        <div className="project-meta subtle-meta">
-                                            <span className="project-members">Members: {project.member_count} / {project.capacity}</span>
-                                            <span className="project-topic">Topic: {project.topic}</span>
-                                        </div>
-                                        <div className="project-actions">
-                                            <Link to={`/project/${project._id}`} className="btn btn-outline">View Details</Link>
-                                            <button
-                                                disabled={project.has_pending_request || project.request_status === 'pending'}
-                                                className="btn btn-ghost"
-                                                onClick={() => handleJoinProject(project._id)}
-                                            >
-                                                {project.request_status === 'pending' ? 'Request Pending' : 
-                                                 project.request_status === 'rejected' ? 'Rejected' : 
-                                                 project.request_status === 'approved' ? 'Approved' : 
-                                                 'Join Project'}
-                                            </button>
+                            {projectData.availableProjects
+                                .filter(project => {
+                                    const query = searchQuery.toLowerCase();
+                                    return (
+                                        project.title?.toLowerCase().includes(query) ||
+                                        project.description?.toLowerCase().includes(query) ||
+                                        project.topic?.toLowerCase().includes(query)
+                                    );
+                                })
+                                .map(project => (
+                                    <div key={project._id} className="project-card available-project-card">
+                                        <div className="project-content">
+                                            <div className="project-header">
+                                                <h2 className="project-title subtle-title">{project.title}</h2>
+                                            </div>
+                                            <p className="project-description subtle-desc">{project.description}</p>
+                                            <div className="project-meta subtle-meta">
+                                                <span className="project-members">Members: {project.member_count} / {project.capacity}</span>
+                                                <span className="project-topic">Topic: {project.topic}</span>
+                                            </div>
+                                            <div className="project-actions">
+                                                <Link to={`/project/${project._id}`} className="btn btn-outline">View Details</Link>
+                                                <button
+                                                    disabled={project.has_pending_request || project.request_status === 'pending'}
+                                                    className="btn btn-ghost"
+                                                    onClick={() => handleJoinProject(project._id)}
+                                                >
+                                                    {project.request_status === 'pending' ? 'Request Pending' : 
+                                                     project.request_status === 'rejected' ? 'Rejected' : 
+                                                     project.request_status === 'approved' ? 'Approved' : 
+                                                     'Join Project'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            {projectData.availableProjects.filter(project => {
+                                const query = searchQuery.toLowerCase();
+                                return (
+                                    project.title?.toLowerCase().includes(query) ||
+                                    project.description?.toLowerCase().includes(query) ||
+                                    project.topic?.toLowerCase().includes(query)
+                                );
+                            }).length === 0 && (
+                                <p className="no-projects">No projects match your search.</p>
+                            )}
                         </div>
                     ) : (
                         <p className="no-projects">No available projects to join.</p>

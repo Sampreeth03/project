@@ -14,6 +14,7 @@ const recruiterRoutes = require('./routes/recruiterRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const doubtRoutes = require('./routes/doubtRoutes');
 const jobRoutes = require('./routes/jobRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 // --- Import Config/Middleware/Utilities ---
 // navData, userNav, getNavLinks removed as they are for EJS navigation
@@ -74,6 +75,7 @@ app.use('/api', userRoutes);
 app.use('/api', projectRoutes);
 app.use('/api', doubtRoutes);
 app.use('/api', jobRoutes);
+app.use('/api/messages', messageRoutes);
 
 
 // -------------------------------------------------------------------------

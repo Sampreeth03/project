@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import useProjectActions from '../../hooks/useProjectActions'; 
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import Navbar from '../User/NavBar.jsx'; 
 import '../../styles/ProjectStyles.css'; 
 
@@ -95,6 +96,7 @@ const ProjectDetails = () => {
     const currentUserId = user?.id;
     
     const { handleCreateTask, confirmFinishProject, handleExtendDeadline, handleReviewSubmission, handleRemoveMember } = useProjectActions(projectId);
+    const { getUnreadCount } = useUnreadMessages();
     
     const [projectData, setProjectData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -106,6 +108,14 @@ const ProjectDetails = () => {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewAction, setReviewAction] = useState({ taskId: null, action: null });
     const [pendingTasksCount, setPendingTasksCount] = useState(0);
+
+    const unreadCount = getUnreadCount(projectId);
+
+    // Debug logging
+    useEffect(() => {
+        console.log('Project ID:', projectId);
+        console.log('Unread Count:', unreadCount);
+    }, [projectId, unreadCount]);
 
     // --- Data Fetching ---
     useEffect(() => {
@@ -204,6 +214,22 @@ const ProjectDetails = () => {
                         <div className="project-nav">
                             {/* ... (Dropdown structure here) ... */}
                         </div>
+
+                        {/* Group Chat Button - Available for all members */}
+                        {(isCreator || project.hasJoined || project.request_status === 'approved') && (
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={() => window.location.href = `/group-chat/${projectId}`}
+                                style={{ marginRight: '10px' }}
+                            >
+                                💬 Group Chat
+                                {unreadCount > 0 && (
+                                    <span className="unread-badge">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                        )}
 
                         {/* Finish Project Button (Restored) */}
                         {isCreator && project.status !== 'completed' && (

@@ -1,7 +1,7 @@
 // controllers/projectController.js
 
 const mongoose = require("mongoose");
-const { User, UserMetrics, Project, ProjectMember, JoinRequest, Task, Notification, JoinRequestMessage } = require("../database"); 
+const { User, UserMetrics, Project, ProjectMember, JoinRequest, Task, Notification, JoinRequestMessage, Channel } = require("../database"); 
 const { getTimeAgo } = require("../services/helperService");
 const { topics, topicNormalizationMap } = require("../config/constants");
 const { upload } = require("../middleware/uploadMiddleware");
@@ -297,6 +297,18 @@ exports.createProject = async (req, res) => {
         });
 
         await ProjectMember.create({ project_id: project._id, user_id: new mongoose.Types.ObjectId(userId), joined_at: new Date() });
+        
+        // Create default channels for the project
+        const defaultChannels = ['general', 'announcements'];
+        for (const channelName of defaultChannels) {
+            await Channel.create({
+                project_id: project._id,
+                name: channelName,
+                created_by: new mongoose.Types.ObjectId(userId),
+                created_at: new Date()
+            });
+        }
+        
         await UserMetrics.findOneAndUpdate(
             { user_id: new mongoose.Types.ObjectId(userId) },
             { $inc: { active_projects: 1, total_collaborations: 1, leadership_roles: 1 } },

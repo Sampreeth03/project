@@ -201,6 +201,56 @@ const joinRequestMessageSchema = new mongoose.Schema({
 
 const JoinRequestMessage = mongoose.model('JoinRequestMessage', joinRequestMessageSchema);
 
+// Channel Schema - for project chat channels
+const channelSchema = new mongoose.Schema({
+  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  name: { type: String, required: true }, // e.g., 'general', 'announcements', 'random'
+  created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  created_at: { type: Date, default: Date.now }
+});
+
+// Message Schema - for channel messages
+const messageSchema = new mongoose.Schema({
+  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  channel_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Channel', required: true },
+  sender_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  text: { type: String },
+  file_url: { type: String },
+  file_name: { type: String },
+  file_type: { type: String },
+  is_pinned: { type: Boolean, default: false },
+  pinned_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  pinned_at: { type: Date },
+  created_at: { type: Date, default: Date.now }
+});
+
+// Direct Message Schema - for 1-on-1 DMs within a project
+const directMessageSchema = new mongoose.Schema({
+  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  sender_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  receiver_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  text: { type: String },
+  file_url: { type: String },
+  file_name: { type: String },
+  file_type: { type: String },
+  created_at: { type: Date, default: Date.now }
+});
+
+// User Read Status Schema - tracks last seen message per user per channel
+const userReadStatusSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  channel_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Channel' },
+  project_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  other_user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // For DMs
+  last_seen_at: { type: Date, default: Date.now },
+  is_dm: { type: Boolean, default: false }
+});
+
+const Channel = mongoose.model('Channel', channelSchema);
+const Message = mongoose.model('Message', messageSchema);
+const DirectMessage = mongoose.model('DirectMessage', directMessageSchema);
+const UserReadStatus = mongoose.model('UserReadStatus', userReadStatusSchema);
+
 // Export Models
 module.exports = {
   User,
@@ -215,7 +265,11 @@ module.exports = {
   Notification,
   JoinRequestMessage,
   PendingRecruiter,
-  PendingStudent
+  PendingStudent,
+  Channel,
+  Message,
+  DirectMessage,
+  UserReadStatus
 };
 
 // ---------------------------
