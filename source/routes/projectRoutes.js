@@ -5,7 +5,9 @@ const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/projectController');
 const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
-const { topics } = require('../config/constants'); 
+const { topics } = require('../config/constants');
+const { projectCreationLimiter } = require('../middleware/rateLimiterMiddleware');
+const { validateProjectCreation } = require('../middleware/validationMiddleware');
 
 const jsonParser = express.json();
 
@@ -16,7 +18,7 @@ router.get('/project/:id', isAuthenticatedAPI, projectController.getProjectDetai
 router.get('/e', isAuthenticatedAPI, projectController.getCreateProjectView); 
 
 // --- Project CRUD & Membership APIs (Paths are correct) ---
-router.post('/create-project', isAuthenticatedAPI, jsonParser, projectController.createProject);
+router.post('/create-project', isAuthenticatedAPI, projectCreationLimiter, jsonParser, validateProjectCreation, projectController.createProject);
 router.post('/delete-project', isAuthenticatedAPI, jsonParser, projectController.deleteProject);
 // ... (rest of CRUD routes remain the same) ...
 router.post('/join-project', isAuthenticatedAPI, jsonParser, projectController.joinProject);

@@ -21,6 +21,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const { topics, topicNormalizationMap } = require("./config/constants"); 
 const { validatePassword, getTimeAgo } = require("./services/helperService"); 
 const { upload } = require("./middleware/uploadMiddleware");
+const { globalLimiter } = require("./middleware/rateLimiterMiddleware");
 // Note: Keeping database imports
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("./database"); 
 
@@ -35,6 +36,9 @@ app.use(cors({
   origin: 'http://localhost:5173', // Vite default port
   credentials: true
 }));
+
+// 0.5 Global Rate Limiter - Apply to all routes
+app.use(globalLimiter);
 
 // 1. Core Parsers
 app.use(express.json()); // Essential for API requests
