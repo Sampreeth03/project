@@ -51,3 +51,28 @@ exports.isRecruiter = (req, res, next) => {
     next();
 };
 exports.isAdmin = exports.isAdminAPI; // Use API version for consistency
+
+// 4. Hybrid Admin Middleware (supports both views and APIs)
+exports.isAdminHybrid = (req, res, next) => {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        // For views, redirect to login
+        if (req.accepts('html')) return res.redirect("/login");
+        // For APIs, return 403 Forbidden
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+    next();
+};
+
+// 5. Hybrid Authentication Middleware (supports both views and APIs)
+exports.isAuthenticatedHybrid = (req, res, next) => {
+    if (!req.session.user) {
+        // For views, redirect to login
+        if (req.accepts('html')) return res.redirect('/login');
+        // For APIs, return 401 Unauthorized
+        return res.status(401).json({ 
+            success: false, 
+            error: "Unauthorized: Please log in to access this resource." 
+        });
+    }
+    next();
+};

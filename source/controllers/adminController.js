@@ -11,19 +11,6 @@ function computeSignedPercent(curr, prev) {
 }
 
 // =========================================================================
-// Middleware Helper (Temporary check for isAdmin, will be centralized later)
-// =========================================================================
-const isAdmin = (req, res, next) => {
-    if (!req.session.user || req.session.user.role !== "admin") {
-        // For views, redirect to login
-        if (req.accepts('html')) return res.redirect("/login");
-        // For APIs, return 403 Forbidden
-        return res.status(403).json({ error: "Unauthorized" });
-    }
-    next();
-};
-
-// =========================================================================
 // 1. Admin Dashboard Page (GET /admin)
 // =========================================================================
 exports.getAdminDashboard = (req, res) => {
