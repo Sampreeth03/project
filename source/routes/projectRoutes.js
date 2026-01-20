@@ -6,7 +6,7 @@ const router = express.Router();
 const projectController = require('../controllers/projectController');
 const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 const { topics } = require('../config/constants');
-const { projectCreationLimiter } = require('../middleware/rateLimiterMiddleware');
+const { projectCreationLimiter } = require('../middleware/securityMiddleware');
 const { validateProjectCreation } = require('../middleware/validationMiddleware');
 
 const jsonParser = express.json();

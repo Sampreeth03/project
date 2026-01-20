@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { upload } = require("../middleware/uploadMiddleware"); // Import Multer
-const { authLimiter, otpLimiter } = require('../middleware/rateLimiterMiddleware');
+const { authLimiter, otpLimiter } = require('../middleware/securityMiddleware');
 const { validateStudentSignup, validateRecruiterSignup, validateLogin, validateOTP, validateEmail } = require('../middleware/validationMiddleware');
 
 // Middleware to use for JSON body parsing on specific routes
