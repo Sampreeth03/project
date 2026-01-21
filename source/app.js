@@ -19,6 +19,7 @@ const { topics, topicNormalizationMap } = require("./config/constants");
 const { validatePassword, getTimeAgo } = require("./services/helperService"); 
 const { upload } = require("./middleware/uploadMiddleware");
 const { globalLimiter, helmetConfig, corsOptions } = require("./middleware/securityMiddleware");
+const { morganMiddleware } = require("./middleware/loggingMiddleware");
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("./database"); 
 
 const app = express();
@@ -28,6 +29,9 @@ app.use(helmetConfig);
 
 // CORS configuration
 app.use(cors(corsOptions));
+
+// Logging middleware
+app.use(morganMiddleware);
 
 // Global rate limiting
 app.use(globalLimiter);
