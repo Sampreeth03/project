@@ -405,12 +405,18 @@ exports.postRecruiterSignupInit = async (req, res) => {
             companyName: companyName || ''
         });
 
-        // Send OTP email
-        const otpResult = await emailService.sendSignupOTP(email, name);
-        
-        if (!otpResult.success) {
-            return res.status(500).json({ success: false, error: "Failed to send verification email. Please try again." });
+        // Generate and send OTP using the shared otpService
+        const otp = createLoginOtp({
+            email: email.toLowerCase(),
+            userId: 'pending-recruiter-signup',
+            role: 'recruiter'
+        });
+
+        if (!isEmailConfigured()) {
+            return res.status(500).json({ success: false, error: 'Email sender not configured. Please contact support.' });
         }
+
+        await sendLoginOtpEmail({ to: email, otp, purpose: 'signup' });
 
         res.status(200).json({ 
             success: true, 
@@ -420,6 +426,9 @@ exports.postRecruiterSignupInit = async (req, res) => {
 
     } catch (err) {
         console.error('Recruiter signup init error:', err.message);
+        if (err.statusCode === 429) {
+            return res.status(429).json({ success: false, error: err.message });
+        }
         res.status(500).json({ success: false, error: "Server error. Please try again." });
     }
 };
@@ -433,11 +442,16 @@ exports.postRecruiterVerifyOTP = async (req, res) => {
     }
 
     try {
-        // Verify OTP
-        const otpResult = emailService.verifyOTP(email, otp, 'signup');
-        
-        if (!otpResult.valid) {
-            return res.status(400).json({ success: false, error: otpResult.error });
+        // Verify OTP using shared otpService
+        const otpResult = verifyLoginOtp({ email: email.toLowerCase(), otp: String(otp).trim() });
+
+        if (!otpResult.ok) {
+            let errorMsg = 'Invalid verification code.';
+            if (otpResult.reason === 'expired') errorMsg = 'Verification code has expired. Please request a new one.';
+            if (otpResult.reason === 'locked') errorMsg = 'Too many attempts. Please request a new code.';
+            if (otpResult.reason === 'no_code') errorMsg = 'No verification code found. Please start signup again.';
+            if (otpResult.attemptsLeft !== undefined) errorMsg = `Invalid code. ${otpResult.attemptsLeft} attempts remaining.`;
+            return res.status(400).json({ success: false, error: errorMsg });
         }
 
         // Mark pending recruiter as OTP verified
@@ -478,16 +492,22 @@ exports.postRecruiterResendOTP = async (req, res) => {
             return res.status(404).json({ success: false, error: "Signup session expired. Please start again." });
         }
 
-        const result = await emailService.resendOTP(email, pending.name, 'signup');
-        
-        if (!result.success) {
-            return res.status(400).json({ success: false, error: result.error });
-        }
+        // Generate new OTP using shared otpService
+        const otp = createLoginOtp({
+            email: email.toLowerCase(),
+            userId: 'pending-recruiter-signup',
+            role: 'recruiter'
+        });
+
+        await sendLoginOtpEmail({ to: email, otp, purpose: 'signup' });
 
         res.status(200).json({ success: true, message: "New verification code sent" });
 
     } catch (err) {
         console.error('Resend OTP error:', err.message);
+        if (err.statusCode === 429) {
+            return res.status(429).json({ success: false, error: err.message });
+        }
         res.status(500).json({ success: false, error: "Failed to resend code" });
     }
 };
