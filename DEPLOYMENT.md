@@ -7,7 +7,6 @@
 - Additional submitted docs: docs/swagger
 - Docker orchestration: docker-compose.yml
 - CI: .github/workflows/ci.yml
-- Render service definition: render.yaml
 - Vercel app routing fallback: client/vercel.json
 
 ## Run With Docker Locally
@@ -45,7 +44,7 @@ GitHub Actions workflow at .github/workflows/ci.yml runs on every push and pull 
 ## Deployment Architecture
 
 - Frontend: Vercel
-- Backend: Render (Docker)
+- Backend: NeonTech
 
 ## Alternative: DigitalOcean App Platform
 
@@ -61,14 +60,18 @@ Then configure:
 
 Use the full browser workflow in `DIGITALOCEAN_STEP_BY_STEP.md`.
 
-## Backend Deployment On Render
+## Backend Deployment On NeonTech
 
-Use Blueprint deploy with render.yaml or create service manually with the same values.
+Initialize deployment from project root:
 
-Required environment variables you must set in Render:
+```bash
+npx neonctl@latest init
+```
+
+Required environment variables you must set in NeonTech:
 
 - CORS_ALLOWED_ORIGINS = https://<your-vercel-domain>
-- PUBLIC_API_BASE_URL = https://<your-render-backend-domain>
+- PUBLIC_API_BASE_URL = https://<your-neontech-backend-domain>
 - MONGODB_URI
 - JWT_SECRET
 - STRIPE_SECRET_KEY
@@ -82,18 +85,10 @@ Required environment variables you must set in Render:
 - GMAIL_USER
 - GMAIL_APP_PASSWORD
 
-Already configured in render.yaml defaults:
-
-- NODE_ENV=production
-- PORT=5000
-- REDIS_ENABLED=false
-- COOKIE_SAME_SITE=none
-- COOKIE_SECURE=true
-
 After deploy, verify:
 
-- https://<your-render-backend-domain>/api/docs
-- https://<your-render-backend-domain>/api/docs-home
+- https://<your-neontech-backend-domain>/api/docs
+- https://<your-neontech-backend-domain>/api/docs-home
 
 ## Frontend Deployment On Vercel
 
@@ -101,8 +96,8 @@ Deploy client as a separate Vercel project using client as root directory.
 
 Set Vercel environment variables:
 
-- VITE_API_BASE_URL = https://<your-render-backend-domain>
-- VITE_SOCKET_URL = https://<your-render-backend-domain>
+- VITE_API_BASE_URL = https://<your-neontech-backend-domain>
+- VITE_SOCKET_URL = https://<your-neontech-backend-domain>
 
 Build command:
 
@@ -122,8 +117,8 @@ dist
 2. Verify authenticated APIs work (cookies present, no CORS errors).
 3. Verify GroupChat socket connection works.
 4. Verify file links from project notifications open correctly.
-5. Open Swagger docs on Render and run sample endpoints from UI.
+5. Open Swagger docs on NeonTech backend and run sample endpoints from UI.
 6. Share only deployed URLs during demo:
    - Vercel frontend URL
-   - Render backend URL
-   - Render Swagger URL (/api/docs)
+   - NeonTech backend URL
+   - NeonTech Swagger URL (/api/docs)
