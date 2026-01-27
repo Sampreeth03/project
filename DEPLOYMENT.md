@@ -46,20 +46,6 @@ GitHub Actions workflow at .github/workflows/ci.yml runs on every push and pull 
 - Frontend: Vercel
 - Backend: NeonTech
 
-## Alternative: DigitalOcean App Platform
-
-If provider auto-detection does not find components, use one of these:
-
-- Import app spec file: `.do/app.yaml`
-- Or set source directories manually as: `source,client`
-
-Then configure:
-
-- Backend service from `source` with `npm ci` and `npm start`
-- Frontend static site from `client` with `npm ci && npm run build` and output `dist`
-
-Use the full browser workflow in `DIGITALOCEAN_STEP_BY_STEP.md`.
-
 ## Backend Deployment On NeonTech
 
 Initialize deployment from project root:
