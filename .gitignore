@@ -9,6 +9,8 @@ lerna-debug.log*
 
 /client/node_modules
 /source/node_modules
+/source/package-lock.json
+/source/package.json
 /source/uploads
 dist
 dist-ssr
@@ -24,5 +26,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/client/package-lock.json
+/client/package.json
 client/package-lock.json
 client/package.json
