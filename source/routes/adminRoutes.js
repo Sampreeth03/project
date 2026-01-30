@@ -25,6 +25,11 @@ router.get('/admin-doubts/data', cacheRoute({ scope: 'admin' }), adminController
 // --- Recruiters Management ---
 router.get('/admin-rec', adminController.getRecruitersPage);
 router.get('/admin-rec/data', cacheRoute({ scope: 'admin' }), adminController.getRecruitersData);
+router.get('/admin/recruiters/:id/jobs', adminController.getRecruiterJobs);
+router.get('/admin/jobs/:jobId/applicants', adminController.getJobApplicants);
+
+// --- Dashboard Analytics ---
+router.get('/admin/analytics', adminController.getAnalyticsData);
 
 // --- Projects Management ---
 router.get("/admin-proj", adminController.getProjectsPage);

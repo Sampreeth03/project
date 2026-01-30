@@ -835,9 +835,10 @@ exports.postForgotPasswordRequestOtp = async (req, res) => {
         const recipientEmail = String(user.email || '').trim();
 
         if (!isEmailConfigured()) {
-            return res.status(500).json({
-                success: false,
-                error: 'Email sender not configured. Fill project .env (EMAIL_USER and EMAIL_PASSWORD, or GMAIL_USER and GMAIL_APP_PASSWORD) and restart the backend.'
+            console.warn('[Auth] Email not configured; skipping forgot-password OTP email send.');
+            return res.status(200).json({
+                success: true,
+                message: 'Email is not configured on this server. Please contact support to reset your password.'
             });
         }
 

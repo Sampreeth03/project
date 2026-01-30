@@ -105,6 +105,7 @@ const replySchema = new mongoose.Schema({
 const jobApplicationSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   posted_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  job_posting_id: { type: mongoose.Schema.Types.ObjectId, ref: 'JobApplication', default: null },
   job_title: { type: String, required: true },
   company_name: { type: String, required: true },
   salary_range: { type: String, required: true },
@@ -113,6 +114,7 @@ const jobApplicationSchema = new mongoose.Schema({
   custom_questions: { type: Array, default: [] },
   custom_answers: { type: Object, default: {} },
   status: { type: String, default: 'Waiting', enum: ['Waiting', 'Pending', 'Approved', 'Rejected'] },
+  recruitedAt: { type: Date, default: null },
   resume: { data: Buffer, contentType: String }, // Updated to match the code
   // #srih1: file-system based resume path used by server.js (/apply-job, /view-resume) (ommtsn)
   resume_path: { type: String, default: null },
@@ -182,6 +184,7 @@ const platformAdministratorSchema = new mongoose.Schema({
 
 // Indexes tuned to current query patterns (filters + sort order)
 userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ createdAt: -1 });
 userSchema.index({ assignedPlatformAdminId: 1 });
 
 pendingRecruiterSchema.index({ email: 1 });
@@ -198,9 +201,13 @@ replySchema.index({ user_id: 1 });
 jobApplicationSchema.index({ posted_by: 1, user_id: 1, status: 1, createdAt: -1 });
 jobApplicationSchema.index({ user_id: 1, status: 1, date_applied: -1 });
 jobApplicationSchema.index({ active: 1, status: 1 });
+jobApplicationSchema.index({ posted_by: 1, createdAt: -1 });
+jobApplicationSchema.index({ job_posting_id: 1, createdAt: -1 });
+jobApplicationSchema.index({ recruitedAt: -1 });
 
 projectSchema.index({ user_id: 1, status: 1, deadline: 1 });
 projectSchema.index({ topic: 1, status: 1 });
+projectSchema.index({ createdAt: -1 });
 
 joinRequestSchema.index({ project_id: 1, status: 1, requested_at: -1 });
 joinRequestSchema.index({ user_id: 1, status: 1, requested_at: -1 });

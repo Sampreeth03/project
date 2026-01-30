@@ -50,9 +50,11 @@ const resolveSolrBinary = () => {
 
 const runSolrCommand = (args, { allowFailure = false } = {}) => {
     const executable = resolveSolrBinary();
+    const executableLower = String(executable).toLowerCase();
+    const isCmdScript = process.platform === 'win32' && (executableLower.endsWith('.cmd') || executableLower.endsWith('.bat'));
 
     return new Promise((resolve, reject) => {
-        execFile(executable, args, { windowsHide: true }, (error, stdout, stderr) => {
+        execFile(executable, args, { windowsHide: true, shell: isCmdScript }, (error, stdout, stderr) => {
             const output = `${stdout || ''}${stderr || ''}`.trim();
 
             if (error && !allowFailure) {

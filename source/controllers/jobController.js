@@ -109,7 +109,7 @@ exports.applyForJob = async (req, res) => {
         await JobApplication.create({
             posted_by: job.posted_by, job_title: job.job_title, company_name: job.company_name, salary_range: job.salary_range,
             description: job.description, skills: job.skills, custom_questions: job.custom_questions || [], 
-            custom_answers: parsedAnswers, user_id: userId, resume_path: resumePath, active: true, date_applied: new Date()
+            custom_answers: parsedAnswers, user_id: userId, job_posting_id: job._id, resume_path: resumePath, active: true, date_applied: new Date(), recruitedAt: null
         });
 
         await Notification.create({ user_id: job.posted_by, message: `New application for "${job.job_title}" from ${req.user.name}.`, type: 'job_application', is_read: false });

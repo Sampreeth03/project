@@ -1,6 +1,19 @@
-// Load environment variables from project root .env (fallback to default behavior)
+// Load environment variables from the first existing env file.
+const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
+
+const envCandidates = [
+    path.resolve(__dirname, '.env'),
+    path.resolve(__dirname, '..', '.env'),
+    path.resolve(__dirname, '..', 'env')
+];
+const resolvedEnvPath = envCandidates.find((candidate) => fs.existsSync(candidate));
+
+if (resolvedEnvPath) {
+    require('dotenv').config({ path: resolvedEnvPath });
+} else {
+    require('dotenv').config();
+}
 
 const http = require('http');
 const { Server } = require('socket.io');

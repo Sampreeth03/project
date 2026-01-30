@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AdminSidebar from './AdminSidebar';
 import { fetchDoubtsData } from '../../store/adminSlice';
@@ -13,10 +13,10 @@ const AdminDoubts = () => {
         dispatch(fetchDoubtsData());
     }, [dispatch]);
 
-    const filteredDoubts = doubts.filter(user =>
+    const filteredDoubts = useMemo(() => doubts.filter((user) => (
         user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    )), [doubts, searchQuery]);
 
     const getInitials = (name) => {
         return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';

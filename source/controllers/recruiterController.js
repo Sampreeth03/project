@@ -412,6 +412,7 @@ exports.updateApplicationStatus = async (req, res) => {
         if (status === 'Rejected') {
             // Update status to 'Rejected' instead of deleting
             application.status = 'Rejected';
+            application.recruitedAt = null;
             await application.save();
             await Notification.create({ user_id: application.user_id, message: `Your application for "${application.job_title}" was rejected.`, type: 'job_rejected', is_read: false });
             // Invalidate recruiter caches
@@ -422,6 +423,7 @@ exports.updateApplicationStatus = async (req, res) => {
             res.json({ success: true });
         } else {
             application.status = status;
+            application.recruitedAt = new Date();
             await application.save();
             
             const recruiter = await User.findById(recruiterId).select('email name').lean();
@@ -470,6 +472,7 @@ exports.createRecruiterJob = async (req, res) => {
 
         const jobDoc = await JobApplication.create({
             posted_by: recruiterId,
+            job_posting_id: null,
             job_title: jobTitle,
             company_name: companyName,
             salary_range: salaryRange,
