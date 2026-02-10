@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import RecruiterNavbar from './RecruiterNavbar';
 import UserProfileModal from './UserProfileModal';
-import { fetchApplications, updateApplicationStatus, clearApplicationsError } from '../../store/recruiterSlice';
+import { fetchApplications, updateApplicationStatus, clearApplicationsError, fetchDashboard } from '../../store/recruiterSlice';
 import '../../styles/Recruiter.css';
 
 const RecruiterApplications = () => {
@@ -38,7 +38,10 @@ const RecruiterApplications = () => {
             filtered = filtered.filter(app => app.status === 'pending');
         } else if (activeTab === 'approved') {
             filtered = filtered.filter(app => app.status === 'approved');
+        } else if (activeTab === 'rejected') {
+            filtered = filtered.filter(app => app.status === 'rejected');
         }
+        // 'all' tab shows everything
 
         // Filter by search query
         const q = searchQuery.trim().toLowerCase();
@@ -68,6 +71,8 @@ const RecruiterApplications = () => {
             const result = await dispatch(updateApplicationStatus({ applicationId, status: 'Approved' })).unwrap();
             if (result.success) {
                 showToast('Application approved successfully.', 'success');
+                // Refresh dashboard metrics
+                dispatch(fetchDashboard());
             } else {
                 showToast(result.error || 'Failed to approve application', 'danger');
             }
@@ -83,6 +88,8 @@ const RecruiterApplications = () => {
             const result = await dispatch(updateApplicationStatus({ applicationId, status: 'Rejected' })).unwrap();
             if (result.success) {
                 showToast('Application rejected.', 'danger');
+                // Refresh dashboard metrics
+                dispatch(fetchDashboard());
             } else {
                 showToast(result.error || 'Failed to reject application', 'danger');
             }
@@ -251,6 +258,12 @@ const RecruiterApplications = () => {
                         onClick={() => setActiveTab('approved')}
                     >
                         Approved
+                    </button>
+                    <button 
+                        className={`recruiter-tab ${activeTab === 'rejected' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('rejected')}
+                    >
+                        Rejected
                     </button>
                 </div>
 

@@ -389,6 +389,18 @@
     letter-spacing: 0.5px;
 }
 
+.recruiter-stat-sublabel {
+    color: var(--recruiter-accent-light);
+    font-size: 14px;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    opacity: 0.9;
+}
+
 @keyframes recruiterFadeIn {
     0% { opacity: 0; transform: scale(0.8); }
     100% { opacity: 1; transform: scale(1); }

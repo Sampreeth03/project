@@ -77,13 +77,89 @@ exports.getRecruiterDashboard = async (req, res) => {
     try {
         const jobCount = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: null });
         const participantCount = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } });
+        
+        // Total Applications Received (all applications regardless of status)
+        const totalApplications = await JobApplication.countDocuments({ 
+            posted_by: recruiterId, 
+            user_id: { $ne: null } 
+        });
+        
+        // Pending Applications (status = 'Waiting' or 'Pending')
+        const pendingApplications = await JobApplication.countDocuments({ 
+            posted_by: recruiterId, 
+            user_id: { $ne: null },
+            status: { $in: ['Waiting', 'Pending'] }
+        });
+        
+        // Rejected Applications (status = 'Rejected')
+        const rejectedApplications = await JobApplication.countDocuments({ 
+            posted_by: recruiterId, 
+            user_id: { $ne: null },
+            status: 'Rejected'
+        });
+        
+        // Approved Applications (status = 'Approved')
+        const approvedApplications = await JobApplication.countDocuments({ 
+            posted_by: recruiterId, 
+            user_id: { $ne: null },
+            status: 'Approved'
+        });
+        
+        // Debug logging
+        console.log('Dashboard Metrics for Recruiter:', recruiterId);
+        console.log('Total Jobs:', jobCount);
+        console.log('Total Applications:', totalApplications);
+        console.log('Pending:', pendingApplications);
+        console.log('Approved:', approvedApplications);
+        console.log('Rejected:', rejectedApplications);
+        
+        // Calculate Hiring Success Rate (%)
+        const hiringSuccessRate = totalApplications > 0 
+            ? Math.round((approvedApplications / totalApplications) * 100) 
+            : 0;
+        
+        // Top Most Applied Job
+        const jobApplicationsAggregation = await JobApplication.aggregate([
+            { 
+                $match: { 
+                    posted_by: new mongoose.Types.ObjectId(recruiterId), 
+                    user_id: { $ne: null } 
+                } 
+            },
+            { 
+                $group: { 
+                    _id: '$job_title', 
+                    count: { $sum: 1 } 
+                } 
+            },
+            { $sort: { count: -1 } },
+            { $limit: 1 }
+        ]);
+        
+        const topMostAppliedJob = jobApplicationsAggregation.length > 0 
+            ? {
+                jobTitle: jobApplicationsAggregation[0]._id,
+                applicationCount: jobApplicationsAggregation[0].count
+            }
+            : {
+                jobTitle: 'No applications yet',
+                applicationCount: 0
+            };
 
-        res.json({
+        const dashboardData = {
             user: req.session.user,
             ...recruiterNav,
             totalJobs: jobCount || 0,
-            totalParticipants: participantCount || 0
-        });
+            totalParticipants: participantCount || 0,
+            approvedApplications: approvedApplications || 0,
+            pendingApplications: pendingApplications || 0,
+            rejectedApplications: rejectedApplications || 0,
+            hiringSuccessRate: hiringSuccessRate,
+            topMostAppliedJob: topMostAppliedJob
+        };
+        
+        console.log('Sending Dashboard Data:', JSON.stringify(dashboardData, null, 2));
+        res.json(dashboardData);
     } catch (err) {
         console.error("Error in recruiter dashboard:", err.message);
         res.status(500).json({ error: "Failed to fetch dashboard data" });
@@ -97,12 +173,16 @@ exports.getRecruiterApplications = async (req, res) => {
     const recruiterId = req.session.user.id;
     
     try {
+        console.log('Fetching applications for recruiter:', recruiterId);
+        
         const applications = await JobApplication.find({
             posted_by: recruiterId,
             user_id: { $ne: null }
         }).populate('user_id', 'name').lean();
 
-        const formattedApplications = applications.map(app => {
+        console.log(`Found ${applications.length} applications`);
+
+        const formattedApplications = applications.filter(app => app.user_id).map(app => {
             const timeAgo = getTimeAgo(app.createdAt);
             const statusLower = app.status.toLowerCase() === 'waiting' ? 'pending' : app.status.toLowerCase();
             return {
@@ -121,6 +201,8 @@ exports.getRecruiterApplications = async (req, res) => {
             };
         });
 
+        console.log(`Formatted ${formattedApplications.length} applications`);
+
         const recruiterNav = getRecruiterNav();
 
         res.json({
@@ -131,6 +213,7 @@ exports.getRecruiterApplications = async (req, res) => {
         });
     } catch (err) {
         console.error('Error in /rec-app route:', err.message);
+        console.error('Full error:', err);
         res.status(500).json({ error: 'Failed to load applications' });
     }
 };
@@ -212,7 +295,9 @@ exports.updateApplicationStatus = async (req, res) => {
         if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
 
         if (status === 'Rejected') {
-            await JobApplication.deleteOne({ _id: applicationId });
+            // Update status to 'Rejected' instead of deleting
+            application.status = 'Rejected';
+            await application.save();
             await Notification.create({ user_id: application.user_id, message: `Your application for "${application.job_title}" was rejected.`, type: 'job_rejected', is_read: false });
             res.json({ success: true });
         } else {

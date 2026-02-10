@@ -8,7 +8,17 @@ const RecruiterDashboard = () => {
     const dispatch = useDispatch();
     
     // Redux state
-    const { totalJobs, totalParticipants, loading, error } = useSelector(state => state.recruiter.dashboard);
+    const { 
+        totalJobs, 
+        totalParticipants, 
+        approvedApplications,
+        pendingApplications,
+        rejectedApplications,
+        hiringSuccessRate,
+        topMostAppliedJob,
+        loading, 
+        error 
+    } = useSelector(state => state.recruiter.dashboard);
 
     useEffect(() => {
         dispatch(fetchDashboard());
@@ -37,7 +47,28 @@ const RecruiterDashboard = () => {
                         </div>
                         <div className="recruiter-stat-card">
                             <div className="recruiter-stat-value">{totalParticipants}</div>
-                            <div className="recruiter-stat-label">Total Participants</div>
+                            <div className="recruiter-stat-label">Total Applications</div>
+                        </div>
+                        <div className="recruiter-stat-card">
+                            <div className="recruiter-stat-value">{approvedApplications}</div>
+                            <div className="recruiter-stat-label">Approved Applications</div>
+                        </div>
+                        <div className="recruiter-stat-card">
+                            <div className="recruiter-stat-value">{pendingApplications}</div>
+                            <div className="recruiter-stat-label">Pending Applications</div>
+                        </div>
+                        <div className="recruiter-stat-card">
+                            <div className="recruiter-stat-value">{rejectedApplications}</div>
+                            <div className="recruiter-stat-label">Rejected Applications</div>
+                        </div>
+                        <div className="recruiter-stat-card">
+                            <div className="recruiter-stat-value">{hiringSuccessRate}%</div>
+                            <div className="recruiter-stat-label">Hiring Success Rate</div>
+                        </div>
+                        <div className="recruiter-stat-card">
+                            <div className="recruiter-stat-value">{topMostAppliedJob.applicationCount}</div>
+                            <div className="recruiter-stat-label">Top Most Applied Job</div>
+                            <div className="recruiter-stat-sublabel">{topMostAppliedJob.jobTitle}</div>
                         </div>
                     </div>
                 )}

@@ -218,6 +218,11 @@ const initialState = {
     dashboard: {
         totalJobs: 0,
         totalParticipants: 0,
+        approvedApplications: 0,
+        pendingApplications: 0,
+        rejectedApplications: 0,
+        hiringSuccessRate: 0,
+        topMostAppliedJob: { jobTitle: 'No applications yet', applicationCount: 0 },
         loading: false,
         error: null
     },
@@ -284,6 +289,11 @@ const recruiterSlice = createSlice({
                 state.dashboard.loading = false;
                 state.dashboard.totalJobs = action.payload.totalJobs || 0;
                 state.dashboard.totalParticipants = action.payload.totalParticipants || 0;
+                state.dashboard.approvedApplications = action.payload.approvedApplications || 0;
+                state.dashboard.pendingApplications = action.payload.pendingApplications || 0;
+                state.dashboard.rejectedApplications = action.payload.rejectedApplications || 0;
+                state.dashboard.hiringSuccessRate = action.payload.hiringSuccessRate || 0;
+                state.dashboard.topMostAppliedJob = action.payload.topMostAppliedJob || { jobTitle: 'No applications yet', applicationCount: 0 };
             })
             .addCase(fetchDashboard.rejected, (state, action) => {
                 state.dashboard.loading = false;

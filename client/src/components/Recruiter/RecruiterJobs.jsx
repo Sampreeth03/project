@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import RecruiterNavbar from './RecruiterNavbar';
-import { fetchJobs, createJob, deleteJob, toggleJobActive, clearJobsError } from '../../store/recruiterSlice';
+import { fetchJobs, createJob, deleteJob, toggleJobActive, clearJobsError, fetchDashboard } from '../../store/recruiterSlice';
 import '../../styles/Recruiter.css';
 
 const RecruiterJobs = () => {
@@ -157,6 +157,7 @@ const RecruiterJobs = () => {
                 showNotification('Job created successfully!');
                 setFormData({ jobTitle: '', description: '', salaryRange: '', skills: '' });
                 dispatch(fetchJobs()); // Refresh jobs list
+                dispatch(fetchDashboard()); // Refresh dashboard metrics
             } else {
                 showNotification(result.error || 'Failed to create job');
             }
@@ -174,6 +175,7 @@ const RecruiterJobs = () => {
         try {
             await dispatch(deleteJob(jobId)).unwrap();
             showNotification('Job deleted successfully!');
+            dispatch(fetchDashboard()); // Refresh dashboard metrics
         } catch (error) {
             console.error('Error deleting job:', error);
             showNotification('An error occurred');

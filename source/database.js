@@ -105,7 +105,7 @@ const jobApplicationSchema = new mongoose.Schema({
   salary_range: { type: String, required: true },
   description: { type: String, required: true },
   skills: { type: String, required: true },
-  status: { type: String, default: 'Waiting', enum: ['Waiting', 'Approved', 'Rejected'] },
+  status: { type: String, default: 'Waiting', enum: ['Waiting', 'Pending', 'Approved', 'Rejected'] },
   resume: { data: Buffer, contentType: String }, // Updated to match the code
   // #srih1: file-system based resume path used by server.js (/apply-job, /view-resume) (ommtsn)
   resume_path: { type: String, default: null },
