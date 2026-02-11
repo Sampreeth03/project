@@ -20,6 +20,7 @@ const { validatePassword, getTimeAgo } = require("./services/helperService");
 const { upload } = require("./middleware/uploadMiddleware");
 const { globalLimiter, helmetConfig, corsOptions } = require("./middleware/securityMiddleware");
 const { morganMiddleware } = require("./middleware/loggingMiddleware");
+const { notFoundHandler, errorHandler } = require("./middleware/errorMiddleware");
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("./database"); 
 
 const app = express();
@@ -67,6 +68,12 @@ app.use('/api', projectRoutes);
 app.use('/api', doubtRoutes);
 app.use('/api', jobRoutes);
 app.use('/api/messages', messageRoutes);
+
+// 404 handler (API)
+app.use(notFoundHandler);
+
+// Centralized error handler
+app.use(errorHandler);
 
 
 

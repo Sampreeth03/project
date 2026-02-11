@@ -22,7 +22,7 @@ exports.getLogin = (req, res) => {
 // =========================================================================
 // 3. Handle Login Submission (POST /login) - CONVERTED TO JSON API
 // =========================================================================
-exports.postLogin = async (req, res) => {
+exports.postLogin = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -52,7 +52,9 @@ exports.postLogin = async (req, res) => {
         req.session.save(err => {
             if (err) {
                 console.error("Error saving session:", err);
-                return res.status(500).json({ success: false, error: "Server error during login session setup" });
+                err.statusCode = 500;
+                err.publicMessage = "Server error during login session setup";
+                return next(err);
             }
             
             // Return JSON payload with minimal user data and a suggested redirect path
@@ -66,7 +68,9 @@ exports.postLogin = async (req, res) => {
 
     } catch (err) {
         console.error('Error in login:', err.message);
-        res.status(500).json({ success: false, error: "Server error" });
+        err.statusCode = 500;
+        err.publicMessage = "Server error";
+        return next(err);
     }
 };
 
@@ -80,7 +84,7 @@ exports.getSignup = (req, res) => {
 // =========================================================================
 // 5. Handle Student/User Signup Submission (POST /signup) - CONVERTED TO JSON API
 // =========================================================================
-exports.postSignup = async (req, res) => {
+exports.postSignup = async (req, res, next) => {
     const { name, email, password, about, skills, interests } = req.body;
     
     if (!name || !email || !password) {
@@ -137,7 +141,9 @@ exports.postSignup = async (req, res) => {
 
     } catch (err) {
         console.error('Signup error:', err.message);
-        res.status(500).json({ success: false, error: 'Signup failed' });
+        err.statusCode = 500;
+        err.publicMessage = 'Signup failed';
+        return next(err);
     }
 };
 
