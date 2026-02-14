@@ -88,9 +88,25 @@ export const fetchDoubtsData = createAsyncThunk(
 // Async thunk for fetching messages data
 export const fetchMessagesData = createAsyncThunk(
     'admin/fetchMessagesData',
-    async (_, { rejectWithValue }) => {
+    async (payload = '', { rejectWithValue }) => {
         try {
-            const response = await fetch('/api/admin-mess/data', {
+            const request = typeof payload === 'string'
+                ? { username: payload, userId: '' }
+                : {
+                    username: String(payload?.username || ''),
+                    userId: String(payload?.userId || '')
+                };
+
+            const query = request.username.trim();
+            const userId = request.userId.trim();
+            const params = new URLSearchParams();
+            if (query) params.set('username', query);
+            if (userId) params.set('userId', userId);
+            const url = params.toString()
+                ? `/api/admin-mess/data?${params.toString()}`
+                : '/api/admin-mess/data';
+
+            const response = await fetch(url, {
                 credentials: 'include'
             });
             if (!response.ok) throw new Error('Failed to fetch messages data');

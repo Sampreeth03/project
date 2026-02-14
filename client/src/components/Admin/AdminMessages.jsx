@@ -7,20 +7,68 @@ import '../../styles/Admin.css';
 const AdminMessages = () => {
     const dispatch = useDispatch();
     const { messages, messagesLoading, messagesError } = useSelector((state) => state.admin);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
 
     useEffect(() => {
-        dispatch(fetchMessagesData());
-    }, [dispatch]);
+        const query = searchInput.trim();
+        if (!query) {
+            setSelectedUser(null);
+            setSelectedConversation(null);
+            setShowSuggestions(false);
+            dispatch(fetchMessagesData(''));
+            return;
+        }
 
-    const emptyStats = { totalConversations: 0, flaggedConversations: 0, messagesToday: 0, responseRate: 0 };
-    const displayData = messages.conversations?.length > 0 ? messages : { conversations: [], stats: emptyStats };
+        const timer = setTimeout(() => {
+            setShowSuggestions(true);
+            dispatch(fetchMessagesData({ username: query }));
+        }, 300);
 
-    const filteredConversations = displayData.conversations.filter(conv =>
-        conv.participants?.some(p => p.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        conv.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+        return () => clearTimeout(timer);
+    }, [dispatch, searchInput]);
+
+    useEffect(() => {
+        if (!selectedUser || !messages?.user?.id) {
+            setSelectedConversation(null);
+            return;
+        }
+
+        if (String(selectedUser.id) !== String(messages.user.id)) {
+            setSelectedConversation(null);
+            return;
+        }
+
+        setSelectedConversation(messages.conversations?.[0] || null);
+    }, [messages.conversations, messages.user, selectedUser]);
+
+    useEffect(() => {
+        if (messagesError) {
+            setSelectedConversation(null);
+        }
+    }, [messagesError]);
+
+    const emptyStats = {
+        totalConversations: 0,
+        totalMessages: 0,
+        channelMessages: 0,
+        directMessages: 0,
+        messagesToday: 0,
+        flaggedConversations: 0,
+        responseRate: 0
+    };
+    const displayData = {
+        ...messages,
+        conversations: Array.isArray(messages.conversations) ? messages.conversations : [],
+        stats: { ...emptyStats, ...(messages.stats || {}) }
+    };
+
+    const suggestions = Array.isArray(displayData.userMatches) ? displayData.userMatches : [];
+    const hasSelectedUserData = selectedUser && displayData.user && String(selectedUser.id) === String(displayData.user.id);
+
+    const filteredConversations = hasSelectedUserData ? displayData.conversations : [];
 
     const formatTime = (dateStr) => {
         if (!dateStr) return '';
@@ -32,6 +80,22 @@ const AdminMessages = () => {
         return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
     };
 
+    const selectUserAndLoadChats = (user) => {
+        if (!user?.id) return;
+        setSelectedUser(user);
+        setSearchInput(user.name || '');
+        setShowSuggestions(false);
+        setSelectedConversation(null);
+        dispatch(fetchMessagesData({ username: user.name || '', userId: user.id }));
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter' && suggestions.length > 0) {
+            e.preventDefault();
+            selectUserAndLoadChats(suggestions[0]);
+        }
+    };
+
     return (
         <div className="admin-container">
             <AdminSidebar />
@@ -39,18 +103,42 @@ const AdminMessages = () => {
                 {/* Header */}
                 <div className="admin-header">
                     <div className="welcome">
-                        <h2>Message Monitoring</h2>
-                        <h4>Monitor conversations between students and recruiters</h4>
+                        <h2>Chat Search</h2>
+                        <h4>Select a user from search suggestions to load all chats below</h4>
                     </div>
                     <div className="admin-controls">
-                        <div className="search-box">
-                            <input 
-                                type="text" 
-                                placeholder="Search..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                        <div className="search-box admin-user-search">
+                            <input
+                                type="text"
+                                placeholder="Search users..."
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
+                                onFocus={() => {
+                                    if (searchInput.trim()) setShowSuggestions(true);
+                                }}
                             />
                             <i className="fas fa-search"></i>
+                            {showSuggestions && searchInput.trim() && (
+                                <div className="user-suggestions-dropdown">
+                                    {messagesLoading && <div className="user-suggestion-item muted">Searching users...</div>}
+                                    {!messagesLoading && suggestions.length === 0 && (
+                                        <div className="user-suggestion-item muted">No matching users</div>
+                                    )}
+                                    {!messagesLoading && suggestions.map((user) => (
+                                        <button
+                                            key={user.id}
+                                            type="button"
+                                            className="user-suggestion-item"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => selectUserAndLoadChats(user)}
+                                        >
+                                            <span className="user-suggestion-name">{user.name}</span>
+                                            <span className="user-suggestion-email">{user.email}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div className="admin-profile">
                             <div className="admin-avatar">
@@ -65,27 +153,32 @@ const AdminMessages = () => {
                 </div>
 
                 {/* Message Stats */}
-                {messagesError && <div className="error-message">Error: {messagesError}. Please login as admin.</div>}
+                {messagesError && <div className="error-message">Error: {messagesError}</div>}
+                {selectedUser && hasSelectedUserData && (
+                    <div className="stat-secondary" style={{ marginBottom: '12px' }}>
+                        Showing chats for <strong>{displayData.user.name}</strong> ({displayData.user.email})
+                    </div>
+                )}
                 <div className="message-stats">
                     <div className="stat-card">
-                        <div className="stat-title">Total Active Conversations</div>
+                        <div className="stat-title">Conversations Found</div>
                         <div className="stat-value">{displayData.stats.totalConversations}</div>
-                        <div className="stat-secondary">+24 this week</div>
+                        <div className="stat-secondary">Channels and DMs involving the user</div>
                     </div>
                     <div className="stat-card">
-                        <div className="stat-title">Flagged Conversations</div>
-                        <div className="stat-value">{displayData.stats.flaggedConversations}</div>
-                        <div className="stat-secondary">-3 from last week</div>
+                        <div className="stat-title">Total Messages</div>
+                        <div className="stat-value">{displayData.stats.totalMessages}</div>
+                        <div className="stat-secondary">All messages in matched threads</div>
                     </div>
                     <div className="stat-card">
-                        <div className="stat-title">Messages Today</div>
-                        <div className="stat-value">{displayData.stats.messagesToday.toLocaleString()}</div>
-                        <div className="stat-secondary">+126 from yesterday</div>
+                        <div className="stat-title">Channel Messages</div>
+                        <div className="stat-value">{displayData.stats.channelMessages}</div>
+                        <div className="stat-secondary">Public project conversations</div>
                     </div>
                     <div className="stat-card">
-                        <div className="stat-title">Message Response Rate</div>
-                        <div className="stat-value">{displayData.stats.responseRate}%</div>
-                        <div className="stat-secondary">+2% this month</div>
+                        <div className="stat-title">Direct Messages</div>
+                        <div className="stat-value">{displayData.stats.directMessages}</div>
+                        <div className="stat-secondary">1-on-1 project chats</div>
                     </div>
                 </div>
 
@@ -95,17 +188,6 @@ const AdminMessages = () => {
                     <div className="contacts-panel">
                         <div className="contacts-header">
                             <div className="contacts-title">Active Conversations</div>
-                            <button className="filter-btn">
-                                <i className="fas fa-filter"></i> Filter
-                            </button>
-                        </div>
-                        <div className="contact-search">
-                            <input 
-                                type="text" 
-                                placeholder="Search conversations..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
                         </div>
                         <ul className="contact-list">
                             {messagesLoading && <li className="loading-message">Loading...</li>}
@@ -116,18 +198,24 @@ const AdminMessages = () => {
                                     onClick={() => setSelectedConversation(conv)}
                                 >
                                     <div className="contact-avatar">
-                                        <i className="fas fa-users"></i>
+                                        <span>{getInitials(conv.title)}</span>
                                     </div>
                                     <div className="contact-info">
                                         <div className="contact-name">
-                                            <span>{conv.participants?.join(' & ')}</span>
-                                            <span className="contact-time">{formatTime(conv.lastActivity)}</span>
+                                            <span>{conv.title}</span>
+                                            <span className="contact-time">{conv.lastActivityLabel || formatTime(conv.lastActivity)}</span>
                                         </div>
-                                        <div className="contact-preview">{conv.lastMessage}</div>
+                                        <div className="contact-preview">{conv.projectTitle} • {conv.messageCount} messages</div>
                                     </div>
-                                    {conv.flagged && <div className="status-flag"></div>}
+                                    <div className="status-flag" title={conv.type === 'direct' ? 'Direct chat' : 'Channel chat'}></div>
                                 </li>
                             ))}
+                            {!messagesLoading && hasSelectedUserData && filteredConversations.length === 0 && (
+                                <li className="loading-message">No conversations for this user yet.</li>
+                            )}
+                            {!messagesLoading && !selectedUser && (
+                                <li className="loading-message">Search and select a user from the top bar.</li>
+                            )}
                         </ul>
                     </div>
 
@@ -139,19 +227,21 @@ const AdminMessages = () => {
                                     <i className="fas fa-shield-alt"></i>
                                 </div>
                                 <div className="no-message-text">
-                                    <p>Select a conversation to monitor</p>
-                                    <p style={{ fontSize: '14px', marginTop: '10px' }}>You can view messages and flag inappropriate content</p>
+                                    {!selectedUser && <p>Search and select a user from the top search bar.</p>}
+                                    {!!selectedUser && hasSelectedUserData && <p>{displayData.user.name} selected. Pick a conversation from the left panel.</p>}
+                                    {!!selectedUser && !hasSelectedUserData && <p>Loading selected user chats...</p>}
+                                    <p style={{ fontSize: '14px', marginTop: '10px' }}>All channel and DM threads for the selected user will appear below.</p>
                                 </div>
                             </div>
                         ) : (
                             <div className="chat-interface">
                                 <div className="chat-header">
                                     <div className="contact-avatar">
-                                        <i className="fas fa-users"></i>
+                                        <span>{getInitials(selectedConversation.title)}</span>
                                     </div>
                                     <div className="chat-title">
-                                        <div className="chat-user">{selectedConversation.participants?.join(' & ')}</div>
-                                        <div className="chat-status">Last activity: {formatTime(selectedConversation.lastActivity)}</div>
+                                        <div className="chat-user">{selectedConversation.title}</div>
+                                        <div className="chat-status">{selectedConversation.projectTitle} • Last activity: {selectedConversation.lastActivityLabel || formatTime(selectedConversation.lastActivity)}</div>
                                     </div>
                                     <div className="chat-controls">
                                         <button className="chat-control-btn">
@@ -164,14 +254,21 @@ const AdminMessages = () => {
                                 </div>
                                 <div className="messages-area">
                                     {selectedConversation.messages?.map((msg) => (
-                                        <div key={msg.id} className={`message ${msg.isUserA ? 'user-a' : 'user-b'}`}>
-                                            <div className="message-content">{msg.content}</div>
+                                        <div key={msg.id} className={`message ${msg.isTargetUser ? 'user-a' : 'user-b'}`}>
+                                            <div className="message-content">
+                                                {msg.text || (msg.fileName ? `Attachment: ${msg.fileName}` : 'Message')}
+                                            </div>
                                             <div className="message-meta">
-                                                <span className="message-user">{msg.sender}</span>
+                                                <span className="message-user">{msg.author}{msg.isTargetUser ? ' (searched user)' : ''}</span>
                                                 <span className="message-time">{msg.time}</span>
                                             </div>
                                         </div>
                                     ))}
+                                    {selectedConversation.messages?.length === 0 && (
+                                        <div className="no-message-text" style={{ padding: '24px' }}>
+                                            No messages found in this thread.
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="monitoring-tools">
                                     <div className="monitoring-status">

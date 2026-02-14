@@ -2,7 +2,7 @@
 
 const mongoose = require("mongoose");
 // NOTE: Assuming models path. Please confirm or update path to your models!
-const { User, UserMetrics, Project, Doubt, JobApplication, ProjectMember, PlatformAdministrator } = require("../database"); 
+const { User, UserMetrics, Project, Doubt, JobApplication, ProjectMember, PlatformAdministrator, Channel, Message, DirectMessage } = require("../database"); 
 const { getCacheValue, setCacheValue, isRedisReady } = require('../services/redisCacheService');
 
 // Helper function to calculate percentage change
@@ -78,6 +78,57 @@ const readJsonCache = async (key) => {
         return null;
     }
 };
+
+const escapeRegex = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const formatAdminMessageTime = (dateValue) => {
+    if (!dateValue) return '';
+    return new Date(dateValue).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+};
+
+const formatAdminConversationTime = (dateValue) => {
+    if (!dateValue) return '';
+    return new Date(dateValue).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+};
+
+const formatAdminChatMessage = (message, targetUserId) => ({
+    id: String(message._id),
+    author: message.sender_id?.name || 'Unknown',
+    senderId: message.sender_id?._id ? String(message.sender_id._id) : '',
+    text: message.text || '',
+    fileUrl: message.file_url || '',
+    fileName: message.file_name || '',
+    fileType: message.file_type || '',
+    time: formatAdminMessageTime(message.created_at || message.createdAt),
+    createdAt: message.created_at || message.createdAt || null,
+    isTargetUser: message.sender_id?._id ? String(message.sender_id._id) === String(targetUserId) : false
+});
+
+const buildEmptyMessagesResponse = (query = '', message = '') => ({
+    success: true,
+    query,
+    user: null,
+    userMatches: [],
+    conversations: [],
+    stats: {
+        totalConversations: 0,
+        totalMessages: 0,
+        channelMessages: 0,
+        directMessages: 0,
+        messagesToday: 0,
+        flaggedConversations: 0,
+        responseRate: 0
+    },
+    message
+});
 
 const writeJsonCache = async (key, value, ttlSeconds) => {
     if (!isRedisReady()) return;
@@ -891,18 +942,221 @@ exports.getProfileData = async (req, res) => {
 // =========================================================================
 exports.getMessagesData = async (req, res) => {
     try {
-        // Mock data for messages - in real implementation, fetch from database
-        const messagesData = {
-            conversations: [],
+        const username = String(req.query.username || '').trim();
+        const userId = String(req.query.userId || '').trim();
+
+        if (!username && !userId) {
+            return res.json(buildEmptyMessagesResponse('', 'Type a username to load that user\'s chats.'));
+        }
+
+        let userCandidates = [];
+        let user = null;
+
+        if (userId) {
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                return res.json(buildEmptyMessagesResponse(username, 'Invalid user selection.'));
+            }
+
+            user = await User.findById(userId)
+                .select('_id name email role')
+                .lean();
+
+            userCandidates = user ? [user] : [];
+        } else {
+            const queryRegex = new RegExp(escapeRegex(username), 'i');
+            userCandidates = await User.find({
+                $or: [
+                    { name: queryRegex },
+                    { email: queryRegex }
+                ]
+            })
+                .select('_id name email role')
+                .limit(10)
+                .lean();
+        }
+
+        if (userCandidates.length === 0) {
+            return res.json(buildEmptyMessagesResponse(username, `No user found for "${username}"`));
+        }
+
+        const userCandidatesSorted = user
+            ? userCandidates
+            : (() => {
+                const lowerQuery = username.toLowerCase();
+                const candidateIds = userCandidates.map((candidate) => candidate._id);
+                return [...userCandidates].sort((left, right) => {
+                    const leftName = String(left.name || '').toLowerCase();
+                    const rightName = String(right.name || '').toLowerCase();
+                    const leftEmail = String(left.email || '').toLowerCase();
+                    const rightEmail = String(right.email || '').toLowerCase();
+                    const leftExact = leftName === lowerQuery || leftEmail === lowerQuery ? 1 : 0;
+                    const rightExact = rightName === lowerQuery || rightEmail === lowerQuery ? 1 : 0;
+                    if (leftExact !== rightExact) return rightExact - leftExact;
+                    const leftStarts = leftName.startsWith(lowerQuery) || leftEmail.startsWith(lowerQuery) ? 1 : 0;
+                    const rightStarts = rightName.startsWith(lowerQuery) || rightEmail.startsWith(lowerQuery) ? 1 : 0;
+                    if (leftStarts !== rightStarts) return rightStarts - leftStarts;
+                    const leftIndex = candidateIds.findIndex((id) => String(id) === String(left._id));
+                    const rightIndex = candidateIds.findIndex((id) => String(id) === String(right._id));
+                    if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+                    return leftName.localeCompare(rightName);
+                });
+            })();
+
+        user = user || userCandidatesSorted[0];
+
+        const targetUserId = String(user._id);
+        const todayKey = new Date().toDateString();
+
+        const [channelSeedMessages, directMessages] = await Promise.all([
+            Message.find({ sender_id: user._id })
+                .select('_id channel_id created_at createdAt text file_url file_name file_type sender_id')
+                .lean(),
+            DirectMessage.find({
+                $or: [
+                    { sender_id: user._id },
+                    { receiver_id: user._id }
+                ]
+            })
+                .populate('sender_id', 'name')
+                .populate('receiver_id', 'name')
+                .populate('project_id', 'title')
+                .sort({ created_at: 1, createdAt: 1 })
+                .lean()
+        ]);
+
+        const channelIds = [...new Set(channelSeedMessages.map((message) => message.channel_id?.toString()).filter(Boolean))];
+        const channelObjectIds = channelIds.map((value) => toObjectId(value)).filter(Boolean);
+        const directConversationKeys = new Set(
+            directMessages
+                .map((message) => {
+                    const senderId = String(message.sender_id?._id || '');
+                    const receiverId = String(message.receiver_id?._id || '');
+                    if (senderId !== targetUserId && receiverId !== targetUserId) return '';
+                    const otherUserId = senderId === targetUserId ? receiverId : senderId;
+                    if (!otherUserId) return '';
+                    return `${String(message.project_id?._id || message.project_id || '')}:${otherUserId}`;
+                })
+                .filter(Boolean)
+        );
+
+        const [channelDocs, channelMessages] = await Promise.all([
+            channelObjectIds.length > 0
+                ? Channel.find({ _id: { $in: channelObjectIds } })
+                    .populate('project_id', 'title')
+                    .lean()
+                : Promise.resolve([]),
+            channelObjectIds.length > 0
+                ? Message.find({ channel_id: { $in: channelObjectIds } })
+                    .populate('sender_id', 'name')
+                    .populate('channel_id', 'name project_id')
+                    .sort({ created_at: 1, createdAt: 1 })
+                    .lean()
+                : Promise.resolve([])
+        ]);
+
+        const channelMap = new Map(channelDocs.map((channel) => [String(channel._id), channel]));
+        const channelConversationMap = new Map();
+
+        for (const message of channelMessages) {
+            const channelId = String(message.channel_id?._id || message.channel_id || '');
+            if (!channelId) continue;
+
+            if (!channelConversationMap.has(channelId)) {
+                const channelDoc = channelMap.get(channelId);
+                channelConversationMap.set(channelId, {
+                    id: `channel:${channelId}`,
+                    type: 'channel',
+                    title: `#${message.channel_id?.name || channelDoc?.name || 'channel'}`,
+                    projectTitle: message.channel_id?.project_id?.title || channelDoc?.project_id?.title || 'Unknown project',
+                    participants: [user.name || user.email || 'User'],
+                    lastActivity: message.created_at || message.createdAt || null,
+                    lastMessage: message.text || message.file_name || 'Attachment',
+                    messages: []
+                });
+            }
+
+            const conversation = channelConversationMap.get(channelId);
+            conversation.messages.push(formatAdminChatMessage(message, targetUserId));
+            conversation.lastActivity = message.created_at || message.createdAt || conversation.lastActivity;
+            conversation.lastMessage = message.text || message.file_name || 'Attachment';
+        }
+
+        const directConversationMap = new Map();
+
+        for (const message of directMessages) {
+            const senderId = String(message.sender_id?._id || '');
+            const receiverId = String(message.receiver_id?._id || '');
+            const otherUser = senderId === targetUserId ? message.receiver_id : message.sender_id;
+            const otherUserId = senderId === targetUserId ? receiverId : senderId;
+            const projectId = String(message.project_id?._id || message.project_id || '');
+            const conversationKey = `${projectId}:${otherUserId}`;
+
+            if (!directConversationKeys.has(conversationKey)) continue;
+
+            if (!directConversationMap.has(conversationKey)) {
+                directConversationMap.set(conversationKey, {
+                    id: `dm:${conversationKey}`,
+                    type: 'direct',
+                    title: `DM with ${otherUser?.name || 'Unknown user'}`,
+                    projectTitle: message.project_id?.title || 'Unknown project',
+                    participants: [user.name || user.email || 'User', otherUser?.name || 'Unknown user'],
+                    lastActivity: message.created_at || message.createdAt || null,
+                    lastMessage: message.text || message.file_name || 'Attachment',
+                    messages: []
+                });
+            }
+
+            const conversation = directConversationMap.get(conversationKey);
+            conversation.messages.push(formatAdminChatMessage(message, targetUserId));
+            conversation.lastActivity = message.created_at || message.createdAt || conversation.lastActivity;
+            conversation.lastMessage = message.text || message.file_name || 'Attachment';
+        }
+
+        const conversations = [...channelConversationMap.values(), ...directConversationMap.values()]
+            .sort((left, right) => new Date(right.lastActivity || 0) - new Date(left.lastActivity || 0))
+            .map((conversation) => ({
+                ...conversation,
+                messageCount: conversation.messages.length,
+                lastActivityLabel: formatAdminConversationTime(conversation.lastActivity)
+            }));
+
+        const totalMessages = conversations.reduce((sum, conversation) => sum + conversation.messages.length, 0);
+        const channelMessagesCount = conversations
+            .filter((conversation) => conversation.type === 'channel')
+            .reduce((sum, conversation) => sum + conversation.messages.length, 0);
+        const directMessagesCount = conversations
+            .filter((conversation) => conversation.type === 'direct')
+            .reduce((sum, conversation) => sum + conversation.messages.length, 0);
+        const messagesToday = conversations.reduce((sum, conversation) => {
+            return sum + conversation.messages.filter((message) => new Date(message.createdAt).toDateString() === todayKey).length;
+        }, 0);
+
+        res.json({
+            success: true,
+            query: username,
+            user: {
+                id: targetUserId,
+                name: user.name,
+                email: user.email || '',
+                role: user.role || 'user'
+            },
+            userMatches: userCandidatesSorted.map((candidate) => ({
+                id: String(candidate._id),
+                name: candidate.name,
+                email: candidate.email || '',
+                role: candidate.role || 'user'
+            })),
+            conversations,
             stats: {
-                totalConversations: 0,
+                totalConversations: conversations.length,
+                totalMessages,
+                channelMessages: channelMessagesCount,
+                directMessages: directMessagesCount,
+                messagesToday,
                 flaggedConversations: 0,
-                messagesToday: 0,
                 responseRate: 0
             }
-        };
-        
-        res.json(messagesData);
+        });
     } catch (err) {
         console.error("Error fetching messages data:", err.message);
         res.status(500).json({ error: "Server Error" });
