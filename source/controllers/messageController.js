@@ -161,7 +161,7 @@ const getChannelMessages = async (req, res) => {
         const formattedMessages = messages.map(msg => ({
             _id: msg._id,
             author: msg.sender_id.name,
-            senderId: msg.sender_id._id,
+            senderId: msg.sender_id._id.toString(),
             text: msg.text,
             file_url: msg.file_url,
             file_name: msg.file_name,
@@ -237,7 +237,7 @@ const sendChannelMessage = async (req, res) => {
         const formattedMessage = {
             _id: populatedMessage._id,
             author: populatedMessage.sender_id.name,
-            senderId: populatedMessage.sender_id._id,
+            senderId: populatedMessage.sender_id._id.toString(),
             text: populatedMessage.text,
             file_url: populatedMessage.file_url,
             file_name: populatedMessage.file_name,
@@ -249,6 +249,18 @@ const sendChannelMessage = async (req, res) => {
                 hour12: true 
             })
         };
+
+        const io = req.app?.get('io');
+        if (io) {
+            io.to(`channel:${channelId}`).emit('channel:newMessage', { channelId, message: formattedMessage });
+            if (messageData.project_id) {
+                io.to(`project:${messageData.project_id.toString()}`).emit('channel:notify', {
+                    projectId: messageData.project_id.toString(),
+                    channelId,
+                    message: formattedMessage
+                });
+            }
+        }
 
         res.json({ success: true, message: formattedMessage });
     } catch (error) {
@@ -376,6 +388,23 @@ const sendDirectMessage = async (req, res) => {
                 hour12: true 
             })
         };
+
+        const io = req.app?.get('io');
+        if (io) {
+            const [a, b] = [userId.toString(), otherUserId.toString()].sort();
+            io.to(`dm:${projectId}:${a}:${b}`).emit('dm:newMessage', { projectId, otherUserId, message: formattedMessage });
+
+            io.to(`user:${otherUserId.toString()}`).emit('dm:notify', {
+                projectId: projectId.toString(),
+                fromUserId: userId.toString(),
+                message: formattedMessage
+            });
+            io.to(`user:${userId.toString()}`).emit('dm:notify', {
+                projectId: projectId.toString(),
+                fromUserId: userId.toString(),
+                message: formattedMessage
+            });
+        }
 
         res.json({ success: true, message: formattedMessage });
     } catch (error) {
@@ -751,26 +780,6 @@ const getPinnedMessages = async (req, res) => {
     }
 };
 
-// Update online status
-const updateOnlineStatus = async (req, res) => {
-    try {
-        if (!req.session.user) {
-            return res.status(401).json({ success: false, error: 'Not authenticated' });
-        }
-        const userId = req.session.user.id;
-        const { projectId } = req.params;
-
-        // Update user's last active time for this project
-        // In a real app, you'd use Redis or a similar cache for this
-        // For now, we'll just send back success and handle it client-side
-        
-        res.json({ success: true, timestamp: new Date() });
-    } catch (error) {
-        console.error('Error updating online status:', error);
-        res.status(500).json({ success: false, error: 'Failed to update status' });
-    }
-};
-
 module.exports = {
     getUserProjects,
     getProjectChannels,
@@ -785,7 +794,6 @@ module.exports = {
     markDMAsRead,
     searchChannelMessages,
     togglePinMessage,
-    getPinnedMessages,
-    updateOnlineStatus
+    getPinnedMessages
 };
 

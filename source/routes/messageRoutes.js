@@ -47,7 +47,4 @@ router.post('/messages/:messageId/pin', messageController.togglePinMessage);
 // Get pinned messages for a channel
 router.get('/channels/:channelId/pinned', messageController.getPinnedMessages);
 
-// Update online status
-router.post('/projects/:projectId/online-status', messageController.updateOnlineStatus);
-
 module.exports = router;

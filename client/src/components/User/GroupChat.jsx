@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 import NavBar from './NavBar.jsx';
 import '../../styles/GroupChat.css';
@@ -14,7 +15,10 @@ const GroupChat = () => {
     const [projects, setProjects] = useState([]);
     const [channels, setChannels] = useState([]);
     const [users, setUsers] = useState([]);
-    const currentUserId = user?.id; // Get current user ID from auth
+    const currentUserId = user?.id || user?._id; // Get current user ID from auth
+
+    const [unreadChannels, setUnreadChannels] = useState({});
+    const [unreadDMs, setUnreadDMs] = useState({});
     
     // Channel messages state
     const [messages, setMessages] = useState([]);
@@ -36,11 +40,22 @@ const GroupChat = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [showSearchResults, setShowSearchResults] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState('');
+    const searchSeqRef = useRef(0);
 
     // Ref for scrolling to bottom
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const prevMessagesLength = useRef(0);
+
+    const socketRef = useRef(null);
+    const activeProjectRef = useRef(null);
+    const isDMRef = useRef(false);
+    const currentChannelIdRef = useRef(null);
+    const currentDmUserRef = useRef(null);
+    const onlineUserIdsRef = useRef(new Set());
+    const currentUserIdRef = useRef(null);
 
     // Only scroll to bottom when NEW messages are added (not on initial load or channel switch)
     useEffect(() => {
@@ -59,65 +74,210 @@ const GroupChat = () => {
         prevMessagesLength.current = currentLength;
     }, [messages, directMessages]);
 
+    useEffect(() => {
+        currentChannelIdRef.current = currentChannelId;
+    }, [currentChannelId]);
+
+    useEffect(() => {
+        currentDmUserRef.current = currentDmUser;
+    }, [currentDmUser]);
+
+    useEffect(() => {
+        activeProjectRef.current = activeProject;
+    }, [activeProject]);
+
+    useEffect(() => {
+        isDMRef.current = isDM;
+    }, [isDM]);
+
+    useEffect(() => {
+        currentUserIdRef.current = currentUserId;
+    }, [currentUserId]);
+
+    const appendUnique = (prev, msg) => {
+        if (!msg) return prev;
+        if (!msg._id) return [...prev, msg];
+        return prev.some(m => m?._id === msg._id) ? prev : [...prev, msg];
+    };
+
+    useEffect(() => {
+        const socket = io('http://localhost:5000', {
+            withCredentials: true,
+            transports: ['websocket']
+        });
+
+        socketRef.current = socket;
+
+        socket.on('presence:update', ({ projectId: pid, onlineUserIds } = {}) => {
+            if (!pid || pid !== activeProjectRef.current) return;
+            const onlineSet = new Set((onlineUserIds || []).map(String));
+            onlineUserIdsRef.current = onlineSet;
+            setUsers(prev => prev.map(u => ({ ...u, online: onlineSet.has(String(u.id)) })));
+        });
+
+        socket.on('channel:newMessage', ({ channelId, message } = {}) => {
+            if (!channelId || channelId !== currentChannelIdRef.current) return;
+            setMessages(prev => appendUnique(prev, message));
+        });
+
+        socket.on('channel:notify', ({ projectId: pid, channelId, message } = {}) => {
+            if (!pid || pid !== activeProjectRef.current || !channelId) return;
+
+            const senderId = message?.senderId ? String(message.senderId) : '';
+            if (senderId && senderId === String(currentUserIdRef.current || '')) return;
+
+            if (!isDMRef.current && currentChannelIdRef.current === channelId) return;
+
+            setUnreadChannels(prev => ({
+                ...prev,
+                [channelId]: (prev?.[channelId] || 0) + 1
+            }));
+        });
+
+        socket.on('dm:newMessage', ({ message } = {}) => {
+            if (!isDMRef.current || !currentDmUserRef.current) return;
+            setDirectMessages(prev => appendUnique(prev, message));
+        });
+
+        socket.on('dm:notify', ({ projectId: pid, fromUserId, message } = {}) => {
+            if (!pid || pid !== activeProjectRef.current) return;
+
+            const fromId = String(fromUserId || message?.from || '');
+            if (!fromId) return;
+            if (fromId === String(currentUserIdRef.current || '')) return;
+
+            if (isDMRef.current && String(currentDmUserRef.current || '') === fromId) return;
+
+            setUnreadDMs(prev => ({
+                ...prev,
+                [fromId]: (prev?.[fromId] || 0) + 1
+            }));
+        });
+
+        socket.on('project:channelCreated', ({ projectId: pid, channel } = {}) => {
+            if (!pid || pid !== activeProjectRef.current || !channel?._id) return;
+            setChannels(prev => (prev.some(c => c?._id === channel._id) ? prev : [...prev, channel]));
+        });
+
+        return () => {
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        const socket = socketRef.current;
+        if (!socket || !activeProject) return;
+
+        socket.emit('join:project', { projectId: activeProject });
+
+        return () => {
+            socket.emit('leave:project', { projectId: activeProject });
+        };
+    }, [activeProject]);
+
+    useEffect(() => {
+        const socket = socketRef.current;
+        if (!socket || !currentChannelId || isDM) return;
+
+        socket.emit('join:channel', { channelId: currentChannelId });
+        return () => {
+            socket.emit('leave:channel', { channelId: currentChannelId });
+        };
+    }, [currentChannelId, isDM]);
+
+    useEffect(() => {
+        const socket = socketRef.current;
+        if (!socket || !activeProject || !isDM || !currentDmUser) return;
+
+        socket.emit('join:dm', { projectId: activeProject, otherUserId: currentDmUser });
+        return () => {
+            socket.emit('leave:dm', { projectId: activeProject, otherUserId: currentDmUser });
+        };
+    }, [activeProject, isDM, currentDmUser]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const emitAck = (event, payload) => {
+        const socket = socketRef.current;
+        return new Promise((resolve) => {
+            if (!socket?.connected) return resolve({ success: false, error: 'WebSocket disconnected' });
+            socket.emit(event, payload, (ack) => resolve(ack || { success: false }));
+        });
+    };
+
     // Fetch user's projects on mount
     useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                const response = await axios.get('/api/messages/projects');
-                if (response.data.success) {
-                    setProjects(response.data.projects);
-                    
-                    // If projectId is in URL, use that; otherwise use first project
-                    const initialProject = projectId 
-                        ? response.data.projects.find(p => p._id === projectId)
-                        : response.data.projects[0];
-                    
-                    if (initialProject) {
-                        setActiveProject(initialProject._id);
-                        loadProjectData(initialProject._id);
-                    } else {
-                        setLoading(false);
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching projects:', error);
+        let cancelled = false;
+
+        const run = async () => {
+            setLoading(true);
+            const ack = await emitAck('fetch:projects', {});
+            if (cancelled) return;
+            if (!ack?.success) {
+                console.error('Error fetching projects:', ack?.error);
+                setLoading(false);
+                return;
+            }
+
+            setProjects(ack.projects || []);
+
+            const initialProject = projectId
+                ? (ack.projects || []).find(p => p._id === projectId)
+                : (ack.projects || [])[0];
+
+            if (initialProject?._id) {
+                setActiveProject(initialProject._id);
+                loadProjectData(initialProject._id);
+            } else {
                 setLoading(false);
             }
         };
-        
-        fetchProjects();
+
+        const socket = socketRef.current;
+        if (socket?.connected) run();
+        else socket?.once('connect', run);
+
+        return () => {
+            cancelled = true;
+            socket?.off('connect', run);
+        };
     }, [projectId]);
 
     // Load channels and members for a project
     const loadProjectData = async (projId) => {
         try {
             setLoading(true);
-            
-            // Fetch channels
-            const channelsResponse = await axios.get(`/api/messages/projects/${projId}/channels`);
-            if (channelsResponse.data.success) {
-                setChannels(channelsResponse.data.channels);
-                
-                // Select first channel by default
-                if (channelsResponse.data.channels.length > 0) {
-                    const firstChannel = channelsResponse.data.channels[0];
+            const [channelsAck, membersAck] = await Promise.all([
+                emitAck('fetch:channels', { projectId: projId }),
+                emitAck('fetch:members', { projectId: projId })
+            ]);
+
+            if (channelsAck?.success) {
+                setChannels(channelsAck.channels || []);
+
+                if ((channelsAck.channels || []).length > 0) {
+                    const firstChannel = channelsAck.channels[0];
                     setCurrentChannel(firstChannel.name);
                     setCurrentChannelId(firstChannel._id);
                     loadChannelMessages(firstChannel._id);
                 }
             }
-            
-            // Fetch members
-            const membersResponse = await axios.get(`/api/messages/projects/${projId}/members`);
-            if (membersResponse.data.success) {
-                const membersList = membersResponse.data.members;
-                setUsers(membersList);
+
+            if (membersAck?.success) {
+                const onlineSet = new Set((membersAck.onlineUserIds || []).map(String));
+                onlineUserIdsRef.current = onlineSet;
+                setUsers((membersAck.members || []).map(u => ({ ...u, online: onlineSet.has(String(u.id)) })));
             }
-            
+
+            const unreadAck = await emitAck('fetch:unreadCounts', { projectId: projId });
+            if (unreadAck?.success) {
+                setUnreadChannels(unreadAck.channelUnread || {});
+                setUnreadDMs(unreadAck.dmUnread || {});
+            }
+
             setLoading(false);
         } catch (error) {
             console.error('Error loading project data:', error);
@@ -128,12 +288,11 @@ const GroupChat = () => {
     // Load messages for a channel
     const loadChannelMessages = async (channelId) => {
         try {
-            const response = await axios.get(`/api/messages/channels/${channelId}/messages`);
-            if (response.data.success) {
-                setMessages(response.data.messages);
-                
-                // Mark as read
-                await axios.post(`/api/messages/channels/${channelId}/mark-read`);
+            const ack = await emitAck('fetch:channelMessages', { channelId });
+            if (ack?.success) {
+                setMessages(ack.messages || []);
+                await emitAck('mark:channelRead', { channelId });
+                setUnreadChannels(prev => ({ ...prev, [channelId]: 0 }));
             }
         } catch (error) {
             console.error('Error loading channel messages:', error);
@@ -143,24 +302,15 @@ const GroupChat = () => {
     // Load direct messages between users
     const loadDirectMessages = async (projId, otherUserId) => {
         try {
-            const response = await axios.get(`/api/messages/projects/${projId}/direct-messages/${otherUserId}`);
-            if (response.data.success) {
-                setDirectMessages(response.data.messages);
-                // Mark as read
-                await axios.post(`/api/messages/projects/${projId}/direct-messages/${otherUserId}/mark-read`);
+            const ack = await emitAck('fetch:directMessages', { projectId: projId, otherUserId });
+            if (ack?.success) {
+                setDirectMessages(ack.messages || []);
+                await emitAck('mark:dmRead', { projectId: projId, otherUserId });
+                setUnreadDMs(prev => ({ ...prev, [otherUserId]: 0 }));
             }
         } catch (error) {
             console.error('Error loading direct messages:', error);
         }
-    };
-
-    // Get current time formatted
-    const getCurrentTime = () => {
-        return new Date().toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-        });
     };
 
     // Handle sending a message
@@ -171,18 +321,46 @@ const GroupChat = () => {
 
         try {
             if (isDM && currentDmUser) {
-                // Send direct message
-                const response = await axios.post(
-                    `/api/messages/projects/${activeProject}/direct-messages/${currentDmUser}`,
-                    { text: trimmedMessage }
-                );
-                
-                if (response.data.success) {
-                    setDirectMessages(prev => [...prev, response.data.message]);
-                    setMessageInput('');
+                const socket = socketRef.current;
+                if (!socket?.connected) {
+                    alert('WebSocket disconnected. Please refresh and try again.');
+                    return;
                 }
+
+                socket.emit(
+                    'send:directMessage',
+                    { projectId: activeProject, otherUserId: currentDmUser, text: trimmedMessage },
+                    (ack) => {
+                        if (ack?.success) {
+                            setMessageInput('');
+                        } else {
+                            alert(ack?.error || 'Failed to send message');
+                        }
+                    }
+                );
             } else if (currentChannelId) {
-                // Send channel message with file
+                const socket = socketRef.current;
+
+                if (!socket?.connected) {
+                    alert('WebSocket disconnected. Please refresh and try again.');
+                    return;
+                }
+
+                if (!selectedFile) {
+                    socket.emit(
+                        'send:channelMessage',
+                        { channelId: currentChannelId, text: trimmedMessage },
+                        (ack) => {
+                            if (ack?.success) {
+                                setMessageInput('');
+                            } else {
+                                alert(ack?.error || 'Failed to send message');
+                            }
+                        }
+                    );
+                    return;
+                }
+
                 const formData = new FormData();
                 if (trimmedMessage) {
                     formData.append('text', trimmedMessage);
@@ -202,7 +380,6 @@ const GroupChat = () => {
                 );
                 
                 if (response.data.success) {
-                    setMessages(prev => [...prev, response.data.message]);
                     setMessageInput('');
                     setSelectedFile(null);
                 }
@@ -234,6 +411,10 @@ const GroupChat = () => {
         setCurrentDmUser(null);
         setSearchQuery('');
         setShowSearchResults(false);
+        setSearchResults([]);
+        setSearchLoading(false);
+        setSearchError('');
+        setUnreadChannels(prev => ({ ...prev, [channel._id]: 0 }));
         loadChannelMessages(channel._id);
     };
 
@@ -245,49 +426,79 @@ const GroupChat = () => {
         setCurrentChannelId(null);
         setSearchQuery('');
         setShowSearchResults(false);
+        setSearchResults([]);
+        setSearchLoading(false);
+        setSearchError('');
+        setUnreadDMs(prev => ({ ...prev, [userId]: 0 }));
         loadDirectMessages(activeProject, userId);
     };
     
     // Search messages
     const handleSearch = async (query) => {
+        const seq = ++searchSeqRef.current;
         setSearchQuery(query);
-        if (!query.trim() || !currentChannelId || isDM) {
+        if (!query.trim()) {
             setShowSearchResults(false);
             setSearchResults([]);
+            setSearchLoading(false);
+            setSearchError('');
             return;
         }
-        //for web soc transfer here and below /api routes convert them
-        try {
-            const response = await axios.get(
-                `/api/messages/channels/${currentChannelId}/search`,
-                { params: { query: query.trim() } }
-            );
-            if (response.data.success) {
-                setSearchResults(response.data.messages);
-                setShowSearchResults(true);
+
+        setShowSearchResults(true);
+        setSearchLoading(true);
+        setSearchError('');
+        setSearchResults([]);
+
+        if (isDM) {
+            if (!activeProject || !currentDmUser) {
+                if (seq !== searchSeqRef.current) return;
+                setSearchLoading(false);
+                setSearchError('Open a DM to search.');
+                return;
             }
+
+            try {
+                const ack = await emitAck('search:directMessages', {
+                    projectId: activeProject,
+                    otherUserId: currentDmUser,
+                    query: query.trim()
+                });
+                if (seq !== searchSeqRef.current) return;
+                if (ack?.success) setSearchResults(ack.messages || []);
+                else setSearchError(ack?.error || 'Search failed');
+                setSearchLoading(false);
+            } catch (error) {
+                if (seq !== searchSeqRef.current) return;
+                console.error('Error searching direct messages:', error);
+                setSearchError('Search failed');
+                setSearchLoading(false);
+            }
+
+            return;
+        }
+
+        if (!currentChannelId) {
+            if (seq !== searchSeqRef.current) return;
+            setSearchLoading(false);
+            setSearchError('Open a channel to search.');
+            return;
+        }
+        try {
+            const ack = await emitAck('search:channelMessages', { channelId: currentChannelId, query: query.trim() });
+            if (seq !== searchSeqRef.current) return;
+            if (ack?.success) setSearchResults(ack.messages || []);
+            else setSearchError(ack?.error || 'Search failed');
+            setSearchLoading(false);
         } catch (error) {
+            if (seq !== searchSeqRef.current) return;
             console.error('Error searching messages:', error);
+            setSearchError('Search failed');
+            setSearchLoading(false);
         }
     };
     
-    // Update online status periodically
-    useEffect(() => {
-        if (!activeProject) return;
-        
-        const updateStatus = async () => {
-            try {
-                await axios.post(`/api/messages/projects/${activeProject}/online-status`);
-            } catch (error) {
-                console.error('Error updating online status:', error);
-            }
-        };
-        
-        updateStatus();
-        const interval = setInterval(updateStatus, 30000); // Every 30 seconds
-        
-        return () => clearInterval(interval);
-    }, [activeProject]);
+    // Online status is handled via websockets now
 
     // Switch project
     const switchProject = (projId) => {
@@ -298,6 +509,8 @@ const GroupChat = () => {
         setCurrentChannelId(null);
         setMessages([]);
         setDirectMessages([]);
+        setUnreadChannels({});
+        setUnreadDMs({});
         navigate(`/group-chat/${projId}`);
         loadProjectData(projId);
     };
@@ -310,17 +523,16 @@ const GroupChat = () => {
         }
 
         try {
-            const response = await axios.post(
-                `/api/messages/projects/${activeProject}/channels`,
-                { channelName: newChannelName.trim() }
-            );
-            
-            if (response.data.success) {
-                setChannels(prev => [...prev, response.data.channel]);
+            const ack = await emitAck('create:channel', { projectId: activeProject, channelName: newChannelName.trim() });
+            if (ack?.success) {
+                setChannels(prev => [...prev, ack.channel]);
+                if (ack.channel?._id) {
+                    setUnreadChannels(prev => ({ ...prev, [ack.channel._id]: 0 }));
+                }
                 setNewChannelName('');
                 setShowChannelInput(false);
             } else {
-                alert(response.data.error || 'Failed to create channel');
+                alert(ack?.error || 'Failed to create channel');
             }
         } catch (error) {
             console.error('Error creating channel:', error);
@@ -473,7 +685,7 @@ const GroupChat = () => {
                                 className={`channel ${!isDM && currentChannelId === channel._id ? 'active' : ''}`}
                                 onClick={() => switchToChannel(channel)}
                             >
-                                # {channel.name}
+                                # {unreadChannels?.[channel._id] > 0 ? `(${unreadChannels[channel._id]}) ` : ''}{channel.name}
                             </div>
                         ))}
                     </div>
@@ -492,7 +704,7 @@ const GroupChat = () => {
                                 <div className="user-avatar">
                                     {user.username.charAt(0)}
                                 </div>
-                                <span>{user.username}</span>
+                                <span>{unreadDMs?.[user.id] > 0 ? `(${unreadDMs[user.id]}) ` : ''}{user.username}</span>
                                 <span className={`user-status ${user.online ? '' : 'offline'}`}></span>
                             </div>
                         ))}
@@ -510,26 +722,22 @@ const GroupChat = () => {
                         </div>
                         
                         <div className="chat-header-actions">
-                            {!isDM && (
-                                <>
-                                    {/* Search */}
-                                    <div className="search-container">
-                                        <input
-                                            type="text"
-                                            className="search-input"
-                                            placeholder="Search messages..."
-                                            value={searchQuery}
-                                            onChange={(e) => handleSearch(e.target.value)}
-                                        />
-                                        <span className="search-icon">⌕</span>
-                                    </div>
-                                </>
-                            )}
+                            {/* Search */}
+                            <div className="search-container">
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Search messages..."
+                                    value={searchQuery}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                />
+                                <span className="search-icon">⌕</span>
+                            </div>
                         </div>
                     </div>
                     
                     {/* Search Results */}
-                    {showSearchResults && searchResults.length > 0 && (
+                    {showSearchResults && (
                         <div className="search-results-panel">
                             <div className="search-results-header">
                                 <h4>Search Results ({searchResults.length})</h4>
@@ -538,60 +746,86 @@ const GroupChat = () => {
                                     onClick={() => {
                                         setShowSearchResults(false);
                                         setSearchQuery('');
+                                        setSearchResults([]);
+                                        setSearchLoading(false);
+                                        setSearchError('');
                                     }}
                                 >
                                     ✕
                                 </button>
                             </div>
-                            {searchResults.map(msg => (
-                                <div key={msg._id} className="search-result-item">
-                                    <div>
-                                        <span className="search-result-author">{msg.author}</span>
-                                        <span className="search-result-time">{msg.time}</span>
-                                    </div>
-                                    <div className="search-result-text">{msg.text}</div>
+                            {searchLoading ? (
+                                <div className="search-result-item">
+                                    <div className="search-result-text">Searching…</div>
                                 </div>
-                            ))}
+                            ) : searchError ? (
+                                <div className="search-result-item">
+                                    <div className="search-result-text">{searchError}</div>
+                                </div>
+                            ) : searchResults.length === 0 ? (
+                                <div className="search-result-item">
+                                    <div className="search-result-text">No results</div>
+                                </div>
+                            ) : (
+                                searchResults.map(msg => (
+                                    <div key={msg._id} className="search-result-item">
+                                        <div>
+                                            <span className="search-result-author">{msg.author}</span>
+                                            <span className="search-result-time">{msg.time}</span>
+                                        </div>
+                                        <div className="search-result-text">{msg.text}</div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     )}
 
                     <div className="messages-container" ref={messagesContainerRef}>
                         {getCurrentMessages().length > 0 ? (
-                            getCurrentMessages().map((message, index) => (
-                                <div className="message" key={message._id || index}>
-                                    <div className="message-avatar">
-                                        {message.author.charAt(0)}
-                                    </div>
-                                    <div className="message-content">
-                                        <div className="message-header">
-                                            <span className="message-author">{message.author}</span>
-                                            <span className="message-time">{message.time}</span>
-                                        </div>
-                                        {message.text && <div className="message-text">{message.text}</div>}
-                                        {message.file_url && (
-                                            <div className="message-file">
-                                                {message.file_type?.startsWith('image/') ? (
-                                                    <img 
-                                                        src={message.file_url} 
-                                                        alt={message.file_name}
-                                                        className="message-image"
-                                                        onClick={() => window.open(message.file_url, '_blank')}
-                                                    />
-                                                ) : (
-                                                    <a 
-                                                        href={message.file_url} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="message-file-link"
-                                                    >
-                                                        📎 {message.file_name}
-                                                    </a>
-                                                )}
+                            getCurrentMessages().map((message, index) => {
+                                const me = String(currentUserId || '');
+                                const fromId = isDM
+                                    ? String(message?.from || '')
+                                    : String(message?.senderId || '');
+                                const isMine = !!me && !!fromId && fromId === me;
+                                const authorLabel = isMine ? 'You' : (message?.author || '');
+
+                                return (
+                                    <div className="message" key={message._id || index}>
+                                        <div className="message-content">
+                                            <div className="message-header">
+                                                <div className="message-avatar message-avatar--small">
+                                                    {authorLabel ? authorLabel.charAt(0) : '?'}
+                                                </div>
+                                                <span className="message-author">{authorLabel}</span>
+                                                <span className="message-time">{message.time}</span>
                                             </div>
-                                        )}
+                                            {message.text && <div className="message-text">{message.text}</div>}
+                                            {message.file_url && (
+                                                <div className="message-file">
+                                                    {message.file_type?.startsWith('image/') ? (
+                                                        <img
+                                                            src={message.file_url}
+                                                            alt={message.file_name}
+                                                            className="message-image"
+                                                            onClick={() => window.open(message.file_url, '_blank')}
+                                                        />
+                                                    ) : (
+                                                        <a
+                                                            href={message.file_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="message-file-link"
+                                                        >
+                                                            📎 {message.file_name}
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="no-messages">
                                 <i className="fas fa-comments"></i>
