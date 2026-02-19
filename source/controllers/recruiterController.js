@@ -50,7 +50,9 @@ exports.getRecruiterJobs = async (req, res) => {
         const totalJobs = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: null });
         const totalParticipants = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } });
         const activeJobs = await JobApplication.countDocuments({ posted_by: recruiterId, active: 1, user_id: null });
-        const postedJobs = await JobApplication.find({ posted_by: recruiterId, user_id: null }).lean();
+        const postedJobs = await JobApplication.find({ posted_by: recruiterId, user_id: null })
+            .select('_id job_title company_name salary_range description skills custom_questions active')
+            .lean();
 
         res.json({
             user: req.session.user,
@@ -323,13 +325,19 @@ exports.updateApplicationStatus = async (req, res) => {
 // 8. Create Recruiter Job (POST /create-recruiter-job)
 // =========================================================================
 exports.createRecruiterJob = async (req, res) => {
-    const { jobTitle, description, salaryRange, skills } = req.body;
+    const { jobTitle, companyName, description, salaryRange, skills, customQuestions } = req.body;
     const recruiterId = req.session.user.id;
-    const companyName = req.session.user.name;
-
+    
     try {
         const jobDoc = await JobApplication.create({
-            posted_by: recruiterId, job_title: jobTitle, company_name: companyName, salary_range: salaryRange, description, skills, active: 1
+            posted_by: recruiterId, 
+            job_title: jobTitle, 
+            company_name: companyName, 
+            salary_range: salaryRange, 
+            description, 
+            skills, 
+            custom_questions: customQuestions || [],
+            active: 1
         });
         
         const createdAt = new Date();
