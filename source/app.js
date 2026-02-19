@@ -13,6 +13,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const doubtRoutes = require('./routes/doubtRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Import config and middleware
 const { topics, topicNormalizationMap } = require("./config/constants"); 
@@ -68,6 +69,7 @@ app.use('/api', projectRoutes);
 app.use('/api', doubtRoutes);
 app.use('/api', jobRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 404 handler (API)
 app.use(notFoundHandler);

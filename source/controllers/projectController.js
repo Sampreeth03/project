@@ -285,8 +285,8 @@ exports.createProject = async (req, res, next) => {
     const userId = req.session.user.id;
     
     const userProjectCount = await Project.countDocuments({ user_id: new mongoose.Types.ObjectId(userId) });
-    const paidFlag = req.body && (req.body.paid === true || req.body.paid === 'true' || req.body.paid === '1');
-    if (userProjectCount >= 3 && !paidFlag) {
+    if (userProjectCount >= 6) {
+        // Payment required – frontend must go through /api/payment/create-order → /api/payment/verify
         return res.json({ requirePayment: true });
     }
 

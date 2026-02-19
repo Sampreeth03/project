@@ -165,15 +165,13 @@ const validateProjectCreation = [
     body('topic')
         .trim()
         .notEmpty().withMessage('Project topic is required'),
-    
-    body('difficulty')
-        .trim()
-        .notEmpty().withMessage('Difficulty level is required')
-        .isIn(['beginner', 'intermediate', 'advanced']).withMessage('Invalid difficulty level'),
-    
-    body('team_size')
+
+    body('deadline')
+        .notEmpty().withMessage('Deadline is required'),
+
+    body('capacity')
         .optional()
-        .isInt({ min: 2, max: 10 }).withMessage('Team size must be between 2 and 10'),
+        .isInt({ min: 2, max: 20 }).withMessage('Capacity must be between 2 and 20'),
     
     handleValidationErrors
 ];

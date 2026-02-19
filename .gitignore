@@ -28,5 +28,9 @@ dist-ssr
 *.sw?
 /client/package-lock.json
 /client/package.json
+
+# Environment variables (contains secret API keys)
+.env
+source/.env
 client/package-lock.json
 client/package.json

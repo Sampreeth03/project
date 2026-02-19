@@ -9,6 +9,7 @@ import Navbar from '../User/NavBar.jsx';
 import '../../styles/CreateProjectStyles.css'; // Contains all dedicated form styles
 import '../../styles/ProjectStyles.css'; // Contains the Project Card and Grid styles
 import ProjectForm from './ProjectForm';
+import StripePaymentModal from './StripePaymentModal';
 
 const initialProjectData = {
     title: '', description: '', topic: '', capacity: 3, deadline: '', paid: false
@@ -44,6 +45,7 @@ const CreateProject = () => {
         };
     const [serverMessage, setServerMessage] = useState({ type: null, text: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [paymentModal, setPaymentModal] = useState(null); // { clientSecret, paymentIntentId, publishableKey }
     
     const { formData, validation, isFormValid, updateField, setFormDataDirectly, normalizedString } = useCreateProjectValidation(initialProjectData);
     
@@ -99,8 +101,27 @@ const CreateProject = () => {
         }
     };
 
-    // --- Submission Handler (Retained) ---
-    const handleSubmit = async (e, paidOverride = false) => {
+    // ── Stripe checkout helper ────────────────────────────────────────────────
+    const openStripeCheckout = async () => {
+        setServerMessage({ type: null, text: '' });
+        try {
+            const res = await axios.post('/api/payment/create-order', formData);
+            if (!res.data.success) {
+                setServerMessage({ type: 'error', text: res.data.error || 'Could not create payment.' });
+                return;
+            }
+            setPaymentModal({
+                clientSecret:    res.data.clientSecret,
+                paymentIntentId: res.data.paymentIntentId,
+                publishableKey:  res.data.publishableKey,
+            });
+        } catch {
+            setServerMessage({ type: 'error', text: 'Network error while creating payment.' });
+        }
+    };
+
+    // ── Primary submit handler ─────────────────────────────────────────────────
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setServerMessage({ type: null, text: '' });
 
@@ -109,27 +130,26 @@ const CreateProject = () => {
             return;
         }
 
-        const dataToSend = { ...formData, paid: paidOverride };
-
         try {
-            const response = await axios.post('/api/create-project', dataToSend);
-            const result = response.data;
+            const response = await axios.post('/api/create-project', formData);
+            const result   = response.data;
 
-            if (result.requirePayment && !paidOverride) {
-                const confirmPay = window.confirm('You have reached the free project limit. Pay ₹500 to create more projects? Click OK to pay.');
-                if (confirmPay) { await handleSubmit(e, true); }
+            if (result.requirePayment) {
+                // Limit reached → open Stripe checkout modal
+                await openStripeCheckout();
                 return;
-            } 
-            
+            }
+
             if (result.success) {
                 setServerMessage({ type: 'success', text: 'Project created successfully!' });
                 localStorage.removeItem('projectFormDraft');
-                window.location.reload(); 
+                window.location.reload();
             } else {
                 setServerMessage({ type: 'error', text: result.message || 'Error creating project.' });
             }
-        } catch (error) {
-            setServerMessage({ type: 'error', text: 'Network error or server failure.' });
+        } catch (err) {
+            const msg = err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Network error or server failure.';
+            setServerMessage({ type: 'error', text: msg });
         }
     };
     
@@ -215,6 +235,26 @@ const CreateProject = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Stripe Payment Modal — shown when 4th project requires payment */}
+            {paymentModal && (
+                <StripePaymentModal
+                    clientSecret={paymentModal.clientSecret}
+                    paymentIntentId={paymentModal.paymentIntentId}
+                    publishableKey={paymentModal.publishableKey}
+                    onSuccess={() => {
+                        setPaymentModal(null);
+                        setServerMessage({ type: 'success', text: '✅ Payment successful! Project created.' });
+                        localStorage.removeItem('projectFormDraft');
+                        setTimeout(() => window.location.reload(), 1500);
+                    }}
+                    onError={(msg) => {
+                        setPaymentModal(null);
+                        setServerMessage({ type: 'error', text: msg });
+                    }}
+                    onClose={() => setPaymentModal(null)}
+                />
+            )}
         </>
     );
 };
