@@ -18,12 +18,13 @@ exports.getJobApplyPage = async (req, res) => {
                 { $or: [ { active: true }, { active: 1 } ] },
                 { status: { $ne: 'Rejected' } }
             ]
-        }).select('_id job_title company_name salary_range description skills').lean();
+        }).select('_id job_title company_name salary_range description skills custom_questions').lean();
 
         // --- FIX: Map _id to id for Frontend Access ---
         const formattedJobs = jobs.map(job => ({
             ...job,
-            id: job._id.toString() // Ensure the 'id' property exists for the frontend
+            id: job._id.toString(), // Ensure the 'id' property exists for the frontend
+            custom_questions: job.custom_questions || []
         }));
         // ----------------------------------------------------
 
@@ -60,9 +61,12 @@ exports.getJobApplyPage = async (req, res) => {
 // 2. Submit Job Application (POST /apply-job) 
 // =========================================================================
 exports.applyForJob = async (req, res) => {
-    const { jobId } = req.body;
+    const { jobId, customAnswers } = req.body;
     const userId = req.session.user.id;
-    const resumePath = req.file?.path; 
+    const resumePath = req.file?.path;
+    
+    // Parse custom answers if provided
+    const parsedAnswers = customAnswers ? JSON.parse(customAnswers) : {}; 
 
     // Validation ensures jobId is present (now guaranteed by the hidden input if rendered)
     if (!jobId) {
@@ -87,7 +91,8 @@ exports.applyForJob = async (req, res) => {
 
         await JobApplication.create({
             posted_by: job.posted_by, job_title: job.job_title, company_name: job.company_name, salary_range: job.salary_range,
-            description: job.description, skills: job.skills, user_id: userId, resume_path: resumePath, active: true, date_applied: new Date()
+            description: job.description, skills: job.skills, custom_questions: job.custom_questions || [], 
+            custom_answers: parsedAnswers, user_id: userId, resume_path: resumePath, active: true, date_applied: new Date()
         });
 
         await Notification.create({ user_id: job.posted_by, message: `New application for "${job.job_title}" from ${req.session.user.name}.`, type: 'job_application', is_read: false });

@@ -147,6 +147,10 @@ const validateJobCreation = [
             return true;
         }),
     
+    body('customQuestions')
+        .optional()
+        .isArray().withMessage('Custom questions must be an array'),
+    
     handleValidationErrors
 ];
 
