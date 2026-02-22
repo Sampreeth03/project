@@ -14,6 +14,8 @@ const ProjectsList = () => {
     const [projectData, setProjectData] = useState({ createdProjects: [], availableProjects: [] });
     const [showWelcomeToast, setShowWelcomeToast] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedTopic, setSelectedTopic] = useState('All Topics');
+    const [joinedTopicCounts, setJoinedTopicCounts] = useState({});
 
     // Check if coming from profile completion (welcome param)
     useEffect(() => {
@@ -51,17 +53,37 @@ const ProjectsList = () => {
         // ... (data fetching logic remains the same) ...
         const fetchProjects = async () => {
             try {
-                const response = await axios.get('/api/project'); 
-                
-                if (response.data.success) {
+                const projectsResponse = await axios.get('/api/project');
+
+                if (projectsResponse.data.success) {
                     setProjectData({
-                        createdProjects: response.data.createdProjects,
-                        availableProjects: response.data.availableProjects,
+                        createdProjects: projectsResponse.data.createdProjects,
+                        availableProjects: projectsResponse.data.availableProjects,
                     });
                 } else {
-                    setError(response.data.error || "Failed to load project lists.");
+                    setError(projectsResponse.data.error || "Failed to load project lists.");
+                }
+
+                try {
+                    const joinedResponse = await axios.get('/api/joined-projects');
+                    if (joinedResponse.data?.success) {
+                        const counts = {};
+                        (joinedResponse.data.projects || [])
+                            .filter(p => p?.status === 'approved')
+                            .forEach(p => {
+                                const topic = p?.topic;
+                                if (!topic) return;
+                                counts[topic] = (counts[topic] || 0) + 1;
+                            });
+                        setJoinedTopicCounts(counts);
+                    } else {
+                        setJoinedTopicCounts({});
+                    }
+                } catch {
+                    setJoinedTopicCounts({});
                 }
             } catch (err) {
+                console.error('Error fetching projects:', err);
                 setError("Network error: Could not connect to the project API.");
             } finally {
                 setLoading(false);
@@ -70,6 +92,51 @@ const ProjectsList = () => {
 
         fetchProjects();
     }, []);
+
+    const allTopics = Array.from(
+        new Set(
+            [...projectData.createdProjects, ...projectData.availableProjects]
+                .map(p => p?.topic)
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    const matchesSearch = (project) => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return true;
+        return (
+            project.title?.toLowerCase().includes(query) ||
+            project.description?.toLowerCase().includes(query) ||
+            project.topic?.toLowerCase().includes(query)
+        );
+    };
+
+    const matchesTopic = (project) => {
+        if (selectedTopic === 'All Topics') return true;
+        return project.topic === selectedTopic;
+    };
+
+    const filteredCreatedProjects = projectData.createdProjects.filter(
+        (p) => matchesSearch(p) && matchesTopic(p)
+    );
+
+    const filteredAvailableProjects = projectData.availableProjects.filter(
+        (p) => matchesSearch(p) && matchesTopic(p)
+    );
+
+    const recommendedAvailableProjects = filteredAvailableProjects
+        .filter((p) => (joinedTopicCounts[p.topic] || 0) > 0)
+        .sort((a, b) => {
+            const diff = (joinedTopicCounts[b.topic] || 0) - (joinedTopicCounts[a.topic] || 0);
+            if (diff !== 0) return diff;
+            return (a.title || '').localeCompare(b.title || '');
+        });
+
+    const otherAvailableProjects = filteredAvailableProjects
+        .filter((p) => (joinedTopicCounts[p.topic] || 0) === 0)
+        .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+    const hasRecommendations = recommendedAvailableProjects.length > 0;
 
     if (loading) {
         return (
@@ -93,6 +160,24 @@ const ProjectsList = () => {
         <>
             <Navbar onSearchChange={setSearchQuery} />
             <div className="container" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto', color: 'white' }}>
+
+                <div className="projects-controls">
+                    <label className="topic-filter">
+                        <span className="topic-filter-label">Topic</span>
+                        <select
+                            className="topic-filter-select"
+                            value={selectedTopic}
+                            onChange={(e) => setSelectedTopic(e.target.value)}
+                        >
+                            <option value="All Topics">All Topics</option>
+                            {allTopics.map((topic) => (
+                                <option key={topic} value={topic}>
+                                    {topic}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
                 
                 {/* --- REMOVED: + Create New Project Button/Toggle Logic --- */}
                 
@@ -102,16 +187,7 @@ const ProjectsList = () => {
                 <section className="created-projects" style={{ marginBottom: '40px' }}>
                     {projectData.createdProjects.length > 0 ? (
                         <div className="project-grid">
-                            {projectData.createdProjects
-                                .filter(project => {
-                                    const query = searchQuery.toLowerCase();
-                                    return (
-                                        project.title?.toLowerCase().includes(query) ||
-                                        project.description?.toLowerCase().includes(query) ||
-                                        project.topic?.toLowerCase().includes(query)
-                                    );
-                                })
-                                .map(project => (
+                            {filteredCreatedProjects.map(project => (
                                     <div key={project._id} className="project-card">
                                         <h3>{project.title}</h3>
                                         <p>{project.description}</p>
@@ -121,14 +197,7 @@ const ProjectsList = () => {
                                         </div>
                                     </div>
                                 ))}
-                            {projectData.createdProjects.filter(project => {
-                                const query = searchQuery.toLowerCase();
-                                return (
-                                    project.title?.toLowerCase().includes(query) ||
-                                    project.description?.toLowerCase().includes(query) ||
-                                    project.topic?.toLowerCase().includes(query)
-                                );
-                            }).length === 0 && (
+                            {filteredCreatedProjects.length === 0 && (
                                 <p className="no-projects">No projects match your search.</p>
                             )}
                         </div>
@@ -143,54 +212,79 @@ const ProjectsList = () => {
                 
                 <section className="available-projects">
                     {projectData.availableProjects.length > 0 ? (
-                        <div className="project-grid">
-                            {projectData.availableProjects
-                                .filter(project => {
-                                    const query = searchQuery.toLowerCase();
-                                    return (
-                                        project.title?.toLowerCase().includes(query) ||
-                                        project.description?.toLowerCase().includes(query) ||
-                                        project.topic?.toLowerCase().includes(query)
-                                    );
-                                })
-                                .map(project => (
-                                    <div key={project._id} className="project-card available-project-card">
-                                        <div className="project-content">
-                                            <div className="project-header">
-                                                <h2 className="project-title subtle-title">{project.title}</h2>
+                        <>
+                            {recommendedAvailableProjects.length > 0 && (
+                                <>
+                                    <h2 className="projects-subtitle">Recommended Projects</h2>
+                                    <div className="project-grid" style={{ marginBottom: '20px' }}>
+                                        {recommendedAvailableProjects.map(project => (
+                                            <div key={project._id} className="project-card available-project-card">
+                                                <div className="project-content">
+                                                    <div className="project-header">
+                                                        <h2 className="project-title subtle-title">{project.title}</h2>
+                                                    </div>
+                                                    <p className="project-description subtle-desc">{project.description}</p>
+                                                    <div className="project-meta subtle-meta">
+                                                        <span className="project-members">Members: {project.member_count} / {project.capacity}</span>
+                                                        <span className="project-topic">Topic: {project.topic}</span>
+                                                    </div>
+                                                    <div className="project-actions">
+                                                        <Link to={`/project/${project._id}`} className="btn btn-outline">View Details</Link>
+                                                        <button
+                                                            disabled={project.has_pending_request || project.request_status === 'pending'}
+                                                            className="btn btn-ghost"
+                                                            onClick={() => handleJoinProject(project._id)}
+                                                        >
+                                                            {project.request_status === 'pending' ? 'Request Pending' :
+                                                                project.request_status === 'rejected' ? 'Rejected' :
+                                                                    project.request_status === 'approved' ? 'Approved' :
+                                                                        'Join Project'}
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p className="project-description subtle-desc">{project.description}</p>
-                                            <div className="project-meta subtle-meta">
-                                                <span className="project-members">Members: {project.member_count} / {project.capacity}</span>
-                                                <span className="project-topic">Topic: {project.topic}</span>
-                                            </div>
-                                            <div className="project-actions">
-                                                <Link to={`/project/${project._id}`} className="btn btn-outline">View Details</Link>
-                                                <button
-                                                    disabled={project.has_pending_request || project.request_status === 'pending'}
-                                                    className="btn btn-ghost"
-                                                    onClick={() => handleJoinProject(project._id)}
-                                                >
-                                                    {project.request_status === 'pending' ? 'Request Pending' : 
-                                                     project.request_status === 'rejected' ? 'Rejected' : 
-                                                     project.request_status === 'approved' ? 'Approved' : 
-                                                     'Join Project'}
-                                                </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            <h2 className="projects-subtitle">{hasRecommendations ? 'Other Available Projects' : 'All Available Projects'}</h2>
+                            {otherAvailableProjects.length > 0 ? (
+                                <div className="project-grid">
+                                    {otherAvailableProjects.map(project => (
+                                        <div key={project._id} className="project-card available-project-card">
+                                            <div className="project-content">
+                                                <div className="project-header">
+                                                    <h2 className="project-title subtle-title">{project.title}</h2>
+                                                </div>
+                                                <p className="project-description subtle-desc">{project.description}</p>
+                                                <div className="project-meta subtle-meta">
+                                                    <span className="project-members">Members: {project.member_count} / {project.capacity}</span>
+                                                    <span className="project-topic">Topic: {project.topic}</span>
+                                                </div>
+                                                <div className="project-actions">
+                                                    <Link to={`/project/${project._id}`} className="btn btn-outline">View Details</Link>
+                                                    <button
+                                                        disabled={project.has_pending_request || project.request_status === 'pending'}
+                                                        className="btn btn-ghost"
+                                                        onClick={() => handleJoinProject(project._id)}
+                                                    >
+                                                        {project.request_status === 'pending' ? 'Request Pending' :
+                                                            project.request_status === 'rejected' ? 'Rejected' :
+                                                                project.request_status === 'approved' ? 'Approved' :
+                                                                    'Join Project'}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            {projectData.availableProjects.filter(project => {
-                                const query = searchQuery.toLowerCase();
-                                return (
-                                    project.title?.toLowerCase().includes(query) ||
-                                    project.description?.toLowerCase().includes(query) ||
-                                    project.topic?.toLowerCase().includes(query)
-                                );
-                            }).length === 0 && (
-                                <p className="no-projects">No projects match your search.</p>
+                                    ))}
+                                </div>
+                            ) : (
+                                !hasRecommendations && (
+                                    <p className="no-projects">No projects match your search.</p>
+                                )
                             )}
-                        </div>
+                        </>
                     ) : (
                         <p className="no-projects">No available projects to join.</p>
                     )}

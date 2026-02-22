@@ -89,6 +89,44 @@ body {
     border-radius: 2px;
 }
 
+.projects-subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 6px 0 14px;
+    color: var(--light-text);
+}
+
+.projects-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin: 6px 0 18px;
+}
+
+.topic-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topic-filter-label {
+    color: var(--medium-text);
+    font-size: 14px;
+}
+
+.topic-filter-select {
+    background: transparent;
+    color: var(--light-text);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 14px;
+    outline: none;
+}
+
+.topic-filter-select:focus {
+    border-color: var(--primary-color);
+}
+
 /* --- Project Card Styling (Lists) --- */
 .project-grid {
     display: grid;

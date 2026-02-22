@@ -117,11 +117,26 @@ exports.getJoinedProjects = async (req, res, next) => {
         });
 
         // Format combined list for React
-        const formattedProjects = projects.map(project => ({ id: project._id, title: project.title, description: project.description, member_count: project.member_count, status: 'approved', requestId: null }));
-        const pendingProjects = pendingRequests.filter(req => req.project_id).map(request => ({
-            id: request.project_id._id, title: request.project_id.title, description: request.project_id.description,
-            member_count: 0, status: 'pending', requestId: request._id.toString()
+        const formattedProjects = projects.map(project => ({
+            id: project._id,
+            title: project.title,
+            description: project.description,
+            topic: project.topic,
+            member_count: project.member_count,
+            status: 'approved',
+            requestId: null
         }));
+        const pendingProjects = pendingRequests
+            .filter(req => req.project_id)
+            .map(request => ({
+                id: request.project_id._id,
+                title: request.project_id.title,
+                description: request.project_id.description,
+                topic: request.project_id.topic,
+                member_count: 0,
+                status: 'pending',
+                requestId: request._id.toString()
+            }));
 
         // Return JSON payload (SUCCESS)
         res.json({

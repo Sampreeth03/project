@@ -10,6 +10,7 @@ const JoinedProjects = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [joinedData, setJoinedData] = useState({ projects: [], tasksByProject: {} });
+    const [selectedTopic, setSelectedTopic] = useState('All Topics');
 
     useEffect(() => {
         const fetchJoinedProjects = async () => {
@@ -26,6 +27,7 @@ const JoinedProjects = () => {
                     setError(response.data.error || "Failed to load joined projects.");
                 }
             } catch (err) {
+                console.error('Error fetching joined projects:', err);
                 setError("Network error: Could not connect to the joined projects API.");
             } finally {
                 setLoading(false);
@@ -52,6 +54,19 @@ const JoinedProjects = () => {
             </div>
         );
     }
+
+    const topics = Array.from(
+        new Set(
+            (joinedData.projects || [])
+                .map(p => p?.topic)
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    const filteredProjects = (joinedData.projects || []).filter((project) => {
+        if (selectedTopic === 'All Topics') return true;
+        return project.topic === selectedTopic;
+    });
     
     // --- Render Logic (Replaces EJS HTML) ---
     return (
@@ -59,12 +74,32 @@ const JoinedProjects = () => {
             <Navbar />
             <div className="container" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto', color: 'white' }}>
                 <h1 className="projects-title">My Joined Projects & Requests</h1>
+
+                <div className="projects-controls">
+                    <label className="topic-filter">
+                        <span className="topic-filter-label">Topic</span>
+                        <select
+                            className="topic-filter-select"
+                            value={selectedTopic}
+                            onChange={(e) => setSelectedTopic(e.target.value)}
+                        >
+                            <option value="All Topics">All Topics</option>
+                            {topics.map((topic) => (
+                                <option key={topic} value={topic}>
+                                    {topic}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
                 
                 {joinedData.projects.length === 0 ? (
                     <p className="no-projects">You haven't joined any projects yet or have no pending requests.</p>
+                ) : filteredProjects.length === 0 ? (
+                    <p className="no-projects">No joined projects match the selected topic.</p>
                 ) : (
                     <div className="joined-projects-list">
-                        {joinedData.projects.map(project => (
+                        {filteredProjects.map(project => (
                             <div key={project.id} className="project-card">
                                 <h2>
                                     {project.title} 
