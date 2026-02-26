@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './NavBar.jsx';
 import UserProfileModal from '../../components/Recruiter/UserProfileModal';
-import '../../styles/UserHome.css';
+import '../../styles/Friends.css';
 
 const Friends = () => {
   const [query, setQuery] = useState('');
@@ -68,12 +68,13 @@ const Friends = () => {
       setError(null);
       const res = await axios.post('/api/friend-request/send', { toUserId: userId });
       if (res.data.success) {
-        alert('Friend request sent');
-        fetchIncoming();
-      } else alert(res.data.message || 'Failed to send');
+        // Update local results so button immediately shows "Request Sent"
+        setResults(prev => prev.map(u => u._id === userId ? { ...u, requestStatus: 'pending_sent' } : u));
+      } else {
+        setError(res.data.message || 'Failed to send request.');
+      }
     } catch (err) {
       setError('Error sending request.');
-      alert('Error sending request');
     }
   };
 
@@ -95,76 +96,122 @@ const Friends = () => {
   return (
     <>
       <Navbar />
-      <div className="container" style={{ paddingTop: '70px', maxWidth: '900px', margin: '40px auto' }}>
-        <h2>Friends</h2>
-        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-        <div style={{ marginBottom: '20px' }}>
-          <input placeholder="Search people by name or email" value={query} onChange={(e) => setQuery(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: 'white' }} />
-        </div>
+      <div className="friends-page">
+        <div className="friends-container">
 
-        {loading && <div>Searching...</div>}
-        <div>
-          {results.map(u => (
-            <div key={u._id} style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontWeight: 'bold' }}>{u.name}</div>
-                <div style={{ fontSize: '12px', opacity: 0.8 }}>{u.email}</div>
-              </div>
-              <div>
-                <button className="btn btn-white" style={{ marginRight: '8px' }} onClick={() => setSelectedUserProfile({ userId: u._id, userName: u.name })}>View Profile</button>
-                <button onClick={() => sendRequest(u._id)} className="btn btn-white">Send Request</button>
-              </div>
-            </div>
-          ))}
-        </div>
+          <h1 className="friends-page-title">
+            Find &amp; Connect <span>Friends</span>
+          </h1>
+          <p className="friends-page-subtitle">Search for people, manage requests, and view your connections.</p>
 
-        <hr style={{ margin: '20px 0' }} />
-        <h3>Incoming Requests</h3>
-        <div>
-          {incoming.length === 0 && <div>No incoming requests</div>}
-          {incoming.map(r => {
-            // Support both r.from and r.from_user for compatibility
-            const from = r.from || r.from_user || {};
-            return (
-              <div key={r._id} style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>{from.name || 'Unknown'}</div>
-                  <div style={{ fontSize: '12px', opacity: 0.8 }}>{from.email || ''}</div>
+          {error && <div className="friends-error">{error}</div>}
+
+          {/* Search */}
+          <div className="friends-search-wrapper">
+            <i className="fas fa-search"></i>
+            <input
+              className="friends-search-input"
+              placeholder="Search people by name or email"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+
+          {loading && <div className="friends-loading">Searching...</div>}
+
+          {results.length > 0 && (
+            <div>
+              {results.map(u => (
+                <div key={u._id} className="friends-user-card">
+                  <div className="friends-user-info">
+                    <div className="friends-avatar">{(u.name || 'U').charAt(0)}</div>
+                    <div className="friends-user-details">
+                      <div className="friends-user-name">{u.name}</div>
+                      <div className="friends-user-email">{u.email}</div>
+                    </div>
+                  </div>
+                  <div className="friends-actions">
+                    <button className="friends-btn friends-btn-outline" onClick={() => setSelectedUserProfile({ userId: u._id, userName: u.name })}>View Profile</button>
+                    {u.requestStatus === 'friends' ? (
+                      <span className="friends-status-badge friends-badge-friends"><i className="fas fa-check"></i> Friends</span>
+                    ) : u.requestStatus === 'pending_sent' ? (
+                      <span className="friends-status-badge friends-badge-sent">Request Sent</span>
+                    ) : u.requestStatus === 'pending_received' ? (
+                      <span className="friends-status-badge friends-badge-received"><i className="fas fa-envelope"></i> Requested You</span>
+                    ) : (
+                      <button className="friends-btn friends-btn-primary" onClick={() => sendRequest(u._id)}>Send Request</button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <button className="btn btn-white" style={{ marginRight: '8px' }} onClick={() => setSelectedUserProfile({ userId: (from._id || from.id || from._id?.toString()), userName: from.name || 'Profile' })}>View Profile</button>
-                  <button className="btn btn-white" onClick={() => respondRequest(r._id, 'accept')}>Accept</button>
-                  <button className="btn" style={{ marginLeft: '8px' }} onClick={() => respondRequest(r._id, 'reject')}>Reject</button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <hr style={{ margin: '20px 0' }} />
-        <h3>Your Friends</h3>
-        <div>
-          {friends.length === 0 && <div>No friends yet</div>}
-          {friends.map(f => (
-            <div key={f._id} style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontWeight: 'bold' }}>{f.name}</div>
-                <div style={{ fontSize: '12px', opacity: 0.8 }}>{f.email}</div>
-              </div>
-              <div>
-                <button className="btn btn-white" onClick={() => setSelectedUserProfile({ userId: f._id, userName: f.name })}>View Profile</button>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          <hr className="friends-divider" />
+
+          {/* Incoming Requests */}
+          <div className="friends-section-header">
+            <span className="friends-section-title">Incoming Requests</span>
+            {incoming.length > 0 && <span className="friends-section-count">{incoming.length}</span>}
+          </div>
+          {incoming.length === 0
+            ? <div className="friends-empty"><i className="fas fa-inbox"></i> No incoming requests</div>
+            : incoming.map(r => {
+                const from = r.from || r.from_user || {};
+                return (
+                  <div key={r._id} className="friends-user-card">
+                    <div className="friends-user-info">
+                      <div className="friends-avatar">{(from.name || 'U').charAt(0)}</div>
+                      <div className="friends-user-details">
+                        <div className="friends-user-name">{from.name || 'Unknown'}</div>
+                        <div className="friends-user-email">{from.email || ''}</div>
+                      </div>
+                    </div>
+                    <div className="friends-actions">
+                      <button className="friends-btn friends-btn-outline" onClick={() => setSelectedUserProfile({ userId: (from._id || from.id || from._id?.toString()), userName: from.name || 'Profile' })}>View Profile</button>
+                      <button className="friends-btn friends-btn-accept" onClick={() => respondRequest(r._id, 'accept')}>Accept</button>
+                      <button className="friends-btn friends-btn-reject" onClick={() => respondRequest(r._id, 'reject')}>Reject</button>
+                    </div>
+                  </div>
+                );
+              })
+          }
+
+          <hr className="friends-divider" />
+
+          {/* Your Friends */}
+          <div className="friends-section-header">
+            <span className="friends-section-title">Your Friends</span>
+            {friends.length > 0 && <span className="friends-section-count">{friends.length}</span>}
+          </div>
+          {friends.length === 0
+            ? <div className="friends-empty"><i className="fas fa-user-friends"></i> No friends yet</div>
+            : friends.map(f => (
+                <div key={f._id} className="friends-user-card">
+                  <div className="friends-user-info">
+                    <div className="friends-avatar">{(f.name || 'U').charAt(0)}</div>
+                    <div className="friends-user-details">
+                      <div className="friends-user-name">{f.name}</div>
+                      <div className="friends-user-email">{f.email}</div>
+                    </div>
+                  </div>
+                  <div className="friends-actions">
+                    <button className="friends-btn friends-btn-outline" onClick={() => setSelectedUserProfile({ userId: f._id, userName: f.name })}>View Profile</button>
+                  </div>
+                </div>
+              ))
+          }
+
         </div>
-        {selectedUserProfile && (
-          <UserProfileModal
-            userId={selectedUserProfile.userId}
-            userName={selectedUserProfile.userName}
-            onClose={() => setSelectedUserProfile(null)}
-          />
-        )}
       </div>
+
+      {selectedUserProfile && (
+        <UserProfileModal
+          userId={selectedUserProfile.userId}
+          userName={selectedUserProfile.userName}
+          onClose={() => setSelectedUserProfile(null)}
+        />
+      )}
     </>
   );
 };
