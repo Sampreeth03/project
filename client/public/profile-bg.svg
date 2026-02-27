@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+  <!-- Static line-art "poster" background (no gradients). Designed to be subtle behind UI. -->
+  <g stroke="white" stroke-opacity="0.06" stroke-width="1" fill="none">
+    <!-- Topographic-ish curves -->
+    <path d="M-40 220 C 240 80, 460 120, 660 210 S 1100 380, 1660 220" />
+    <path d="M-60 300 C 220 170, 520 190, 760 300 S 1260 520, 1700 360" />
+    <path d="M-80 390 C 220 310, 560 300, 820 410 S 1240 630, 1720 510" />
+    <path d="M-90 500 C 240 440, 560 460, 860 540 S 1320 720, 1760 640" />
+    <path d="M-60 620 C 260 580, 620 590, 920 660 S 1360 820, 1700 790" />
+
+    <!-- Framing arcs -->
+    <path d="M260 -60 C 520 120, 760 180, 1040 140 S 1500 -10, 1760 120" />
+    <path d="M-140 820 C 220 680, 520 660, 840 740 S 1360 960, 1760 860" />
+
+    <!-- Concentric rings (subtle) -->
+    <circle cx="310" cy="260" r="160" />
+    <circle cx="310" cy="260" r="240" />
+    <circle cx="310" cy="260" r="320" />
+
+    <circle cx="1280" cy="300" r="140" />
+    <circle cx="1280" cy="300" r="210" />
+    <circle cx="1280" cy="300" r="280" />
+  </g>
+
+  <!-- Sparse dot texture (still no gradients) -->
+  <g fill="white" fill-opacity="0.045">
+    <circle cx="140" cy="120" r="1" />
+    <circle cx="220" cy="160" r="1" />
+    <circle cx="520" cy="120" r="1" />
+    <circle cx="820" cy="160" r="1" />
+    <circle cx="1180" cy="140" r="1" />
+    <circle cx="1460" cy="180" r="1" />
+
+    <circle cx="160" cy="520" r="1" />
+    <circle cx="420" cy="580" r="1" />
+    <circle cx="720" cy="520" r="1" />
+    <circle cx="980" cy="560" r="1" />
+    <circle cx="1280" cy="600" r="1" />
+    <circle cx="1500" cy="540" r="1" />
+
+    <circle cx="260" cy="820" r="1" />
+    <circle cx="640" cy="800" r="1" />
+    <circle cx="980" cy="820" r="1" />
+    <circle cx="1340" cy="820" r="1" />
+  </g>
+</svg>
