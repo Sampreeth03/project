@@ -108,45 +108,55 @@ exports.applyForJob = async (req, res) => {
 // ... (Rest of jobController.js code follows: getStudentApplications, getJobNotifications, markNotificationRead, deleteNotification) ...
 
 exports.getStudentApplications = async (req, res) => {
-    const userId = req.session.user.id;
     try {
+        // Check if session and user exist
+        if (!req.session || !req.session.user || !req.session.user.id) {
+            console.error("Session or user not found in getStudentApplications");
+            if (req.headers.accept && req.headers.accept.includes('application/json')) {
+                return res.status(401).json({ error: 'Unauthorized: Please log in again' });
+            }
+            return res.redirect("/login?error=Session expired. Please log in again.");
+        }
+
+        const userId = req.session.user.id;
+        
         // Only show Waiting and Approved applications, rejected ones are removed
         const applications = await JobApplication.find({ 
             user_id: userId, 
             status: { $in: ['Waiting', 'Approved'] } 
         })
             .select('job_title company_name salary_range description skills date_applied status posted_by')
-            .populate('posted_by', 'email name').lean();
+            .populate('posted_by', 'email name')
+            .sort({ date_applied: -1 })
+            .lean();
 
         const formattedApplications = applications.map(app => ({ 
-            ...app, 
-            recruiter_email: app.posted_by?.email || null, 
+            ...app,
+            _id: app._id.toString(),
+            recruiter_email: app.posted_by?.email || null,
+            recruiter_name: app.posted_by?.name || 'Unknown',
             date_applied: app.date_applied || new Date()
         }));
 
-        // Check if request expects JSON (React) or HTML (EJS)
-        if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            return res.json({ applications: formattedApplications });
-        }
-
-        res.render("job-applications", {
-            user: req.session.user, 
-            homeUrl: navData.homeUrl, 
-            navLinks: navData.navLinks,
-            applications: formattedApplications
-        });
+        // Return JSON response (React API)
+        return res.json({ applications: formattedApplications });
     } catch (err) {
-        console.error("Error fetching applications:", err.message);
-        if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            return res.status(500).json({ error: 'Internal Server Error' });
-        }
-        res.status(500).send("Internal Server Error");
+        console.error("Error fetching applications:", err);
+        console.error("Stack trace:", err.stack);
+        return res.status(500).json({ error: 'Failed to fetch applications. Please try again.' });
     }
 };
 
 exports.getJobNotifications = async (req, res) => {
-    const userId = req.session.user.id;
     try {
+        // Check if session and user exist
+        if (!req.session || !req.session.user || !req.session.user.id) {
+            console.error("Session or user not found in getJobNotifications");
+            return res.status(401).json({ error: 'Unauthorized: Please log in again' });
+        }
+
+        const userId = req.session.user.id;
+        
         // Fetch all job applications by this user including rejected ones
         const applications = await JobApplication.find({ user_id: userId })
             .select('job_title company_name salary_range description skills status date_applied posted_by')
@@ -202,22 +212,12 @@ exports.getJobNotifications = async (req, res) => {
             new Date(b.date) - new Date(a.date)
         );
 
-        // Check if request expects JSON (React) or HTML (EJS)
-        if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            return res.json({ jobsNotifications: allNotifications });
-        }
-
-        res.render('job_notiffinal', {
-            user: req.session.user,
-            navLinks: getNavLinks(req.session.user),
-            homeUrl: navData.homeUrl
-        });
+        // Return JSON response for React
+        return res.json({ jobsNotifications: allNotifications });
     } catch (err) {
-        console.error("Error in getJobNotifications:", err.message);
-        if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            return res.status(500).json({ error: 'Internal Server Error' });
-        }
-        res.status(500).send("Internal Server Error");
+        console.error("Error in getJobNotifications:", err);
+        console.error("Stack trace:", err.stack);
+        return res.status(500).json({ error: 'Failed to fetch notifications. Please try again.' });
     }
 };
 
@@ -242,5 +242,35 @@ exports.deleteNotification = async (req, res) => {
     } catch (err) {
         console.error('Error deleting notification:', err.message);
         res.json({ success: false, message: 'Server Error' });
+    }
+};
+
+exports.revokeApplication = async (req, res) => {
+    try {
+        if (!req.session || !req.session.user || !req.session.user.id) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const { applicationId } = req.body;
+        const userId = req.session.user.id;
+
+        if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) {
+            return res.status(400).json({ success: false, error: 'Invalid application ID' });
+        }
+
+        const application = await JobApplication.findOne({ _id: applicationId, user_id: userId });
+        if (!application) {
+            return res.status(404).json({ success: false, error: 'Application not found' });
+        }
+        if (application.status === 'Approved') {
+            return res.status(400).json({ success: false, error: 'Cannot revoke a shortlisted application' });
+        }
+
+        await JobApplication.deleteOne({ _id: applicationId, user_id: userId });
+        await UserMetrics.findOneAndUpdate({ user_id: userId }, { $inc: { job_applications: -1 } });
+
+        return res.json({ success: true, message: 'Application revoked successfully' });
+    } catch (err) {
+        console.error('Error revoking application:', err);
+        return res.status(500).json({ success: false, error: 'Failed to revoke application' });
     }
 };

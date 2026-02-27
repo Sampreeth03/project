@@ -46,6 +46,7 @@ const topicNormalizationMap = {
 module.exports = {
     MONGODB_URI,
     userNav,
+    navData: userNav, 
     topics,
     topicNormalizationMap
 };

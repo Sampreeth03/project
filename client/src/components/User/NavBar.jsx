@@ -30,7 +30,7 @@ const Navbar = ({ onSearchChange }) => {
             name: "Jobs", href: "/apply",
             submenu: [
                 { name: "Apply for Jobs", href: "/apply" },
-                { name: "My Applications", href: "/job" }
+                { name: "My Applications", href: "/my-applications" }
             ]
         },
         { 

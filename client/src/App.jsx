@@ -63,7 +63,7 @@ function App() {
       
       {/* Job Routes */}
       <Route path="/apply" element={<ApplyJobs />} />
-      <Route path="/job" element={<JobApplications />} />
+      <Route path="/my-applications" element={<JobApplications />} />
       <Route path="/job_not" element={<JobNotifications />} />
       
       {/* Profile Routes */}
