@@ -22,5 +22,8 @@ router.post('/apply-job', isAuthenticatedAPI, jobApplicationLimiter, upload.sing
 router.post('/mark-notification-read', isAuthenticatedAPI, jsonParser, jobController.markNotificationRead);
 router.post('/delete-notification', isAuthenticatedAPI, jsonParser, jobController.deleteNotification);
 
+// --- Revoke Application ---
+router.delete('/revoke-application', isAuthenticatedAPI, jsonParser, jobController.revokeApplication);
+
 
 module.exports = router;

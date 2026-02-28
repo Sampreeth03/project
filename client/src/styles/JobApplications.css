@@ -1,152 +1,699 @@
-/* JobApplications.css */
+/* =============================================
+   JobApplications.css — Professional Dark UI
+   ============================================= */
 
 :root {
-    --dark-bg: #121212;
-    --primary-blue: #0068ff;
-    --text-color: #ffffff;
-    --card-bg: #1e1e1e;
+    --bg:             #0e0e12;
+    --surface:        #18181f;
+    --surface-hover:  #1f1f28;
+    --surface-raised: #222230;
+
+    --accent:         #6366f1;
+    --accent-dim:     rgba(99,102,241,0.12);
+    --accent-border:  rgba(99,102,241,0.28);
+
+    --green:          #22d3a5;
+    --green-dim:      rgba(34,211,165,0.1);
+    --green-border:   rgba(34,211,165,0.22);
+
+    --amber:          #f6a740;
+    --amber-dim:      rgba(246,167,64,0.1);
+    --amber-border:   rgba(246,167,64,0.22);
+
+    --red:            #f87171;
+    --red-dim:        rgba(248,113,113,0.1);
+    --red-border:     rgba(248,113,113,0.2);
+
+    --t1:  #eaeaf2;
+    --t2:  #9898ac;
+    --t3:  #55555f;
+
+    /* legacy aliases so nothing else breaks */
+    --dark-bg: #0e0e12;
+    --card-bg: #18181f;
+    --card-hover: #1f1f28;
+    --primary-blue: #6366f1;
+    --success-green: #22d3a5;
+    --success-green-bg: rgba(34,211,165,0.1);
+    --warning-orange: #f6a740;
+    --warning-orange-bg: rgba(246,167,64,0.1);
+    --text-primary: #eaeaf2;
+    --text-secondary: #9898ac;
+    --text-tertiary: #55555f;
+    --border-color: rgba(255,255,255,0.06);
+    --border-hover: rgba(99,102,241,0.28);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25);
+    --shadow-hover: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.2);
+    --radius: 14px;
+    --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+* { box-sizing: border-box; }
+
+/* ── Page ──────────────────────────────────── */
 .job-applications-page {
-    background-color: var(--dark-bg);
-    color: var(--text-color);
+    background: var(--bg);
+    color: var(--t1);
     min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    /* subtle dot-grid texture */
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 28px 28px;
 }
 
+/* custom scrollbar */
+.job-applications-page ::-webkit-scrollbar { width: 6px; }
+.job-applications-page ::-webkit-scrollbar-track { background: transparent; }
+.job-applications-page ::-webkit-scrollbar-thumb {
+    background: rgba(99,102,241,0.25);
+    border-radius: 3px;
+}
+.job-applications-page ::-webkit-scrollbar-thumb:hover {
+    background: rgba(99,102,241,0.5);
+}
+
+/* ── Container ─────────────────────────────── */
 .job-applications-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 100px 20px 20px;
+    width: 100%;
+    padding: 108px 56px 80px;
+    animation: pageFadeIn 0.5s var(--ease) both;
 }
 
+@keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Header ────────────────────────────────── */
 .applications-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
 }
 
 .applications-header h1 {
-    color: var(--primary-blue);
-    font-size: 28px;
-    margin-bottom: 5px;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--t1);
+    letter-spacing: -0.6px;
+    line-height: 1.15;
+    margin: 0;
+    position: relative;
+    padding-bottom: 16px;
 }
 
-.subtitle {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 16px;
+.applications-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.45s var(--ease);
 }
 
+.applications-header:hover h1::after { width: 100px; }
+
+/* ── Stat Filter Tabs ──────────────────────── */
+.stat-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.stat-tab {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 20px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    transition:
+        background    0.22s var(--ease),
+        border-color  0.22s var(--ease),
+        box-shadow    0.22s var(--ease),
+        transform     0.18s var(--ease);
+}
+
+.stat-tab:hover {
+    background: var(--surface-hover);
+    border-color: rgba(255,255,255,0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+
+.stat-tab:hover .stat-num {
+    transform: scale(1.08);
+}
+
+.stat-tab:active { transform: translateY(0); }
+
+.stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--t1);
+    line-height: 1;
+    letter-spacing: -0.5px;
+    transition: color 0.2s ease, transform 0.2s var(--ease);
+    display: inline-block;
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    transition: color 0.2s ease;
+}
+
+/* Active state — default (accent/indigo) */
+.stat-tab-active {
+    background: var(--accent-dim) !important;
+    border-color: var(--accent-border) !important;
+    box-shadow: 0 0 0 1px var(--accent-border);
+    animation: tabPulse 2.4s ease infinite;
+}
+.stat-tab-active .stat-num  { color: var(--accent); }
+.stat-tab-active .stat-label { color: rgba(99,102,241,0.7); }
+
+@keyframes tabPulse {
+    0%, 100% { box-shadow: 0 0 0 1px var(--accent-border); }
+    50%       { box-shadow: 0 0 0 3px rgba(99,102,241,0.12), 0 0 0 1px var(--accent-border); }
+}
+
+/* Active — green */
+.stat-tab-active-green {
+    background: var(--green-dim) !important;
+    border-color: var(--green-border) !important;
+    box-shadow: 0 0 0 1px var(--green-border) !important;
+    animation: tabPulseGreen 2.4s ease infinite !important;
+}
+@keyframes tabPulseGreen {
+    0%, 100% { box-shadow: 0 0 0 1px var(--green-border); }
+    50%       { box-shadow: 0 0 0 3px rgba(34,211,165,0.1), 0 0 0 1px var(--green-border); }
+}
+.stat-tab-active-green .stat-num  { color: var(--green); }
+.stat-tab-active-green .stat-label { color: rgba(34,211,165,0.65); }
+
+/* Active — amber */
+.stat-tab-active-amber {
+    background: var(--amber-dim) !important;
+    border-color: var(--amber-border) !important;
+    box-shadow: 0 0 0 1px var(--amber-border) !important;
+    animation: tabPulseAmber 2.4s ease infinite !important;
+}
+@keyframes tabPulseAmber {
+    0%, 100% { box-shadow: 0 0 0 1px var(--amber-border); }
+    50%       { box-shadow: 0 0 0 3px rgba(246,167,64,0.1), 0 0 0 1px var(--amber-border); }
+}
+.stat-tab-active-amber .stat-num  { color: var(--amber); }
+.stat-tab-active-amber .stat-label { color: rgba(246,167,64,0.65); }
+
+/* Hover colour hints for non-active tabs */
+.stat-tab-green:hover:not(.stat-tab-active-green) .stat-num  { color: var(--green); }
+.stat-tab-amber:hover:not(.stat-tab-active-amber) .stat-num  { color: var(--amber); }
+
+/* ── Grid ──────────────────────────────────── */
 .applications-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
+
+/* ── Card ──────────────────────────────────── */
+.job-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.055);
+    border-radius: 16px;
+    padding: 28px 32px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.42s var(--ease) both;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    transition:
+        background    0.28s var(--ease),
+        border-color  0.28s var(--ease),
+        box-shadow    0.28s var(--ease),
+        transform     0.28s var(--ease);
 }
 
+.job-card:nth-child(1) { animation-delay: 0.04s; }
+.job-card:nth-child(2) { animation-delay: 0.1s;  }
+.job-card:nth-child(3) { animation-delay: 0.16s; }
+.job-card:nth-child(4) { animation-delay: 0.22s; }
+.job-card:nth-child(n+5) { animation-delay: 0.28s; }
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* left accent bar */
+.job-card::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 0;
+    bottom: 14px;
+    width: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: center;
+    border-radius: 0 3px 3px 0;
+    opacity: 0;
+    transition: transform 0.32s var(--ease), opacity 0.32s var(--ease);
+}
+
+/* subtle glow ring on hover */
+.job-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(99,102,241,0);
+    transition: box-shadow 0.28s var(--ease);
+    pointer-events: none;
+}
+
+/* shimmer sweep on hover */
+.job-card .card-shimmer {
+    display: none;
+}
+.job-card:hover::after {
+    box-shadow: inset 0 0 0 1px rgba(99,102,241,0.1);
+}
+
+/* shimmer via background on the card itself */
 .job-card {
-    background-color: var(--card-bg);
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-image: none;
+}
+.job-card:hover {
+    background-image: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(99,102,241,0.03) 50%,
+        transparent 60%
+    );
 }
 
+.job-card:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 12px 36px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-border);
+    transform: translateY(-3px);
+}
+
+.job-card:hover::before {
+    transform: scaleY(1);
+    opacity: 1;
+}
+
+.job-card:hover::after {
+    box-shadow: inset 0 0 0 1px rgba(99,102,241,0.1);
+}
+
+/* ── Status Badge (top-right) ──────────────── */
+.card-status-badge {
+    position: absolute;
+    top: 20px;
+    right: 26px;
+    padding: 4px 13px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid var(--amber-border);
+    transition: opacity 0.2s ease;
+}
+
+.card-status-badge.status-approved {
+    background: var(--green-dim);
+    color: var(--green);
+    border-color: var(--green-border);
+}
+
+/* ── Job Header ────────────────────────────── */
 .job-header {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
+    padding-right: 145px;
 }
 
 .company-name {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    margin-bottom: 8px;
+    opacity: 0.7;
+    transition: opacity 0.25s ease, letter-spacing 0.25s ease;
+}
+
+.job-card:hover .company-name {
+    opacity: 1;
+    letter-spacing: 1.8px;
 }
 
 .job-title {
     font-size: 20px;
-    font-weight: bold;
-    color: var(--primary-blue);
-    margin-bottom: 5px;
+    font-weight: 700;
+    color: var(--t1);
+    margin-bottom: 10px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    transition: color 0.22s ease;
 }
 
+.job-card:hover .job-title { color: #ffffff; }
+
 .salary {
-    font-size: 18px;
-    margin-bottom: 15px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 12.5px;
     font-weight: 600;
+    color: var(--green);
+    background: var(--green-dim);
+    border: 1px solid var(--green-border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    letter-spacing: 0.1px;
+    transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.job-card:hover .salary {
+    background: rgba(34,211,165,0.15);
+    border-color: rgba(34,211,165,0.38);
+    box-shadow: 0 0 8px rgba(34,211,165,0.12);
 }
 
 .job-description {
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 15px;
-    line-height: 1.5;
+    font-size: 13.5px;
+    color: var(--t2);
+    line-height: 1.75;
+    margin: 16px 0;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.02);
+    border-left: 2px solid rgba(99,102,241,0.2);
+    border-radius: 0 6px 6px 0;
+    transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.job-card:hover .job-description {
+    border-color: rgba(99,102,241,0.55);
+    background: rgba(99,102,241,0.03);
 }
 
 .skills-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 15px;
+    gap: 7px;
+    margin-bottom: 20px;
 }
 
 .skill-tag {
-    background-color: rgba(0, 104, 255, 0.2);
-    color: var(--primary-blue);
-    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--t2);
+    background: var(--surface-raised);
+    border: 1px solid rgba(255,255,255,0.065);
     border-radius: 20px;
-    font-size: 12px;
+    padding: 4px 12px;
+    letter-spacing: 0.15px;
+    transition:
+        color        0.2s ease,
+        background   0.2s ease,
+        border-color 0.2s ease,
+        box-shadow   0.2s ease,
+        transform    0.18s ease;
+}
+
+.skill-tag:hover {
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-color: var(--accent-border);
+    box-shadow: 0 0 8px rgba(99,102,241,0.12);
+    transform: translateY(-1px);
 }
 
 .job-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 18px;
+    margin-top: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+    transition: border-color 0.25s ease;
+}
+
+.job-card:hover .job-footer { border-color: rgba(255,255,255,0.1); }
+
+.footer-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .date-applied {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    color: var(--t3);
+    font-weight: 400;
+    letter-spacing: 0.1px;
+    transition: color 0.2s ease;
 }
 
+.job-card:hover .date-applied { color: var(--t2); }
+
 .status-badge {
-    background-color: rgba(0, 104, 255, 0.15);
-    color: var(--primary-blue);
-    padding: 5px 10px;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
     border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid var(--amber-border);
 }
 
 .status-approved {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: #28a745;
+    background: var(--green-dim);
+    color: var(--green);
+    border-color: var(--green-border);
 }
 
 .recruiter-email {
-    margin-top: 8px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--green);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--t2);
+    line-height: 1.65;
+    transition: background 0.2s ease;
 }
 
-.recruiter-email strong {
-    color: var(--text-color);
+.job-card:hover .recruiter-email { background: rgba(34,211,165,0.04); }
+
+.recruiter-email strong { color: var(--t1); font-weight: 600; }
+
+/* ── Revoke ─────────────────────────────────── */
+.revoke-btn {
+    padding: 6px 16px;
+    background: rgba(248,113,113,0.08);
+    color: rgba(248,113,113,0.85);
+    border: 1px solid rgba(248,113,113,0.35);
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        color        0.22s ease,
+        background   0.22s ease,
+        border-color 0.22s ease,
+        box-shadow   0.22s ease,
+        transform    0.18s ease;
 }
 
+.revoke-btn:hover {
+    color: #fff;
+    background: rgba(220, 50, 50, 0.75);
+    border-color: rgba(220, 50, 50, 0.9);
+    box-shadow: 0 0 12px rgba(248,113,113,0.25);
+    transform: translateY(-1px);
+}
+
+.revoke-btn:active { transform: translateY(0); }
+
+.revoke-confirm-inline {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(248,113,113,0.05);
+    border: 1px solid rgba(248,113,113,0.13);
+    border-radius: 7px;
+    padding: 4px 10px 4px 12px;
+    animation: expandIn 0.2s var(--ease) both;
+}
+
+@keyframes expandIn {
+    from { opacity: 0; transform: scaleX(0.9); }
+    to   { opacity: 1; transform: scaleX(1); }
+}
+
+.revoke-confirm-inline span {
+    font-size: 12px;
+    color: var(--t2);
+    white-space: nowrap;
+}
+
+.revoke-confirm-btn {
+    padding: 4px 12px;
+    background: rgba(200,40,40,0.8);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.18s ease;
+}
+
+.revoke-confirm-btn:hover:not(:disabled) { background: #aa1f1f; }
+.revoke-confirm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.revoke-cancel-btn {
+    padding: 4px 11px;
+    background: transparent;
+    color: var(--t3);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.revoke-cancel-btn:hover:not(:disabled) {
+    color: var(--t1);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.16);
+}
+
+.revoke-cancel-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Toast ─────────────────────────────────── */
+.revoke-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--surface-raised);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    z-index: 1000;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Empty State ───────────────────────────── */
 .no-applications {
     text-align: center;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--t3);
+    font-size: 14.5px;
+    margin-top: 32px;
+    padding: 72px 40px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px dashed rgba(255,255,255,0.06);
+    line-height: 1.65;
+}
+
+/* ── Loading & Error ───────────────────────── */
+.loading-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px;
+    gap: 10px;
+}
+
+.loading-state h1 {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--t3);
+    letter-spacing: 0.2px;
+    margin: 0;
+}
+
+.error-state h1 {
     font-size: 18px;
-    margin-top: 40px;
+    font-weight: 600;
+    color: var(--red);
+    margin: 0;
+}
+
+.error-state p {
+    font-size: 13px;
+    color: var(--t3);
+    margin: 0;
+}
+
+/* ── Responsive ────────────────────────────── */
+@media (max-width: 1200px) {
+    .job-applications-container { padding: 108px 40px 70px; }
+}
+
+@media (max-width: 900px) {
+    .job-applications-container { padding: 100px 28px 60px; }
+    .applications-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
-    .job-applications-container {
-        padding: 80px 10px 10px;
-    }
-
-    .job-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
+    .job-applications-container { padding: 90px 16px 48px; }
+    .applications-header h1 { font-size: 24px; }
+    .job-card { padding: 20px 18px; }
+    .job-header { padding-right: 100px; }
+    .job-title { font-size: 18px; }
+    .card-status-badge { font-size: 9px; padding: 3px 10px; right: 14px; top: 14px; }
+    .job-card:hover { transform: none; }
+    .stat-tab { padding: 8px 14px; }
+    .stat-num  { font-size: 18px; }
+    .stat-label { font-size: 11px; }
 }
