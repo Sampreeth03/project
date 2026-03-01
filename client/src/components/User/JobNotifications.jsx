@@ -172,6 +172,9 @@ const JobNotifications = () => {
                                     </div>
 
                                     <div className="job-card-company">
+                                        <div className="company-avatar">
+                                            {notification.company ? notification.company.charAt(0).toUpperCase() : '?'}
+                                        </div>
                                         <span className="company-name">{notification.company}</span>
                                     </div>
 
@@ -183,13 +186,16 @@ const JobNotifications = () => {
 
                                     {notification.type === 'approved' && notification.recruiter_email && (
                                         <div className="recruiter-info">
-                                            <strong>Recruiter Contact:</strong><br />
-                                            {notification.recruiter_name && <span>Name: {notification.recruiter_name}<br /></span>}
-                                            Email: <a href={`mailto:${notification.recruiter_email}`}>{notification.recruiter_email}</a>
+                                            <div className="recruiter-info-inner">
+                                                <strong>Recruiter Contact</strong><br />
+                                                {notification.recruiter_name && <span>Name: {notification.recruiter_name}<br /></span>}
+                                                Email: <a href={`mailto:${notification.recruiter_email}`}>{notification.recruiter_email}</a>
+                                            </div>
                                         </div>
                                     )}
 
                                     <div className="job-card-footer">
+                                        <span className="card-expand-hint"></span>
                                         <button
                                             className="btn btn-icon btn-secondary"
                                             onClick={() => deleteNotification(notification.id)}

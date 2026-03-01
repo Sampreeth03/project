@@ -13,6 +13,7 @@ const jsonParser = express.json();
 router.get("/recruiter-home", isRecruiterAPI, recruiterController.getRecruiterHome);
 router.get("/rec-job", isRecruiterAPI, recruiterController.getRecruiterJobs);
 router.get("/recruiter-dashboard", isRecruiterAPI, recruiterController.getRecruiterDashboard);
+router.get("/recruiter-dashboard-trends", isRecruiterAPI, recruiterController.getRecruiterDashboardTrends);
 router.get('/rec-app', isRecruiterAPI, recruiterController.getRecruiterApplications);
 router.get('/rec-not', isRecruiterAPI, recruiterController.getRecruiterNotifications);
 

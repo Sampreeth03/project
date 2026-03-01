@@ -164,12 +164,6 @@ exports.getJobNotifications = async (req, res) => {
             .sort({ date_applied: -1 })
             .lean();
 
-        // Also fetch rejection notifications
-        const rejectionNotifications = await Notification.find({
-            user_id: userId,
-            type: 'job_rejected'
-        }).sort({ createdAt: -1 }).lean();
-
         const jobsNotifications = applications.map(app => ({
             id: app._id.toString(),
             title: app.job_title,
@@ -188,27 +182,8 @@ exports.getJobNotifications = async (req, res) => {
             recruiter_name: app.posted_by?.name || null
         }));
 
-        // Add rejection notifications for deleted applications
-        const rejectionNotifs = rejectionNotifications.map(notif => {
-            const titleMatch = notif.message.match(/\"([^\"]+)\"/);
-            const jobTitle = titleMatch ? titleMatch[1] : 'Unknown Position';
-            return {
-                id: notif._id.toString(),
-                title: jobTitle,
-                content: `Your application for ${jobTitle} was not selected.`,
-                description: 'The recruiter has decided not to move forward with your application.',
-                pay: 'N/A',
-                date: notif.createdAt,
-                company: 'N/A',
-                type: 'rejected',
-                status: 'rejected',
-                recruiter_email: null,
-                recruiter_name: null
-            };
-        });
-
-        // Merge and sort by date
-        const allNotifications = [...jobsNotifications, ...rejectionNotifs].sort((a, b) => 
+        // Sort by date (applications already carry rejected status — no need to merge Notification records)
+        const allNotifications = [...jobsNotifications].sort((a, b) => 
             new Date(b.date) - new Date(a.date)
         );
 
