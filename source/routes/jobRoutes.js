@@ -5,7 +5,7 @@ const router = express.Router();
 const jobController = require('../controllers/jobController');
 const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 const { upload } = require("../middleware/uploadMiddleware");
-const { jobApplicationLimiter } = require('../middleware/rateLimiterMiddleware');
+const { jobApplicationLimiter } = require('../middleware/securityMiddleware');
 const { validateJobApplication } = require('../middleware/validationMiddleware');
 
 const jsonParser = express.json();

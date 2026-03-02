@@ -175,7 +175,7 @@ function connectDB() {
     // Perform initial migrations before connecting
     updateReplies(); // Runs async, but doesn't block connect 
 
-    mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    mongoose.connect(MONGODB_URI)
         .then(async () => {
             console.log('Connected to MongoDB');
             

@@ -6,10 +6,16 @@ const { getTimeAgo } = require("../services/helperService");
 const { topics, topicNormalizationMap } = require("../config/constants");
 const { upload } = require("../middleware/uploadMiddleware");
 
+const forwardError = (next, err, publicMessage, statusCode = 500) => {
+    err.statusCode = statusCode;
+    err.publicMessage = publicMessage;
+    return next(err);
+};
+
 // =========================================================================
 // 1. All Projects View (GET /project - Created & Available) - CONVERTED TO JSON
 // =========================================================================
-exports.getAllProjects = async (req, res) => {
+exports.getAllProjects = async (req, res, next) => {
     // Authentication handled by isAuthenticatedAPI middleware
     const userId = req.session.user.id; 
 
@@ -69,14 +75,14 @@ exports.getAllProjects = async (req, res) => {
     } catch (err) {
         // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching projects (All Projects):', err.message);
-        res.status(500).json({ success: false, error: 'Server Error during fetch.' });
+        return forwardError(next, err, 'Server Error during fetch.');
     }
 };
 
 // =========================================================================
 // 2. Joined Projects View (GET /joined-projects) - CONVERTED TO JSON
 // =========================================================================
-exports.getJoinedProjects = async (req, res) => {
+exports.getJoinedProjects = async (req, res, next) => {
     const userId = req.session.user.id;
 
     try {
@@ -127,14 +133,14 @@ exports.getJoinedProjects = async (req, res) => {
     } catch (err) {
         // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching joined projects:', err.message);
-        res.status(500).json({ success: false, error: 'Server Error during fetch.' });
+        return forwardError(next, err, 'Server Error during fetch.');
     }
 };
 
 // =========================================================================
 // 3. Project Detail View (GET /project/:id) - CONVERTED TO JSON
 // =========================================================================
-exports.getProjectDetails = async (req, res) => {
+exports.getProjectDetails = async (req, res, next) => {
     const projectId = req.params.id;
     const userId = req.session.user.id;
 
@@ -202,14 +208,14 @@ exports.getProjectDetails = async (req, res) => {
     } catch (err) {
         // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching project details:', err.message);
-        res.status(500).json({ success: false, error: 'Server Error during fetch.' });
+        return forwardError(next, err, 'Server Error during fetch.');
     }
 };
 
 // =========================================================================
 // 4. Topic Specific Projects (GET /web-dev, /cyb, etc.) - CONVERTED TO JSON
 // =========================================================================
-exports.getTopicProjects = async (req, res) => {
+exports.getTopicProjects = async (req, res, next) => {
     const userId = req.session.user.id;
     
     // NOTE: Requires parsing the topic path from the original URL
@@ -240,14 +246,14 @@ exports.getTopicProjects = async (req, res) => {
     } catch (err) {
         // CRITICAL FIX: Always return JSON on error
         console.error(`Error fetching projects for ${topic}:`, err.message);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        return forwardError(next, err, 'Server Error');
     }
 };
 
 // =========================================================================
 // 5. Create Project View (GET /e) - CONVERTED TO JSON
 // =========================================================================
-exports.getCreateProjectView = async (req, res) => {
+exports.getCreateProjectView = async (req, res, next) => {
     // This endpoint now serves the list of created projects needed for the form's dashboard pane.
     const userId = req.session.user.id;
     
@@ -264,7 +270,7 @@ exports.getCreateProjectView = async (req, res) => {
     } catch (err) {
         // CRITICAL FIX: Always return JSON on error
         console.error('Error fetching created projects:', err.message);
-        res.status(500).json({ success: false, error: 'Failed to load projects' });
+        return forwardError(next, err, 'Failed to load projects');
     }
 };
 
@@ -272,7 +278,7 @@ exports.getCreateProjectView = async (req, res) => {
 // =========================================================================
 // 6. Create Project API (POST /create-project)
 // =========================================================================
-exports.createProject = async (req, res) => {
+exports.createProject = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     
     const { title, description, capacity, topic, deadline } = req.body;
@@ -324,14 +330,14 @@ exports.createProject = async (req, res) => {
         res.json({ success: true, message: 'Project created successfully', projectId: project._id });
     } catch (err) {
         console.error('Error creating project:', err.message);
-        res.status(500).json({ success: false, message: 'Failed to create project: ' + err.message });
+        return forwardError(next, err, `Failed to create project: ${err.message}`);
     }
 };
 
 // =========================================================================
 // 7. Join Project (POST /join-project)
 // =========================================================================
-exports.joinProject = async (req, res) => {
+exports.joinProject = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { projectId } = req.body;
@@ -369,14 +375,14 @@ exports.joinProject = async (req, res) => {
         res.json({ success: true, message: 'Join request sent successfully' });
     } catch (err) {
         console.error('Error joining project:', err.message);
-        res.status(500).json({ success: false, message: 'Failed to join project: ' + err.message });
+        return forwardError(next, err, `Failed to join project: ${err.message}`);
     }
 };
 
 // =========================================================================
 // 8. Approve Join Request (POST /approve-join-request)
 // =========================================================================
-exports.approveJoinRequest = async (req, res) => {
+exports.approveJoinRequest = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId } = req.body;
@@ -415,14 +421,14 @@ exports.approveJoinRequest = async (req, res) => {
         res.json({ success: true, message: 'Join request approved successfully' });
     } catch (err) {
         console.error('Error approving join request:', err.message);
-        res.status(500).json({ success: false, message: 'Failed to approve join request: ' + err.message });
+        return forwardError(next, err, `Failed to approve join request: ${err.message}`);
     }
 };
 
 // =========================================================================
 // 9. Reject Join Request (POST /reject-join-request)
 // =========================================================================
-exports.rejectJoinRequest = async (req, res) => {
+exports.rejectJoinRequest = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId } = req.body;
@@ -450,14 +456,14 @@ exports.rejectJoinRequest = async (req, res) => {
         res.json({ success: true, message: 'Join request rejected successfully' });
     } catch (err) {
         console.error('Error rejecting join request:', err.message);
-        res.status(500).json({ success: false, message: 'Failed to reject join request: ' + err.message });
+        return forwardError(next, err, `Failed to reject join request: ${err.message}`);
     }
 };
 
 // =========================================================================
 // 10. Delete Join Request (POST /delete-join-request)
 // =========================================================================
-exports.deleteJoinRequest = async (req, res) => {
+exports.deleteJoinRequest = async (req, res, next) => {
     const { requestId } = req.body;
     const userId = req.session.user.id;
 
@@ -474,12 +480,12 @@ exports.deleteJoinRequest = async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('Error deleting join request:', err.message);
-        res.status(500).json({ success: false, error: 'Failed to delete request' });
+        return forwardError(next, err, 'Failed to delete request');
     }
 };
 
 // ========= Project Invite (Owner -> Friend) =========
-exports.inviteFriendToProject = async (req, res) => {
+exports.inviteFriendToProject = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { projectId, toUserId } = req.body;
     const userId = req.session.user.id;
@@ -500,11 +506,11 @@ exports.inviteFriendToProject = async (req, res) => {
         res.json({ success: true, message: 'Invite sent' });
     } catch (err) {
         console.error('Invite friend error:', err.message);
-        res.status(500).json({ success: false, message: 'Server error' });
+        return forwardError(next, err, 'Server error');
     }
 };
 
-exports.getProjectInvites = async (req, res) => {
+exports.getProjectInvites = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     try {
         const ProjectInvite = require('../database').ProjectInvite;
@@ -512,11 +518,11 @@ exports.getProjectInvites = async (req, res) => {
         res.json({ invites });
     } catch (err) {
         console.error('Get project invites error:', err.message);
-        res.status(500).json({ success: false, message: 'Server error' });
+        return forwardError(next, err, 'Server error');
     }
 };
 
-exports.respondProjectInvite = async (req, res) => {
+exports.respondProjectInvite = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { inviteId, action } = req.body;
     if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
@@ -546,14 +552,14 @@ exports.respondProjectInvite = async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('Respond project invite error:', err.message);
-        res.status(500).json({ success: false, message: 'Server error' });
+        return forwardError(next, err, 'Server error');
     }
 };
 
 // =========================================================================
 // 11. Delete Project (POST /delete-project)
 // =========================================================================
-exports.deleteProject = async (req, res) => {
+exports.deleteProject = async (req, res, next) => {
     if (!req.session.user || req.session.user.role !== 'user') return res.status(403).json({ success: false, error: 'Unauthorized' });
 
     const { projectId } = req.body;
@@ -579,14 +585,14 @@ exports.deleteProject = async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('Error deleting project:', err.message);
-        res.status(500).json({ success: false, error: 'Database error' });
+        return forwardError(next, err, 'Database error');
     }
 };
 
 // =========================================================================
 // 12. Task Management & Project Status (POST/GET)
 // =========================================================================
-exports.createTask = async (req, res) => {
+exports.createTask = async (req, res, next) => {
     const { projectId, title, description, assignedTo, dueDate } = req.body;
     const userId = req.session.user.id;
     // ... validation and security checks ...
@@ -612,11 +618,11 @@ exports.createTask = async (req, res) => {
         
         res.json({ success: true, task: { id: task._id, title, status: task.status } });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Server error: ' + err.message });
+        return forwardError(next, err, `Server error: ${err.message}`);
     }
 };
 
-exports.getPendingTasks = async (req, res) => {
+exports.getPendingTasks = async (req, res, next) => {
     try {
         const projectId = req.params.id;
         // Exclude both Completed and Rejected tasks from pending count
@@ -626,11 +632,11 @@ exports.getPendingTasks = async (req, res) => {
         });
         res.json({ pendingTasks });
     } catch (err) {
-        res.json({ pendingTasks: 0 });
+        return forwardError(next, err, 'Server error');
     }
 };
 
-exports.extendDeadline = async (req, res) => {
+exports.extendDeadline = async (req, res, next) => {
     try {
         const { taskTitle, projectId, newDueDate } = req.body;
         const task = await Task.findOne({ title: taskTitle, project_id: projectId });
@@ -642,11 +648,11 @@ exports.extendDeadline = async (req, res) => {
             res.json({ success: false, message: 'Task not found' });
         }
     } catch (err) {
-        res.json({ success: false, message: err.message });
+        return forwardError(next, err, err.message);
     }
 };
 
-exports.submitGithubLink = async (req, res) => {
+exports.submitGithubLink = async (req, res, next) => {
     const { taskId, githubLink, projectId } = req.body;
     const userId = req.session.user.id;
     try {
@@ -657,11 +663,11 @@ exports.submitGithubLink = async (req, res) => {
         // ... (Notification logic to project creator) ...
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Server error: ' + err.message });
+        return forwardError(next, err, `Server error: ${err.message}`);
     }
 };
 
-exports.reviewSubmission = async (req, res) => {
+exports.reviewSubmission = async (req, res, next) => {
     // FIX FOR HANGING ISSUE: Ensure reliable response path
     const { taskId, projectId, action, feedback } = req.body;
     const userId = req.session.user.id;
@@ -724,11 +730,11 @@ exports.reviewSubmission = async (req, res) => {
 
     } catch (err) {
         console.error('Error reviewing submission:', err.message);
-        return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
+        return forwardError(next, err, `Server error: ${err.message}`);
     }
 };
 
-exports.finishProject = async (req, res) => {
+exports.finishProject = async (req, res, next) => {
     try {
         const projectId = req.params.id;
         const userId = req.session.user.id;
@@ -781,14 +787,14 @@ exports.finishProject = async (req, res) => {
         res.json({ success: true, message: 'Project completed successfully' });
     } catch (err) {
         console.error('[Finish Project] Error:', err);
-        res.status(500).json({ success: false, message: err.message });
+        return forwardError(next, err, err.message);
     }
 };
 
 // =========================================================================
 // Get Task Project (GET /get-task-project/:taskId)
 // =========================================================================
-exports.getTaskProject = async (req, res) => {
+exports.getTaskProject = async (req, res, next) => {
     try {
         const taskId = req.params.taskId;
         const task = await Task.findById(taskId).select('project_id');
@@ -800,14 +806,14 @@ exports.getTaskProject = async (req, res) => {
         return res.json({ success: true, projectId: task.project_id });
     } catch (err) {
         console.error('Error getting task project:', err.message);
-        return res.status(500).json({ success: false, message: 'Server error' });
+        return forwardError(next, err, 'Server error');
     }
 };
 
 // =========================================================================
 // Get Join Request Messages (GET /join-request-messages/:requestId)
 // =========================================================================
-exports.getJoinRequestMessages = async (req, res) => {
+exports.getJoinRequestMessages = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId } = req.params;
@@ -842,14 +848,14 @@ exports.getJoinRequestMessages = async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching messages:', err.message);
-        return res.status(500).json({ success: false, message: 'Server error' });
+        return forwardError(next, err, 'Server error');
     }
 };
 
 // =========================================================================
 // Send Join Request Message (POST /send-join-request-message)
 // =========================================================================
-exports.sendJoinRequestMessage = async (req, res) => {
+exports.sendJoinRequestMessage = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId, message } = req.body;
@@ -876,14 +882,14 @@ exports.sendJoinRequestMessage = async (req, res) => {
         return res.json({ success: true, message: populatedMessage });
     } catch (err) {
         console.error('Error sending message:', err.message);
-        return res.status(500).json({ success: false, message: 'Server error' });
+        return forwardError(next, err, 'Server error');
     }
 };
 
 // =========================================================================
 // Upload Join Request File (POST /upload-join-request-file)
 // =========================================================================
-exports.uploadJoinRequestFile = async (req, res) => {
+exports.uploadJoinRequestFile = async (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     upload.single('file')(req, res, async (err) => {
@@ -921,7 +927,7 @@ exports.uploadJoinRequestFile = async (req, res) => {
             return res.json({ success: true, message: populatedMessage });
         } catch (error) {
             console.error('Error saving file message:', error.message);
-            return res.status(500).json({ success: false, message: 'Server error' });
+            return forwardError(next, error, 'Server error');
         }
     });
 };

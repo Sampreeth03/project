@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const recruiterController = require('../controllers/recruiterController');
 const { isRecruiterAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
-const { jobPostingLimiter } = require('../middleware/rateLimiterMiddleware');
+const { jobPostingLimiter } = require('../middleware/securityMiddleware');
 const { validateJobCreation } = require('../middleware/validationMiddleware');
 
 const jsonParser = express.json(); 

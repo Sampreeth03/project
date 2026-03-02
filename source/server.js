@@ -1,8 +1,6 @@
 // Load environment variables from .env file
 require('dotenv').config();
 
-require('dotenv').config();
-
 // Imports the configured Express app and the database connection logic
 const { app } = require("./app");
 
