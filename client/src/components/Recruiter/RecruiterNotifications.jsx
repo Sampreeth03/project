@@ -1,23 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import RecruiterNavbar from './RecruiterNavbar';
 import { fetchNotifications, markNotificationRead, deleteNotification as deleteNotificationAction, clearNotificationsError } from '../../store/recruiterSlice';
 import '../../styles/Recruiter.css';
 
+const JOB_MGMT_TYPES = ['job_created', 'job_deleted', 'job_activated', 'job_deactivated'];
+
+const TYPE_META = {
+    job_created:     { label: 'Job Created',     color: '#0068FF' },
+    job_deleted:     { label: 'Job Deleted',      color: '#0068FF' },
+    job_activated:   { label: 'Job Activated',    color: '#0068FF' },
+    job_deactivated: { label: 'Job Deactivated',  color: '#0068FF' },
+};
+
 const RecruiterNotifications = () => {
     const dispatch = useDispatch();
-    
-    // Redux state
     const { list: notifications, loading, error } = useSelector(state => state.recruiter.notifications);
-    
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    useEffect(() => {
-        dispatch(fetchNotifications());
-    }, [dispatch]);
+    useEffect(() => { dispatch(fetchNotifications()); }, [dispatch]);
 
-    // Handle Redux errors
     useEffect(() => {
         if (error) {
             showToast(error, 'danger');
@@ -30,119 +32,95 @@ const RecruiterNotifications = () => {
         setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
     };
 
-    // Memoized unread count
-    const unreadCount = useMemo(() => {
-        return notifications.filter(n => !n.is_read).length;
-    }, [notifications]);
+    // Only show job management notifications
+    const filtered = useMemo(() =>
+        notifications.filter(n => JOB_MGMT_TYPES.includes(n.type)),
+        [notifications]
+    );
 
-    const handleMarkAsRead = async (notificationId, e) => {
+    const unreadCount = useMemo(() => filtered.filter(n => !n.is_read).length, [filtered]);
+
+    const handleMarkAsRead = async (id, e) => {
         if (e) e.stopPropagation();
-        try {
-            await dispatch(markNotificationRead(notificationId)).unwrap();
-        } catch (error) {
-            showToast('Failed to mark as read');
-        }
+        try { await dispatch(markNotificationRead(id)).unwrap(); } catch { showToast('Failed to mark as read', 'danger'); }
     };
 
-    const handleDeleteNotification = async (notificationId, e) => {
+    const handleDelete = async (id, e) => {
         e.stopPropagation();
         try {
-            await dispatch(deleteNotificationAction(notificationId)).unwrap();
+            await dispatch(deleteNotificationAction(id)).unwrap();
             showToast('Notification deleted');
-        } catch (error) {
-            showToast('Failed to delete');
-        }
+        } catch { showToast('Failed to delete', 'danger'); }
     };
 
-    const handleCardClick = (notificationId) => {
-        handleMarkAsRead(notificationId);
-    };
-
-    const getNotificationTitle = (notification) => {
-        return notification.type === 'job_application' 
-            ? 'New Job Application' 
-            : 'Job Posted Successfully';
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString();
-    };
+    const formatDate = (d) => new Date(d).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
 
     return (
-        <div className="recruiter-notifications-body">
+        <div className="rn-root">
             <RecruiterNavbar />
 
-            <div className="recruiter-notifications-container">
-                <div className="recruiter-page-header">
-                    <h1>Notifications</h1>
-                    <span className="recruiter-notification-count">{unreadCount}</span>
+            <div className="rn-content">
+                {/* page header */}
+                <div className="rn-header">
+                    <h1 className="rn-title">Notifications</h1>
                 </div>
 
-                <div className="recruiter-nav-tabs">
-                    <Link to="/rec-not" className="recruiter-nav-tab active">Notifications</Link>
-                    <Link to="/rec-app" className="recruiter-nav-tab">Applications</Link>
-                </div>
-
+                {/* list */}
                 {loading ? (
-                    <div className="recruiter-empty-state">
-                        <p>Loading notifications...</p>
+                    <div className="rn-loading">
+                        <div className="rn-ring" />
+                        <span>Loading…</span>
                     </div>
-                ) : notifications.length > 0 ? (
-                    <div className="recruiter-notifications-list">
-                        {notifications.map(notification => (
-                            <div 
-                                key={notification._id}
-                                className={`recruiter-notification-card ${!notification.is_read ? 'unread' : ''}`}
-                                onClick={() => handleCardClick(notification._id)}
-                            >
-                                <div className="recruiter-notification-title">
-                                    {getNotificationTitle(notification)}
-                                </div>
-                                <div className="recruiter-notification-body">
-                                    {notification.message}
-                                </div>
-                                {notification.job_id && (
-                                    <>
-                                        {notification.description && (
-                                            <div className="job-description">{notification.description}</div>
-                                        )}
-                                        {notification.salary_range && (
-                                            <div className="job-salary">{notification.salary_range}</div>
-                                        )}
-                                    </>
-                                )}
-                                <div className="recruiter-notification-time">
-                                    {formatDate(notification.createdAt || notification.created_at)}
-                                </div>
-                                <div className="recruiter-notification-footer">
-                                    <span className="recruiter-notification-badge">Job Post</span>
-                                    <div className="recruiter-notification-buttons">
-                                        <button 
-                                            className="recruiter-btn-secondary"
-                                            onClick={(e) => handleMarkAsRead(notification._id, e)}
-                                        >
-                                            Mark as read
-                                        </button>
-                                        <button 
-                                            className="recruiter-btn-secondary"
-                                            onClick={(e) => handleDeleteNotification(notification._id, e)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                ) : filtered.length === 0 ? (
+                    <div className="rn-empty">
+                        <div className="rn-empty-icon">◈</div>
+                        <p>No job activity yet</p>
+                        <span>Notifications will appear here when you create, activate, deactivate or delete a job.</span>
                     </div>
                 ) : (
-                    <div className="recruiter-empty-state">
-                        <h3>No notifications to display</h3>
-                        <p>New notifications will appear here</p>
+                    <div className="rn-list">
+                        {filtered.map((n, i) => {
+                            const meta = TYPE_META[n.type] || { label: n.type, color: '#888' };
+                            return (
+                                <div
+                                    key={n._id}
+                                    className={`rn-card${n.is_read ? '' : ' rn-card--unread'}`}
+                                    style={{ '--nc': meta.color, '--idx': i }}
+                                    onClick={() => handleMarkAsRead(n._id)}
+                                >
+                                    <div className="rn-card-bar" style={{ background: meta.color }} />
+                                    <div className="rn-card-body">
+                                        <div className="rn-card-top">
+                                            <span className="rn-card-type" style={{ color: meta.color, borderColor: meta.color + '44' }}>{meta.label}</span>
+                                            {!n.is_read && <span className="rn-card-dot" style={{ background: meta.color, boxShadow: `0 0 6px ${meta.color}` }} />}
+                                        </div>
+                                        <p className="rn-card-msg">{n.message}</p>
+                                        <div className="rn-card-footer">
+                                            <span className="rn-card-time">{formatDate(n.createdAt || n.created_at)}</span>
+                                            <div className="rn-card-actions">
+                                                {!n.is_read && (
+                                                    <button className="rn-btn rn-btn--read" onClick={(e) => handleMarkAsRead(n._id, e)}>
+                                                        Mark read
+                                                    </button>
+                                                )}
+                                                <button className="rn-btn rn-btn--del" onClick={(e) => handleDelete(n._id, e)}>
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
 
-            <div className={`recruiter-toast ${toast.show ? 'show' : ''} ${toast.type}`}>
+            <div className={`rn-toast rn-toast--${toast.type}${toast.show ? ' rn-toast--show' : ''}`}>
+                <span className="rn-toast-dot" />
                 {toast.message}
             </div>
         </div>

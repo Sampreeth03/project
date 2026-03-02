@@ -405,10 +405,21 @@ exports.toggleJobActive = async (req, res) => {
     const recruiterId = req.session.user.id;
     const { active } = req.body;
     try {
+        const job = await JobApplication.findOne({ _id: jobId, posted_by: recruiterId }).lean();
         const result = await JobApplication.updateOne({ _id: jobId, posted_by: recruiterId }, { active });
         if (result.modifiedCount === 0) {
             return res.status(404).json({ success: false, error: "Job not found or not authorized to update" });
         }
+        const title = job?.job_title || 'your job';
+        const isActivating = active === 1 || active === true;
+        await Notification.create({
+            user_id: recruiterId,
+            message: isActivating
+                ? `You activated the job "${title}" on ${new Date().toLocaleDateString()}.`
+                : `You deactivated the job "${title}" on ${new Date().toLocaleDateString()}.`,
+            type: isActivating ? 'job_activated' : 'job_deactivated',
+            is_read: false
+        });
         res.json({ success: true });
     } catch (err) {
         console.error("Error toggling job active status:", err.message);

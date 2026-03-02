@@ -47,8 +47,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 // Session management
-app.use(
-session({
+const sessionMiddleware = session({
  secret: "your-secret-key", 
  resave: false,
  saveUninitialized: false,
@@ -58,8 +57,8 @@ session({
    sameSite: 'lax',
    maxAge: 24 * 60 * 60 * 1000
  }
- })
-);
+});
+app.use(sessionMiddleware);
 
 // Mount API routes
 app.use('/api', authRoutes); 
@@ -83,6 +82,7 @@ app.use(errorHandler);
 
 module.exports = { 
 app, 
+sessionMiddleware,
 topics, 
  User, 
  UserMetrics, 

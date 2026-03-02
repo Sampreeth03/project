@@ -354,489 +354,237 @@ const RecruiterJobs = () => {
     const filteredJobs = getFilteredJobs();
 
     return (
-        <div className="recruiter-jobs-body">
+        <div className="rj-root">
             <RecruiterNavbar />
 
-            {/* Main Container with Sidebar Layout */}
-            <div className="recruiter-jobs-main-wrapper">
-                {/* Left Sidebar - Stats Cards */}
-                <aside className="recruiter-jobs-sidebar">
-                    <h3 className="recruiter-sidebar-title">Quick Filters</h3>
-                    
-                    <div 
-                        className={`recruiter-stat-card ${selectedFilter === 'all' ? 'active' : ''}`}
-                        onClick={() => setSelectedFilter('all')}
-                    >
-                        <div className="recruiter-stat-icon">All</div>
-                        <div className="recruiter-stat-number">{totalCount}</div>
-                    </div>
-
-                    <div 
-                        className={`recruiter-stat-card ${selectedFilter === 'active' ? 'active' : ''}`}
-                        onClick={() => setSelectedFilter('active')}
-                    >
-                        <div className="recruiter-stat-icon">Active</div>
-                        <div className="recruiter-stat-number">{activeCount}</div>
-                    </div>
-
-                    <div 
-                        className={`recruiter-stat-card ${selectedFilter === 'inactive' ? 'active' : ''}`}
-                        onClick={() => setSelectedFilter('inactive')}
-                    >
-                        <div className="recruiter-stat-icon">Inactive</div>
-                        <div className="recruiter-stat-number">{inactiveCount}</div>
-                    </div>
-                </aside>
-
-                {/* Main Content Area */}
-                <main className="recruiter-jobs-main-content">
-                    {/* Page Header with Create Button */}
-                    <div className="recruiter-jobs-header">
-                        {!showForm ? (
-                            <>
-                                <div className="recruiter-page-title-wrapper">
-                                    <h1 className="recruiter-page-main-title">Job Management</h1>
-                                    <p className="recruiter-page-subtitle">Create and manage your job postings</p>
-                                </div>
-                                
-                                {/* Create Job Button - Centered */}
-                                <button 
-                                    className="recruiter-create-job-btn"
-                                    onClick={() => setShowForm(true)}
-                                >
-                                    <span className="recruiter-btn-icon">+</span>
-                                    Create New Job
-                                </button>
-                            </>
-                        ) : (
-                            <div className="recruiter-page-title-wrapper">
-                                <h1 className="recruiter-page-main-title">Create Job Posting</h1>
-                                <p className="recruiter-page-subtitle">Fill in the details for your new job posting</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Job Creation Form Modal */}
-                    {showForm && (
-                        <div className="recruiter-form-overlay">
-                            <div className="recruiter-form-modal">
-                                <div className="recruiter-form-modal-header">
-                                    <h2>Create New Job Posting</h2>
-                                    <button 
-                                        className="recruiter-close-form-btn"
-                                        onClick={() => {
-                                            setShowForm(false);
-                                            setFormData({ jobTitle: '', description: '', salaryRange: '', skills: '' });
-                                            setCustomQuestions([]);
-                                            setErrors({});
-                                        }}
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                                
-                                <form onSubmit={handleSubmit} noValidate className="recruiter-job-form">
-                                    <div className="recruiter-form-section">
-                                        <h3 className="recruiter-section-title">Basic Information</h3>
-                                        
-                                        <div className="recruiter-form-group">
-                                            <label htmlFor="jobTitle">Job Title <span className="required">*</span></label>
-                                            <input 
-                                                type="text" 
-                                                id="jobTitle" 
-                                                name="jobTitle"
-                                                placeholder="e.g. Senior Frontend Developer" 
-                                                value={formData.jobTitle}
-                                                onChange={handleInputChange}
-                                                onBlur={handleBlur}
-                                                maxLength={MAX_TITLE}
-                                                className={errors.jobTitle ? 'invalid' : ''}
-                                            />
-                                            <div className="recruiter-char-counter">
-                                                {normalizedString(formData.jobTitle).length}/{MAX_TITLE}
-                                            </div>
-                                            {errors.jobTitle && (
-                                                <div className="recruiter-error-message">{errors.jobTitle}</div>
-                                            )}
-                                        </div>
-
-                                        <div className="recruiter-form-group">
-                                            <label htmlFor="companyName">Company Name <span className="required">*</span></label>
-                                            <input 
-                                                type="text" 
-                                                id="companyName" 
-                                                name="companyName"
-                                                placeholder="e.g. Microsoft Corporation" 
-                                                value={formData.companyName}
-                                                onChange={handleInputChange}
-                                                onBlur={handleBlur}
-                                                maxLength={MAX_COMPANY}
-                                                className={errors.companyName ? 'invalid' : ''}
-                                            />
-                                            <div className="recruiter-char-counter">
-                                                {normalizedString(formData.companyName).length}/{MAX_COMPANY}
-                                            </div>
-                                            {errors.companyName && (
-                                                <div className="recruiter-error-message">{errors.companyName}</div>
-                                            )}
-                                        </div>
-
-                                        <div className="recruiter-form-group">
-                                            <label htmlFor="description">Job Description <span className="required">*</span></label>
-                                            <textarea 
-                                                id="description" 
-                                                name="description"
-                                                placeholder="Describe the job role, responsibilities, and requirements..."
-                                                value={formData.description}
-                                                onChange={handleInputChange}
-                                                onBlur={handleBlur}
-                                                maxLength={MAX_DESC}
-                                                className={errors.description ? 'invalid' : ''}
-                                            />
-                                            <div className="recruiter-char-counter">
-                                                {normalizedString(formData.description).length}/{MAX_DESC}
-                                            </div>
-                                            {errors.description && (
-                                                <div className="recruiter-error-message">{errors.description}</div>
-                                            )}
-                                        </div>
-
-                                        <div className="recruiter-form-row">
-                                            <div className="recruiter-form-group">
-                                                <label htmlFor="salaryRange">Pay / Salary <span className="required">*</span></label>
-                                                <input 
-                                                    type="text" 
-                                                    id="salaryRange" 
-                                                    name="salaryRange"
-                                                    placeholder="e.g. $80,000 - $120,000"
-                                                    value={formData.salaryRange}
-                                                    onChange={handleInputChange}
-                                                    onBlur={handleBlur}
-                                                    className={errors.salaryRange ? 'invalid' : ''}
-                                                />
-                                                {errors.salaryRange && (
-                                                    <div className="recruiter-error-message">{errors.salaryRange}</div>
-                                                )}
-                                            </div>
-
-                                            <div className="recruiter-form-group">
-                                                <label htmlFor="skills">Required Skills <span className="required">*</span></label>
-                                                <input 
-                                                    type="text" 
-                                                    id="skills" 
-                                                    name="skills"
-                                                    placeholder="e.g. JavaScript, React, Node.js"
-                                                    value={formData.skills}
-                                                    onChange={handleInputChange}
-                                                    onBlur={handleBlur}
-                                                    className={errors.skills ? 'invalid' : ''}
-                                                />
-                                                {errors.skills && (
-                                                    <div className="recruiter-error-message">{errors.skills}</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Custom Questions Section */}
-                                    <div className="recruiter-form-section">
-                                        <div className="recruiter-section-header">
-                                            <h3 className="recruiter-section-title">
-                                                Custom Application Questions
-                                                <span style={{
-                                                    marginLeft: '12px',
-                                                    background: customQuestions.length > 0 ? '#10b981' : '#6b7280',
-                                                    color: 'white',
-                                                    padding: '4px 12px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '14px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {customQuestions.length} {customQuestions.length === 1 ? 'Question' : 'Questions'}
-                                                </span>
-                                            </h3>
-                                            <button 
-                                                type="button"
-                                                className="recruiter-toggle-questions-btn"
-                                                onClick={() => setShowQuestionBuilder(!showQuestionBuilder)}
-                                            >
-                                                {showQuestionBuilder ? '− Hide' : '+ Add Questions'}
-                                            </button>
-                                        </div>
-                                        <p className="recruiter-section-description">
-                                            Add custom questions for candidates to answer when applying
-                                        </p>
-
-                                        {showQuestionBuilder && (
-                                            <div className="recruiter-question-builder">
-                                                <div className="recruiter-question-type-buttons">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => addCustomQuestion('yesno')}
-                                                        className="recruiter-add-question-btn"
-                                                        disabled={stagedQuestion !== null}
-                                                    >
-                                                        <span>Y/N</span> Yes/No Question
-                                                    </button>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => addCustomQuestion('text')}
-                                                        className="recruiter-add-question-btn"
-                                                        disabled={stagedQuestion !== null}
-                                                    >
-                                                        <span>TXT</span> Short Answer
-                                                    </button>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => addCustomQuestion('multiline')}
-                                                        className="recruiter-add-question-btn"
-                                                        disabled={stagedQuestion !== null}
-                                                    >
-                                                        <span>PARA</span> Paragraph
-                                                    </button>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => addCustomQuestion('multiple')}
-                                                        className="recruiter-add-question-btn"
-                                                        disabled={stagedQuestion !== null}
-                                                    >
-                                                        <span>MCQ</span> Multiple Choice
-                                                    </button>
-                                                </div>
-
-                                                {/* Staged Question Editor */}
-                                                {stagedQuestion && (
-                                                    <div className="recruiter-staged-question">
-                                                        <div className="recruiter-question-item">
-                                                            <div className="recruiter-question-header-item">
-                                                                <span className="recruiter-question-number">New Question</span>
-                                                                <span className="recruiter-question-type-badge">
-                                                                    {stagedQuestion.type === 'yesno' && 'Y/N Yes/No'}
-                                                                    {stagedQuestion.type === 'text' && 'TXT Short Answer'}
-                                                                    {stagedQuestion.type === 'multiline' && 'PARA Paragraph'}
-                                                                    {stagedQuestion.type === 'multiple' && 'MCQ Multiple Choice'}
-                                                                </span>
-                                                            </div>
-
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Enter your question here..."
-                                                                value={stagedQuestion.question}
-                                                                onChange={(e) => updateStagedQuestion('question', e.target.value)}
-                                                                className="recruiter-question-input"
-                                                            />
-
-                                                            {stagedQuestion.type === 'multiple' && (
-                                                                <div className="recruiter-options-container">
-                                                                    <label className="recruiter-options-label">Options:</label>
-                                                                    {stagedQuestion.options.map((option, optIndex) => (
-                                                                        <div key={optIndex} className="recruiter-option-item">
-                                                                            <input
-                                                                                type="text"
-                                                                                value={option}
-                                                                                onChange={(e) => updateStagedOption(optIndex, e.target.value)}
-                                                                                className="recruiter-option-input"
-                                                                                placeholder={`Option ${optIndex + 1}`}
-                                                                            />
-                                                                            {stagedQuestion.options.length > 2 && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => removeStagedOption(optIndex)}
-                                                                                    className="recruiter-remove-option-btn"
-                                                                                >
-                                                                                    ×
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-                                                                    ))}
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={addStagedOption}
-                                                                        className="recruiter-add-option-btn"
-                                                                    >
-                                                                        + Add Option
-                                                                    </button>
-                                                                </div>
-                                                            )}
-
-                                                            <label className="recruiter-checkbox-label">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={stagedQuestion.required}
-                                                                    onChange={(e) => updateStagedQuestion('required', e.target.checked)}
-                                                                />
-                                                                <span>Required question</span>
-                                                            </label>
-
-                                                            {/* Add and Cancel Buttons */}
-                                                            <div className="recruiter-staged-question-actions">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={confirmAddQuestion}
-                                                                    className="recruiter-confirm-question-btn"
-                                                                    disabled={!stagedQuestion.question.trim()}
-                                                                >
-                                                                    Add Question
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={cancelStagedQuestion}
-                                                                    className="recruiter-cancel-question-btn"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* List of Added Questions */}
-                                                {customQuestions.length > 0 && (
-                                                    <div className="recruiter-questions-list">
-                                                        <h4 className="recruiter-questions-list-title">Added Questions ({customQuestions.length})</h4>
-                                                        {customQuestions.map((q, index) => (
-                                                            <div key={q.id} className="recruiter-question-item recruiter-confirmed-question">
-                                                                <div className="recruiter-question-header-item">
-                                                                    <span className="recruiter-question-number">Q{index + 1}</span>
-                                                                    <span className="recruiter-question-type-badge">
-                                                                        {q.type === 'yesno' && 'Y/N Yes/No'}
-                                                                        {q.type === 'text' && 'TXT Short Answer'}
-                                                                        {q.type === 'multiline' && 'PARA Paragraph'}
-                                                                        {q.type === 'multiple' && 'MCQ Multiple Choice'}
-                                                                    </span>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="recruiter-remove-question-btn"
-                                                                        onClick={() => removeQuestion(q.id)}
-                                                                    >
-                                                                        ×
-                                                                    </button>
-                                                                </div>
-
-                                                                <div className="recruiter-question-preview">
-                                                                    <p className="recruiter-question-text">{q.question}</p>
-                                                                    {q.type === 'multiple' && (
-                                                                        <ul className="recruiter-options-preview">
-                                                                            {q.options.map((option, idx) => (
-                                                                                <li key={idx}>{option}</li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    )}
-                                                                    {q.required && <span className="recruiter-required-badge">Required</span>}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="recruiter-form-actions">
-                                        <button 
-                                            type="button"
-                                            className="recruiter-cancel-btn"
-                                            onClick={() => {
-                                                setShowForm(false);
-                                                setFormData({ jobTitle: '', description: '', salaryRange: '', skills: '' });
-                                                setCustomQuestions([]);
-                                                setErrors({});
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button 
-                                            type="submit" 
-                                            className="recruiter-submit-btn"
-                                            disabled={!isFormValid() || isSubmitting || loading}
-                                        >
-                                            {isSubmitting ? 'Creating...' : 'Create Job Posting'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Job List Section */}
-                    <div className="recruiter-job-list-section">
-                        <div className="recruiter-jobs-list-header">
-                            <h2>
-                                {selectedFilter === 'all' && 'All Jobs'}
-                                {selectedFilter === 'active' && 'Active Jobs'}
-                                {selectedFilter === 'inactive' && 'Inactive Jobs'}
-                            </h2>
-                            <div className="recruiter-jobs-count">
-                                {filteredJobs.length} {filteredJobs.length === 1 ? 'Job' : 'Jobs'}
-                            </div>
-                        </div>
-                        
-                        {loading ? (
-                            <div className="recruiter-loading-state">
-                                <div className="recruiter-spinner"></div>
-                                <p>Loading jobs...</p>
-                            </div>
-                        ) : filteredJobs.length > 0 ? (
-                            <div className="recruiter-jobs-grid">
-                                {filteredJobs.map(job => (
-                                        <div className="recruiter-job-card" key={job._id}>
-                                            <div className="recruiter-job-header">
-                                                <div className="recruiter-job-title-section">
-                                                    <div className="recruiter-job-title">{job.job_title}</div>
-                                                    <span className={`recruiter-job-status-badge ${job.active ? 'active' : 'inactive'}`}>
-                                                        {job.active ? '● Active' : '○ Inactive'}
-                                                    </span>
-                                                </div>
-                                                <div className="recruiter-job-actions">
-                                                    <button 
-                                                        className={`recruiter-toggle-btn ${job.active ? 'deactivate' : 'activate'}`}
-                                                        onClick={() => handleToggleActive(job._id, job.active)}
-                                                        title={job.active ? 'Deactivate job' : 'Activate job'}
-                                                    >
-                                                        {job.active ? 'Deactivate' : 'Activate'}
-                                                    </button>
-                                                    <button 
-                                                        className="recruiter-delete-btn"
-                                                        onClick={() => handleDeleteJob(job._id)}
-                                                        title="Delete job"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="recruiter-job-pay">{job.salary_range}</div>
-                                            <div className="recruiter-job-description">{job.description}</div>
-                                            <div className="recruiter-job-footer">
-                                                <div className="recruiter-job-skills">
-                                                    <strong>Required Skills:</strong> {job.skills}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="recruiter-empty-jobs-state">
-                                    <div className="recruiter-empty-icon">No Jobs</div>
-                                    <h3>
-                                        {selectedFilter === 'all' && 'No Jobs Posted Yet'}
-                                        {selectedFilter === 'active' && 'No Active Jobs'}
-                                        {selectedFilter === 'inactive' && 'No Inactive Jobs'}
-                                    </h3>
-                                    <p>
-                                        {selectedFilter === 'all' && 'Create your first job posting using the "Create New Job" button above.'}
-                                        {selectedFilter === 'active' && 'You don\'t have any active job postings at the moment.'}
-                                        {selectedFilter === 'inactive' && 'You don\'t have any inactive job postings.'}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </main>
+            {/* ── Top bar: filters + create button ── */}
+            <div className="rj-topbar">
+                <div className="rj-filters">
+                    {[
+                        { key: 'all',      label: 'ALL',      count: totalCount  },
+                        { key: 'active',   label: 'ACTIVE',   count: activeCount   },
+                        { key: 'inactive', label: 'INACTIVE', count: inactiveCount },
+                    ].map(f => (
+                        <button
+                            key={f.key}
+                            className={`rj-filter-btn ${selectedFilter === f.key ? 'rj-filter-btn--on' : ''}`}
+                            onClick={() => setSelectedFilter(f.key)}
+                        >
+                            {f.label}
+                            <span className="rj-filter-count">{f.count}</span>
+                        </button>
+                    ))}
                 </div>
 
-                <div className={`recruiter-notification-popup ${notification.show ? 'show' : ''}`}>
-                    {notification.message}
+                <div className="rj-topbar-right">
+                    <div className="rj-page-meta">
+                        <span className="rj-page-eyebrow">JOB MANAGEMENT</span>
+                        <span className="rj-page-count">{filteredJobs.length} position{filteredJobs.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <button className="rj-create-btn" onClick={() => setShowForm(true)}>
+                        <span className="rj-create-icon">+</span> Post a Job
+                    </button>
                 </div>
             </div>
+
+            {/* ── Job grid ── */}
+            <div className="rj-content">
+                {loading ? (
+                    <div className="rj-loading">
+                        <div className="rj-spinner" />
+                        <p>Loading positions…</p>
+                    </div>
+                ) : filteredJobs.length === 0 ? (
+                    <div className="rj-empty">
+                        <div className="rj-empty-glyph">⬡</div>
+                        <h3>
+                            {selectedFilter === 'all'      && 'No positions posted yet'}
+                            {selectedFilter === 'active'   && 'No active positions'}
+                            {selectedFilter === 'inactive' && 'No inactive positions'}
+                        </h3>
+                        <p>
+                            {selectedFilter === 'all' && 'Hit "Post a Job" above to create your first listing.'}
+                            {selectedFilter !== 'all' && 'Try switching the filter above.'}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="rj-grid">
+                        {filteredJobs.map((job, idx) => (
+                            <div className="rj-card" key={job._id} style={{ '--idx': idx }}>
+                                <div className="rj-card-accent" />
+
+                                <div className="rj-card-head">
+                                    <div className="rj-card-head-left">
+                                        <span className="rj-card-idx">{String(idx + 1).padStart(2, '0')}</span>
+                                        <span
+                                            className="rj-card-pip"
+                                            style={{ background: job.active ? '#00e07a' : '#333' }}
+                                            title={job.active ? 'Active' : 'Inactive'}
+                                        />
+                                    </div>
+                                    <div className="rj-card-actions">
+                                        <button
+                                            className={`rj-toggle-btn ${job.active ? 'rj-toggle-btn--off' : 'rj-toggle-btn--on'}`}
+                                            onClick={() => handleToggleActive(job._id, job.active)}
+                                        >
+                                            {job.active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button
+                                            className="rj-delete-btn"
+                                            onClick={() => handleDeleteJob(job._id)}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="rj-card-title">{job.job_title}</div>
+                                {job.company_name && <div className="rj-card-company">{job.company_name}</div>}
+                                {job.salary_range  && <div className="rj-card-salary">{job.salary_range}</div>}
+
+                                <p className="rj-card-desc">{job.description}</p>
+
+                                {job.skills && (
+                                    <div className="rj-card-skills">
+                                        {job.skills.split(',').map(s => s.trim()).filter(Boolean).map(s => (
+                                            <span key={s} className="rj-skill-tag">{s}</span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* ── Create Job Modal ── */}
+            {showForm && (
+                <div className="rj-overlay" onClick={() => { setShowForm(false); setErrors({}); }}>
+                    <div className="rj-modal" onClick={e => e.stopPropagation()}>
+                        <div className="rj-modal-head">
+                            <div>
+                                <span className="rj-modal-eyebrow">NEW POSITION</span>
+                                <h2 className="rj-modal-title">Post a Job</h2>
+                            </div>
+                            <button className="rj-modal-close" onClick={() => { setShowForm(false); setFormData({ jobTitle: '', companyName: '', description: '', salaryRange: '', skills: '' }); setCustomQuestions([]); setErrors({}); }}>×</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} noValidate className="rj-form">
+
+                            {/* Basic fields */}
+                            <div className="rj-form-row">
+                                <div className="rj-field">
+                                    <label className="rj-label">Job Title <span className="rj-req">*</span></label>
+                                    <input className={`rj-input ${errors.jobTitle ? 'rj-input--err' : ''}`} type="text" name="jobTitle" placeholder="e.g. Senior Frontend Developer" value={formData.jobTitle} onChange={handleInputChange} onBlur={handleBlur} maxLength={MAX_TITLE} />
+                                    <div className="rj-counter">{normalizedString(formData.jobTitle).length}/{MAX_TITLE}</div>
+                                    {errors.jobTitle && <div className="rj-err">{errors.jobTitle}</div>}
+                                </div>
+                                <div className="rj-field">
+                                    <label className="rj-label">Company Name <span className="rj-req">*</span></label>
+                                    <input className={`rj-input ${errors.companyName ? 'rj-input--err' : ''}`} type="text" name="companyName" placeholder="e.g. Acme Corp" value={formData.companyName} onChange={handleInputChange} onBlur={handleBlur} maxLength={MAX_COMPANY} />
+                                    <div className="rj-counter">{normalizedString(formData.companyName).length}/{MAX_COMPANY}</div>
+                                    {errors.companyName && <div className="rj-err">{errors.companyName}</div>}
+                                </div>
+                            </div>
+
+                            <div className="rj-field">
+                                <label className="rj-label">Description <span className="rj-req">*</span></label>
+                                <textarea className={`rj-input rj-textarea ${errors.description ? 'rj-input--err' : ''}`} name="description" placeholder="Describe the role, responsibilities, requirements…" value={formData.description} onChange={handleInputChange} onBlur={handleBlur} maxLength={MAX_DESC} />
+                                <div className="rj-counter">{normalizedString(formData.description).length}/{MAX_DESC}</div>
+                                {errors.description && <div className="rj-err">{errors.description}</div>}
+                            </div>
+
+                            <div className="rj-form-row">
+                                <div className="rj-field">
+                                    <label className="rj-label">Salary Range <span className="rj-req">*</span></label>
+                                    <input className={`rj-input ${errors.salaryRange ? 'rj-input--err' : ''}`} type="text" name="salaryRange" placeholder="e.g. $80,000 – $120,000" value={formData.salaryRange} onChange={handleInputChange} onBlur={handleBlur} />
+                                    {errors.salaryRange && <div className="rj-err">{errors.salaryRange}</div>}
+                                </div>
+                                <div className="rj-field">
+                                    <label className="rj-label">Required Skills <span className="rj-req">*</span></label>
+                                    <input className={`rj-input ${errors.skills ? 'rj-input--err' : ''}`} type="text" name="skills" placeholder="e.g. React, Node.js, TypeScript" value={formData.skills} onChange={handleInputChange} onBlur={handleBlur} />
+                                    {errors.skills && <div className="rj-err">{errors.skills}</div>}
+                                </div>
+                            </div>
+
+                            {/* Custom questions */}
+                            <div className="rj-section-divider">
+                                <span>CUSTOM QUESTIONS</span>
+                                <button type="button" className="rj-toggle-q-btn" onClick={() => setShowQuestionBuilder(!showQuestionBuilder)}>
+                                    {showQuestionBuilder ? '− Hide' : '+ Add'}
+                                </button>
+                            </div>
+
+                            {showQuestionBuilder && (
+                                <div className="rj-qbuilder">
+                                    <div className="rj-qtype-row">
+                                        {[['yesno','Y/N'],['text','Short'],['multiline','Para'],['multiple','MCQ']].map(([type, label]) => (
+                                            <button key={type} type="button" className="rj-qtype-btn" onClick={() => addCustomQuestion(type)} disabled={stagedQuestion !== null}>
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {stagedQuestion && (
+                                        <div className="rj-staged">
+                                            <input type="text" className="rj-input" placeholder="Enter question…" value={stagedQuestion.question} onChange={e => updateStagedQuestion('question', e.target.value)} />
+                                            {stagedQuestion.type === 'multiple' && (
+                                                <div className="rj-options">
+                                                    {stagedQuestion.options.map((opt, i) => (
+                                                        <div key={i} className="rj-opt-row">
+                                                            <input className="rj-input" type="text" value={opt} onChange={e => updateStagedOption(i, e.target.value)} placeholder={`Option ${i+1}`} />
+                                                            {stagedQuestion.options.length > 2 && <button type="button" className="rj-remove-opt" onClick={() => removeStagedOption(i)}>×</button>}
+                                                        </div>
+                                                    ))}
+                                                    <button type="button" className="rj-add-opt-btn" onClick={addStagedOption}>+ Option</button>
+                                                </div>
+                                            )}
+                                            <label className="rj-check-label">
+                                                <input type="checkbox" checked={stagedQuestion.required} onChange={e => updateStagedQuestion('required', e.target.checked)} />
+                                                Required
+                                            </label>
+                                            <div className="rj-staged-actions">
+                                                <button type="button" className="rj-confirm-q-btn" disabled={!stagedQuestion.question.trim()} onClick={confirmAddQuestion}>Add Question</button>
+                                                <button type="button" className="rj-cancel-q-btn" onClick={cancelStagedQuestion}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {customQuestions.length > 0 && (
+                                        <div className="rj-q-list">
+                                            {customQuestions.map((q, i) => (
+                                                <div key={q.id} className="rj-q-item">
+                                                    <div className="rj-q-item-head">
+                                                        <span className="rj-q-num">Q{i+1}</span>
+                                                        <span className="rj-q-badge">{q.type}</span>
+                                                        {q.required && <span className="rj-q-req-badge">required</span>}
+                                                        <button type="button" className="rj-remove-q" onClick={() => removeQuestion(q.id)}>×</button>
+                                                    </div>
+                                                    <p className="rj-q-text">{q.question}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="rj-form-footer">
+                                <button type="button" className="rj-cancel-submit-btn" onClick={() => { setShowForm(false); setFormData({ jobTitle: '', companyName: '', description: '', salaryRange: '', skills: '' }); setCustomQuestions([]); setErrors({}); }}>Cancel</button>
+                                <button type="submit" className="rj-submit-btn" disabled={!isFormValid() || isSubmitting || loading}>
+                                    {isSubmitting ? 'Posting…' : 'Post Job'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* toast */}
+            <div className={`rj-toast ${notification.show ? 'rj-toast--show' : ''}`}>
+                <span className="rj-toast-dot" />
+                {notification.message}
+            </div>
+        </div>
     );
 };
 

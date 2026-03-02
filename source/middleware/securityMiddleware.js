@@ -72,7 +72,7 @@ const helmetConfig = helmet({
             styleSrc: ["'self'", "'unsafe-inline'"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "blob:", "http://localhost:5173"],
-            connectSrc: ["'self'", "http://localhost:5173", "http://localhost:5000"],
+            connectSrc: ["'self'", "http://localhost:5173", "http://localhost:5000", "ws://localhost:5000"],
             fontSrc: ["'self'", "data:"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
