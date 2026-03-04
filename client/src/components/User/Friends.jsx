@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './NavBar.jsx';
+import UserProfileModal from '../../components/Recruiter/UserProfileModal';
 import '../../styles/UserHome.css';
 
 const Friends = () => {
@@ -10,6 +11,7 @@ const Friends = () => {
   const [incoming, setIncoming] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
 
   useEffect(() => {
     fetchFriends();
@@ -109,6 +111,7 @@ const Friends = () => {
                 <div style={{ fontSize: '12px', opacity: 0.8 }}>{u.email}</div>
               </div>
               <div>
+                <button className="btn btn-white" style={{ marginRight: '8px' }} onClick={() => setSelectedUserProfile({ userId: u._id, userName: u.name })}>View Profile</button>
                 <button onClick={() => sendRequest(u._id)} className="btn btn-white">Send Request</button>
               </div>
             </div>
@@ -129,6 +132,7 @@ const Friends = () => {
                   <div style={{ fontSize: '12px', opacity: 0.8 }}>{from.email || ''}</div>
                 </div>
                 <div>
+                  <button className="btn btn-white" style={{ marginRight: '8px' }} onClick={() => setSelectedUserProfile({ userId: (from._id || from.id || from._id?.toString()), userName: from.name || 'Profile' })}>View Profile</button>
                   <button className="btn btn-white" onClick={() => respondRequest(r._id, 'accept')}>Accept</button>
                   <button className="btn" style={{ marginLeft: '8px' }} onClick={() => respondRequest(r._id, 'reject')}>Reject</button>
                 </div>
@@ -148,11 +152,18 @@ const Friends = () => {
                 <div style={{ fontSize: '12px', opacity: 0.8 }}>{f.email}</div>
               </div>
               <div>
-                <button className="btn btn-white" onClick={() => window.location.href = `/profile/${f._id}`}>View Profile</button>
+                <button className="btn btn-white" onClick={() => setSelectedUserProfile({ userId: f._id, userName: f.name })}>View Profile</button>
               </div>
             </div>
           ))}
         </div>
+        {selectedUserProfile && (
+          <UserProfileModal
+            userId={selectedUserProfile.userId}
+            userName={selectedUserProfile.userName}
+            onClose={() => setSelectedUserProfile(null)}
+          />
+        )}
       </div>
     </>
   );
