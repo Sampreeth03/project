@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import NavBar from './NavBar.jsx';
-import './TopicProjects.css';
+import '../../styles/TopicProjects.css';
 
 const TOPICS_CONFIG = {
   '/web-dev': { title: 'Web Development', topic: 'Web Development' },

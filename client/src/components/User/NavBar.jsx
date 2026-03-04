@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx'; 
 import '../../styles/UserHome.css'; 
 
 const Navbar = ({ onSearchChange }) => {
     const { user, logoutUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
 
     const navLinks = [
         { name: "Home", href: "/home", submenu: [] },
-        // ... (rest of the link array remains the same as previously corrected) ...
         { 
             name: "Projects", href: "/project", 
             submenu: [
                 { name: "Projects", href: "/project" },
                 { name: "Joined Projects", href: "/joined-projects" },
-                 { name: "Interact", href: "/messages" }
+                { name: "Interact", href: "/messages" }
             ]
         },
         { 
@@ -64,10 +66,22 @@ const Navbar = ({ onSearchChange }) => {
     }
     finalNavLinks.push({ href: '/logout', name: 'Logout', submenu: [] });
 
+    // Add scroll effect
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     const handleLogout = (e) => {
         e.preventDefault(); 
-        logoutUser(); 
-        navigate('/login');
+        if (window.confirm('Are you sure you want to logout?')) {
+            logoutUser(); 
+            navigate('/login');
+        }
     };
     
     // Handler for search bar input change
@@ -79,28 +93,86 @@ const Navbar = ({ onSearchChange }) => {
             onSearchChange(query);
         }
     };
+
+    // Check if a link is active
+    const isLinkActive = (href) => {
+        return location.pathname === href;
+    };
     
     return (
         <header>
-            <div className="navbar">
+            <div 
+                className="navbar"
+                style={{
+                    background: isScrolled 
+                        ? 'rgba(10, 10, 11, 0.98)' 
+                        : 'rgba(10, 10, 11, 0.95)',
+                    boxShadow: isScrolled 
+                        ? '0 8px 32px rgba(0, 0, 0, 0.6)' 
+                        : '0 4px 24px rgba(0, 0, 0, 0.4)',
+                    transition: 'all 0.3s ease'
+                }}
+            >
                 <span className="logo">
-                    <Link id="logo-link" to={user ? "/home" : "/"}>RELABTeams</Link>
+                    <Link 
+                        id="logo-link" 
+                        to={user ? "/home" : "/"}
+                        style={{
+                            textDecoration: 'none',
+                            display: 'inline-block'
+                        }}
+                    >
+                        RELABTeams
+                    </Link>
                 </span>
                 
                 <ul className="nav-links">
                     {finalNavLinks.map((link, index) => (
                         <li key={index}>
                             {link.name === 'Logout' ? (
-                                <a onClick={handleLogout} style={{ cursor: 'pointer' }}>{link.name}</a>
+                                <a 
+                                    onClick={handleLogout} 
+                                    style={{ 
+                                        cursor: 'pointer',
+                                        color: '#ff6b6b'
+                                    }}
+                                >
+                                    {link.name}
+                                </a>
                             ) : (
-                                <Link to={link.href}>{link.name}</Link>
+                                <Link 
+                                    to={link.href}
+                                    style={{
+                                        color: isLinkActive(link.href) 
+                                            ? 'var(--primary-blue-light)' 
+                                            : 'var(--text-secondary)',
+                                        background: 'transparent',
+                                        textDecoration: isLinkActive(link.href) ? 'underline' : 'none',
+                                        textUnderlineOffset: '7px',
+                                        textDecorationThickness: '2px'
+                                    }}
+                                >
+                                    {link.name}
+                                </Link>
                             )}
                             
                             {link.submenu && link.submenu.length > 0 && (
                                 <ul className="dropdown">
                                     {link.submenu.map((sublink, subIndex) => (
                                         <li key={subIndex}>
-                                            <Link to={sublink.href}>{sublink.name}</Link>
+                                            <Link 
+                                                to={sublink.href}
+                                                style={{
+                                                    color: isLinkActive(sublink.href)
+                                                        ? 'var(--primary-blue-light)'
+                                                        : 'var(--text-secondary)',
+                                                    textDecoration: isLinkActive(sublink.href) ? 'underline' : 'none',
+                                                    textUnderlineOffset: '5px',
+                                                    textDecorationThickness: '2px'
+                                                }}
+                                            >
+                                                {sublink.name}
+                                            </Link>
                                         </li>
                                     ))}
                                 </ul>
@@ -109,15 +181,53 @@ const Navbar = ({ onSearchChange }) => {
                     ))}
                 </ul>
                 
-                {/* SEARCH BAR RESTORATION: Moved back into the Navbar container for layout */}
-                <input 
-                    type="text" 
-                    placeholder="Search" 
-                    className="search-box" 
-                    id="topicSearchBar"
-                    value={searchQuery}
-                    onChange={handleInputChange}
-                />
+                {/* Enhanced SEARCH BAR */}
+                <div style={{ position: 'relative' }}>
+                    <input 
+                        type="text" 
+                        placeholder="Search topics..." 
+                        className="search-box" 
+                        id="topicSearchBar"
+                        value={searchQuery}
+                        onChange={handleInputChange}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setIsSearchFocused(false)}
+                        style={{
+                            width: isSearchFocused 
+                                ? (window.innerWidth <= 768 ? '240px' : '300px')
+                                : (window.innerWidth <= 768 ? '130px' : '170px'),
+                            transition: 'width 0.3s ease'
+                        }}
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => {
+                                setSearchQuery('');
+                                if (onSearchChange) onSearchChange('');
+                            }}
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                cursor: 'pointer',
+                                fontSize: '18px',
+                                padding: '0',
+                                width: '20px',
+                                height: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                            title="Clear search"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
             </div>
         </header>
     );

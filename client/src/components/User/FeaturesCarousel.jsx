@@ -1,82 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import '../../styles/UserHome.css';
 
 const features = [
-    { title: "Student Doubt Clarification Hub", description: "Post doubts, get expert answers, earn reputation points, and chat with peers" },
-    { title: "Project Idea Collaboration Space", description: "Share ideas, form teams, track progress, and showcase work" },
-    { title: "Recruiter Talent Discovery Portal", description: "Find top students, verify skills, send offers, and validate certificates" },
-    { title: "Admin Monitoring & Moderation", description: "Monitor activity, remove spam, verify recruiters, and resolve disputes" }
-];
-
-const testimonials = [
-    { quote: "Great platform! Helped me collaborate on projects easily.", author: "User 1" },
-    { quote: "The best place to find team members for CS projects!", author: "User 2" },
-    { quote: "Amazing experience, learned a lot from my peers!", author: "User 3" }
+    { 
+        title: "Student Doubt Clarification Hub", 
+        description: "Post doubts, get expert answers, earn reputation points, and chat with peers"
+    },
+    { 
+        title: "Project Idea Collaboration Space", 
+        description: "Share ideas, form teams, track progress, and showcase work"
+    },
+    { 
+        title: "Recruiter Talent Discovery Portal", 
+        description: "Find top students, verify skills, send offers, and validate certificates"
+    },
+    { 
+        title: "Admin Monitoring & Moderation", 
+        description: "Monitor activity, remove spam, verify recruiters, and resolve disputes"
+    }
 ];
 
 const FeaturesCarousel = () => {
-    const totalSlides = testimonials.length;
-    const [activeIndex, setActiveIndex] = useState(0); 
+    const featuresRef = useRef(null);
 
-    // --- Carousel Interval Logic (Replaces EJS JavaScript setInterval) ---
+    // Intersection Observer for feature boxes animation
     useEffect(() => {
-        const nextSlide = () => {
-            setActiveIndex(prevIndex => (prevIndex + 1) % totalSlides);
-        };
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const featureBoxes = entry.target.querySelectorAll('.feature-box');
+                        featureBoxes.forEach((box, index) => {
+                            setTimeout(() => {
+                                box.style.opacity = '1';
+                                box.style.transform = 'translateY(0)';
+                            }, index * 150);
+                        });
+                    }
+                });
+            },
+            { threshold: 0.45, rootMargin: '0px 0px -120px 0px' }
+        );
 
-        const interval = setInterval(nextSlide, 3000); 
+        if (featuresRef.current) {
+            observer.observe(featuresRef.current);
+        }
 
-        return () => clearInterval(interval); 
-    }, [totalSlides]);
-
-    const handleDotClick = (index) => {
-        setActiveIndex(index);
-    };
+        return () => observer.disconnect();
+    }, []);
 
     return (
-        <>
-            {/* --- Features Section --- */}
-            <section className="features-section">
-                <h1 className="features-title">FEATURES</h1>
-                <div className="features-container">
-                    {features.map((feature, index) => (
-                        <div key={index} className="feature-box">
-                            <h3>{feature.title}</h3>
-                            <p>{feature.description}</p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* --- Testimonial Carousel --- */}
-            <div className="carousel-container">
-                {/* CRITICAL: Inline style driven by state for smooth sliding */}
-                <div 
-                    className="carousel" 
-                    style={{ 
-                        transform: `translateX(-${activeIndex * 100}%)`,
-                    }}
-                >
-                    {testimonials.map((testimonial, index) => (
-                        /* The testimonial class relies on flex: 0 0 100% in CSS */
-                        <div key={index} className="testimonial">
-                            <p>"{testimonial.quote}"</p>
-                            <h4>- {testimonial.author}</h4>
-                        </div>
-                    ))}
-                </div>
-                
-                <div className="dots">
-                    {[...Array(totalSlides)].map((_, i) => (
-                        <span 
-                            key={i}
-                            className={`dot ${i === activeIndex ? 'active' : ''}`}
-                            onClick={() => handleDotClick(i)}
-                        ></span>
-                    ))}
-                </div>
+        <section className="features-section" ref={featuresRef}>
+            <h1 className="features-title">FEATURES</h1>
+            <div className="features-container">
+                {features.map((feature, index) => (
+                    <div 
+                        key={index} 
+                        className="feature-box"
+                        style={{
+                            opacity: 0,
+                            transform: 'translateY(20px)',
+                            transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                    >
+                        <h3>{feature.title}</h3>
+                        <p>{feature.description}</p>
+                    </div>
+                ))}
             </div>
-        </>
+        </section>
     );
 };
 

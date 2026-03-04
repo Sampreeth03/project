@@ -9,11 +9,15 @@ const MetricsBanner = () => {
     const navigate = useNavigate();
     const [metricsData, setMetricsData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showWelcome, setShowWelcome] = useState(false);
 
     // CRITICAL: Base the username on the user context immediately
     const username = metricsData?.username || user?.name || 'User';
 
     useEffect(() => {
+        // Trigger welcome animation
+        setTimeout(() => setShowWelcome(true), 200);
+
         if (user) {
             const fetchMetrics = async () => {
                 try {
@@ -34,22 +38,29 @@ const MetricsBanner = () => {
     }, [user]);
 
     const handleLogout = async () => {
-        await logoutUser();
-        navigate('/login');
+        // Add confirmation with style
+        if (window.confirm('Are you sure you want to logout?')) {
+            await logoutUser();
+            navigate('/login');
+        }
     };
 
     return (
         <section className="welcome-section">
-            
-            {/* FINAL FIX: The visible, functional Logout button is placed here 
-               and styled absolutely relative to the section, fixing the overlap. */}
-            <button id="logout-btn" onClick={handleLogout}>
-                <span style={{ textDecoration: 'none', color: 'white' }}>Logout</span>
-            </button>
-            
-            {/* Displays the stable username */}
-            <h1 className="banner-content">Welcome to RELABTeams {username}</h1>
-            <p className="banner-para">--Collaborate, Learn, and Build Innovative Projects--</p>
+            <div className="welcome-centered">
+                <h1
+                    className={`welcome-title ${showWelcome ? 'typing-animation' : ''}`}
+                    style={{
+                        opacity: showWelcome ? 1 : 0
+                    }}
+                >
+                    Welcome back, <span style={{ color: 'var(--primary-blue)' }}>{username}</span>
+                </h1>
+                
+                <div className="welcome-tagline">
+                    ----<span>Collaborate. Learn. and Build Innovative Projects</span>----
+                </div>
+            </div>
         </section>
     );
 };
