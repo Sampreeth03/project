@@ -119,6 +119,44 @@ export const fetchProfileData = createAsyncThunk(
     }
 );
 
+// Async thunk for fetching platform administrators
+export const fetchPlatformAdmins = createAsyncThunk(
+    'admin/fetchPlatformAdmins',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await fetch('/api/platform-admins', {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!response.ok) throw new Error('Failed to fetch platform administrators');
+            const data = await response.json();
+            return data.administrators || [];
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+// Async thunk for creating a platform administrator
+export const createPlatformAdmin = createAsyncThunk(
+    'admin/createPlatformAdmin',
+    async ({ email, passkey, adminId }, { rejectWithValue }) => {
+        try {
+            const response = await fetch('/api/platform-admins', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, passkey, adminId })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to create administrator');
+            return data.administrator;
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 const initialState = {
     // Dashboard
     dashboardData: {
@@ -173,7 +211,14 @@ const initialState = {
         lastLogin: ''
     },
     profileLoading: false,
-    profileError: null
+    profileError: null,
+
+    // Platform administrators
+    platformAdmins: [],
+    platformAdminsLoading: false,
+    platformAdminsError: null,
+    createPlatformAdminLoading: false,
+    createPlatformAdminError: null
 };
 
 const adminSlice = createSlice({
@@ -285,6 +330,34 @@ const adminSlice = createSlice({
             .addCase(fetchProfileData.rejected, (state, action) => {
                 state.profileLoading = false;
                 state.profileError = action.payload;
+            })
+            // Platform administrators - list
+            .addCase(fetchPlatformAdmins.pending, (state) => {
+                state.platformAdminsLoading = true;
+                state.platformAdminsError = null;
+            })
+            .addCase(fetchPlatformAdmins.fulfilled, (state, action) => {
+                state.platformAdminsLoading = false;
+                state.platformAdmins = action.payload;
+            })
+            .addCase(fetchPlatformAdmins.rejected, (state, action) => {
+                state.platformAdminsLoading = false;
+                state.platformAdminsError = action.payload;
+            })
+            // Platform administrators - create
+            .addCase(createPlatformAdmin.pending, (state) => {
+                state.createPlatformAdminLoading = true;
+                state.createPlatformAdminError = null;
+            })
+            .addCase(createPlatformAdmin.fulfilled, (state, action) => {
+                state.createPlatformAdminLoading = false;
+                if (action.payload) {
+                    state.platformAdmins.unshift(action.payload);
+                }
+            })
+            .addCase(createPlatformAdmin.rejected, (state, action) => {
+                state.createPlatformAdminLoading = false;
+                state.createPlatformAdminError = action.payload;
             });
     }
 });

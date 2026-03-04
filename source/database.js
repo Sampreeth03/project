@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
   companyName: { type: String, default: '' },
   companyDocumentUrl: { type: String, default: null },
   emailVerified: { type: Boolean, default: false },
+  // Recruiter verification by platform administrator
+  recruiterVerified: { type: Boolean, default: false },
+  recruiterVerificationMessage: { type: String, default: '' },
+  assignedPlatformAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'PlatformAdministrator', default: null },
   // Password reset
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: Date, default: null }
@@ -171,6 +175,14 @@ const notificationSchema = new mongoose.Schema({
   is_read: { type: Boolean, default: false }
 }, { timestamps: true });
 
+// Platform Administrator schema - for platform-level admin accounts
+const platformAdministratorSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, trim: true },
+  passkey: { type: String, required: true },
+  adminId: { type: String, required: true, unique: true, trim: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
 // Create Models
 const User = mongoose.model('User', userSchema);
 const UserMetrics = mongoose.model('UserMetrics', userMetricsSchema);
@@ -182,6 +194,7 @@ const ProjectMember = mongoose.model('ProjectMember', projectMemberSchema);
 const JoinRequest = mongoose.model('JoinRequest', joinRequestSchema);
 const Task = mongoose.model('Task', taskSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
+const PlatformAdministrator = mongoose.model('PlatformAdministrator', platformAdministratorSchema);
 
 // Friend Request Schema - simple one-way request model
 const friendRequestSchema = new mongoose.Schema({
@@ -290,7 +303,8 @@ module.exports = {
   Channel,
   Message,
   DirectMessage,
-  UserReadStatus
+  UserReadStatus,
+  PlatformAdministrator
 };
 
 // ---------------------------

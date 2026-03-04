@@ -8,6 +8,7 @@ const cors = require("cors");
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const platformAdminRoutes = require('./routes/platformAdminRoutes');
 const recruiterRoutes = require('./routes/recruiterRoutes'); 
 const projectRoutes = require('./routes/projectRoutes');
 const doubtRoutes = require('./routes/doubtRoutes');
@@ -63,6 +64,7 @@ session({
 // Mount API routes
 app.use('/api', authRoutes); 
 app.use('/api', adminRoutes);
+app.use('/api', platformAdminRoutes);
 app.use('/api', recruiterRoutes); 
 app.use('/api', userRoutes);
 app.use('/api', projectRoutes);

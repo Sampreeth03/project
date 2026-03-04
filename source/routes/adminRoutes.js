@@ -35,5 +35,9 @@ router.get('/admin-prof/data', adminController.getProfileData); // Profile data 
 router.get('/admin-mess', adminController.getAdminMessagesPage);
 router.get('/admin-mess/data', adminController.getMessagesData); // NEW API endpoint
 
+// --- Platform Administrators Management ---
+router.get('/platform-admins', adminController.getPlatformAdministrators);
+router.post('/platform-admins', adminController.createPlatformAdministrator);
+
 
 module.exports = router;

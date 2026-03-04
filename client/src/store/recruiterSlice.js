@@ -72,8 +72,12 @@ export const createJob = createAsyncThunk(
                 credentials: 'include',
                 body: JSON.stringify(jobData)
             });
-            if (!response.ok) throw new Error('Failed to create job');
-            return await response.json();
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                const message = data && data.error ? data.error : 'Failed to create job';
+                throw new Error(message);
+            }
+            return data;
         } catch (error) {
             return rejectWithValue(error.message);
         }

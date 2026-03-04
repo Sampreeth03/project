@@ -323,23 +323,37 @@ exports.updateApplicationStatus = async (req, res) => {
 
 // =========================================================================
 // 8. Create Recruiter Job (POST /create-recruiter-job)
+//      - Block job creation until platform admin verifies recruiter document
 // =========================================================================
 exports.createRecruiterJob = async (req, res) => {
     const { jobTitle, companyName, description, salaryRange, skills, customQuestions } = req.body;
     const recruiterId = req.session.user.id;
-    
+
     try {
+        // Ensure recruiter has been verified by a platform administrator
+        const recruiter = await User.findById(recruiterId).select('role recruiterVerified recruiterVerificationMessage');
+
+        if (!recruiter || recruiter.role !== 'recruiter') {
+            return res.status(403).json({ success: false, error: 'Only recruiters can create jobs.' });
+        }
+
+        if (!recruiter.recruiterVerified) {
+            const message = recruiter.recruiterVerificationMessage ||
+                'Your document is being verified by the platform team. You will be able to create jobs once verification is complete.';
+            return res.status(403).json({ success: false, error: message });
+        }
+
         const jobDoc = await JobApplication.create({
-            posted_by: recruiterId, 
-            job_title: jobTitle, 
-            company_name: companyName, 
-            salary_range: salaryRange, 
-            description, 
-            skills, 
+            posted_by: recruiterId,
+            job_title: jobTitle,
+            company_name: companyName,
+            salary_range: salaryRange,
+            description,
+            skills,
             custom_questions: customQuestions || [],
             active: 1
         });
-        
+
         const createdAt = new Date();
         await Notification.create({
             user_id: recruiterId,
@@ -347,7 +361,7 @@ exports.createRecruiterJob = async (req, res) => {
             type: 'job_created',
             is_read: false
         });
-        res.json({ success: true });
+        res.json({ success: true, jobId: jobDoc._id.toString() });
     } catch (err) {
         console.error("Error creating job:", err.message);
         res.status(500).json({ success: false, error: "Database error" });

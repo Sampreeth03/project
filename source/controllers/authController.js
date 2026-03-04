@@ -542,6 +542,7 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
         // Create the actual user
         const documentUrl = `/uploads/${companyDocument.filename}`.replace(/\\/g, '/');
         
+        // Create the actual user (recruiter starts as not recruiterVerified until platform admin approves)
         const user = await User.create({
             name: pending.name,
             email: pending.email,
@@ -550,8 +551,25 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
             verified: true,
             emailVerified: true,
             companyName: pending.companyName,
-            companyDocumentUrl: documentUrl
+            companyDocumentUrl: documentUrl,
+            recruiterVerified: false,
+            recruiterVerificationMessage: 'Your document is being verified by the platform team. You will be able to create jobs once verification is complete.'
         });
+
+        // Assign this recruiter to a platform administrator in round-robin fashion (if any exist)
+        try {
+            const { PlatformAdministrator } = require('../database');
+            const admins = await PlatformAdministrator.find({}).sort({ createdAt: 1 }).lean();
+            if (admins && admins.length > 0) {
+                const recruiterCount = await User.countDocuments({ role: 'recruiter' });
+                const index = (recruiterCount - 1) % admins.length; // -1 because we just created this recruiter
+                const assignedAdmin = admins[index];
+                user.assignedPlatformAdminId = assignedAdmin._id;
+                await user.save();
+            }
+        } catch (assignErr) {
+            console.error('Error assigning platform admin to recruiter:', assignErr.message);
+        }
 
         // Delete pending record
         await PendingRecruiter.deleteOne({ email: email.toLowerCase() });
@@ -604,8 +622,30 @@ exports.postRecruiterSignup = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
-            name, email, password: hashedPassword, role: "recruiter", verified: false, verificationFile: verificationFile || null
+            name,
+            email,
+            password: hashedPassword,
+            role: "recruiter",
+            verified: false,
+            verificationFile: verificationFile || null,
+            recruiterVerified: false,
+            recruiterVerificationMessage: 'Your document is being verified by the platform team. You will be able to create jobs once verification is complete.'
         });
+
+        // Assign this legacy-signup recruiter to a platform administrator (round-robin) if any exist
+        try {
+            const { PlatformAdministrator } = require('../database');
+            const admins = await PlatformAdministrator.find({}).sort({ createdAt: 1 }).lean();
+            if (admins && admins.length > 0) {
+                const recruiterCount = await User.countDocuments({ role: 'recruiter' });
+                const index = (recruiterCount - 1) % admins.length;
+                const assignedAdmin = admins[index];
+                user.assignedPlatformAdminId = assignedAdmin._id;
+                await user.save();
+            }
+        } catch (assignErr) {
+            console.error('Error assigning platform admin to legacy recruiter:', assignErr.message);
+        }
         
         req.session.user = { id: user._id.toString(), name, email, role: "recruiter", verified: false };
         

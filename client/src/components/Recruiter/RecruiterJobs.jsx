@@ -303,7 +303,8 @@ const RecruiterJobs = () => {
             }
         } catch (err) {
             console.error('Error creating job:', err);
-            showNotification('An error occurred');
+            const message = typeof err === 'string' ? err : (err?.message || 'Verification under progress');
+            showNotification(message);
         } finally {
             setIsSubmitting(false);
         }

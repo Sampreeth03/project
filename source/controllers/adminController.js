@@ -2,7 +2,7 @@
 
 const mongoose = require("mongoose");
 // NOTE: Assuming models path. Please confirm or update path to your models!
-const { User, UserMetrics, Project, Doubt, JobApplication,ProjectMember } = require("../database"); 
+const { User, UserMetrics, Project, Doubt, JobApplication, ProjectMember, PlatformAdministrator } = require("../database"); 
 
 // Helper function to calculate percentage change
 function computeSignedPercent(curr, prev) {
@@ -348,6 +348,58 @@ exports.getMessagesData = async (req, res) => {
         res.json(messagesData);
     } catch (err) {
         console.error("Error fetching messages data:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+};
+
+// =========================================================================
+// 13. Platform Administrators Management APIs
+// =========================================================================
+
+// GET /platform-admins - list all platform administrators
+exports.getPlatformAdministrators = async (req, res) => {
+    try {
+        const admins = await PlatformAdministrator.find()
+            .select("email adminId createdAt")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({ administrators: admins });
+    } catch (err) {
+        console.error("Error fetching platform administrators:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+};
+
+// POST /platform-admins - create a new platform administrator
+exports.createPlatformAdministrator = async (req, res) => {
+    try {
+        const { email, passkey, adminId } = req.body || {};
+
+        if (!email || !passkey || !adminId) {
+            return res.status(400).json({ error: "Email, passkey and adminId are required" });
+        }
+
+        const existing = await PlatformAdministrator.findOne({
+            $or: [{ email }, { adminId }]
+        }).lean();
+
+        if (existing) {
+            return res.status(409).json({ error: "Administrator with this email or adminId already exists" });
+        }
+
+        const created = await PlatformAdministrator.create({ email, passkey, adminId });
+
+        res.status(201).json({
+            administrator: {
+                _id: created._id,
+                email: created.email,
+                adminId: created.adminId,
+                createdAt: created.createdAt
+            }
+        });
+    } catch (err) {
+        console.error("Error creating platform administrator:", err.message);
         res.status(500).json({ error: "Server Error" });
     }
 };
