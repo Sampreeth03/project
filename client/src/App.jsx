@@ -41,6 +41,10 @@ import AdminProjects from './components/Admin/AdminProjects.jsx';
 import AdminDoubts from './components/Admin/AdminDoubts.jsx';
 import AdminMessages from './components/Admin/AdminMessages.jsx';
 import AdminProfile from './components/Admin/AdminProfile.jsx';
+import AdminAdministrators from './components/Admin/AdminAdministrators.jsx';
+import PlatformAdminLogin from './components/Auth/PlatformAdminLogin.jsx';
+import RecruiterVerification from './components/PlatformAdmin/RecruiterVerification.jsx';
+import PlatformAdminDashboard from './components/PlatformAdmin/PlatformAdminDashboard.jsx';
 
 function App() {
   return (
@@ -52,6 +56,9 @@ function App() {
       <Route path="/signupforrec" element={<RecruiterSignup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/platform-admin-login" element={<PlatformAdminLogin />} />
+      <Route path="/platform-admin" element={<PlatformAdminDashboard />} />
+      <Route path="/platform-admin/recruiters" element={<RecruiterVerification />} />
       
       {/* --- AUTHENTICATED TARGETS --- */}
       
@@ -111,6 +118,7 @@ function App() {
       <Route path="/admin/doubts" element={<AdminDoubts />} />
       <Route path="/admin/messages" element={<AdminMessages />} />
       <Route path="/admin/profile" element={<AdminProfile />} />
+      <Route path="/admin/administrators" element={<AdminAdministrators />} />
     </Routes>
   );
 }

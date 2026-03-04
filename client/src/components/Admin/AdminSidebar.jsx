@@ -43,6 +43,11 @@ const AdminSidebar = () => {
                     <span>Doubts</span>
                 </Link>
 
+                <Link to="/admin/administrators" className={`menu-item ${isActive('/admin/administrators') ? 'active' : ''}`}>
+                    <i className="fas fa-user-shield"></i>
+                    <span>Administrators</span>
+                </Link>
+
                 <div className="menu-label">Communication</div>
                 <Link to="/admin/messages" className={`menu-item ${isActive('/admin/messages') ? 'active' : ''}`}>
                     <i className="fas fa-comment"></i>
