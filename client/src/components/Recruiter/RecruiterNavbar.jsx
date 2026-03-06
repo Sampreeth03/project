@@ -18,7 +18,7 @@ const RecruiterNavbar = () => {
 
     const handleLogout = async () => {
         await logoutUser();
-        navigate('/login');
+        navigate('/login', { replace: true });
     };
 
     const isActive = (path) => location.pathname === path;

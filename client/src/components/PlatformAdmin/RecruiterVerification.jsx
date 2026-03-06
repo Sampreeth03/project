@@ -72,7 +72,7 @@ const RecruiterVerification = () => {
 
   const handleLogout = async () => {
     await logoutUser();
-    navigate('/platform-admin-login');
+    navigate('/platform-admin-login', { replace: true });
   };
 
   const goToDashboard = () => navigate('/platform-admin');

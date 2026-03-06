@@ -1,5 +1,5 @@
 const express = require("express");
-const session = require("express-session");
+const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const path = require("path");
 const cors = require("cors");
@@ -46,19 +46,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use("/uploads", express.static("uploads"));
 
-// Session management
-const sessionMiddleware = session({
- secret: "your-secret-key", 
- resave: false,
- saveUninitialized: false,
- cookie: {
-   httpOnly: true,
-   secure: false,
-   sameSite: 'lax',
-   maxAge: 24 * 60 * 60 * 1000
- }
-});
-app.use(sessionMiddleware);
+// Cookie parser (required for JWT httpOnly cookie auth)
+app.use(cookieParser());
 
 // Mount API routes
 app.use('/api', authRoutes); 
@@ -78,23 +67,4 @@ app.use(notFoundHandler);
 // Centralized error handler
 app.use(errorHandler);
 
-
-
-module.exports = { 
-app, 
-sessionMiddleware,
-topics, 
- User, 
- UserMetrics, 
- Doubt, 
- Reply, 
- JobApplication, 
- Project, 
- ProjectMember, 
- JoinRequest, 
- Task, 
-Notification, 
-upload, 
-  validatePassword, 
-getTimeAgo, 
-};
+module.exports = app;

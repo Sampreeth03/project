@@ -45,6 +45,8 @@ import AdminAdministrators from './components/Admin/AdminAdministrators.jsx';
 import PlatformAdminLogin from './components/Auth/PlatformAdminLogin.jsx';
 import RecruiterVerification from './components/PlatformAdmin/RecruiterVerification.jsx';
 import PlatformAdminDashboard from './components/PlatformAdmin/PlatformAdminDashboard.jsx';
+import NotAllowed from './components/Auth/NotAllowed.jsx';
+import { ProtectedRoute, UserRoute, RecruiterRoute, AdminRoute } from './components/Auth/ProtectedRoute.jsx';
 
 function App() {
   return (
@@ -62,63 +64,63 @@ function App() {
       
       {/* --- AUTHENTICATED TARGETS --- */}
       
-      {/* User Home */}
-      <Route path="/home" element={<UserHome />} /> 
-      <Route path="/doubt" element={<DoubtPage />} />
-      <Route path="/clear" element={<ClearDoubts />} />
-      <Route path="/not" element={<ProjectNotifications />} />
+      {/* USER ROUTES (role: user only) */}
+      <Route path="/home" element={<UserRoute><UserHome /></UserRoute>} />
+      <Route path="/doubt" element={<UserRoute><DoubtPage /></UserRoute>} />
+      <Route path="/clear" element={<UserRoute><ClearDoubts /></UserRoute>} />
+      <Route path="/not" element={<UserRoute><ProjectNotifications /></UserRoute>} />
       
       {/* Job Routes */}
-      <Route path="/apply" element={<ApplyJobs />} />
-      <Route path="/my-applications" element={<JobApplications />} />
-      <Route path="/job_not" element={<JobNotifications />} />
+      <Route path="/apply" element={<UserRoute><ApplyJobs /></UserRoute>} />
+      <Route path="/my-applications" element={<UserRoute><JobApplications /></UserRoute>} />
+      <Route path="/job_not" element={<UserRoute><JobNotifications /></UserRoute>} />
       
       {/* Profile Routes */}
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/profile/:id" element={<Profile />} />
+      <Route path="/profile" element={<UserRoute><Profile /></UserRoute>} />
+      <Route path="/profile/:id" element={<UserRoute><Profile /></UserRoute>} />
       
       {/* --- PROJECT VIEWS --- */}
-      {/* All Projects List */}
-      <Route path="/project" element={<ProjectsList />} />
-      {/* Joined Projects List */}
-      <Route path="/joined-projects" element={<JoinedProjects />} />
-      {/* Individual Project Details */}
-      <Route path="/project/:id" element={<ProjectDetails />} />
-      <Route path="/e" element={<CreateProject />} /> {/* Mapped original EJS route for direct link */}
+      <Route path="/project" element={<UserRoute><ProjectsList /></UserRoute>} />
+      <Route path="/joined-projects" element={<UserRoute><JoinedProjects /></UserRoute>} />
+      <Route path="/project/:id" element={<UserRoute><ProjectDetails /></UserRoute>} />
+      <Route path="/e" element={<UserRoute><CreateProject /></UserRoute>} />
 
       {/* Dashboard Route */}
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/messages" element={<GroupChat />} />
-      <Route path="/group-chat/:projectId" element={<GroupChat />} />
+      <Route path="/dashboard" element={<UserRoute><Dashboard /></UserRoute>} />
+      <Route path="/messages" element={<UserRoute><GroupChat /></UserRoute>} />
+      <Route path="/group-chat/:projectId" element={<UserRoute><GroupChat /></UserRoute>} />
 
       {/* Friends */}
-      <Route path="/friends" element={<Friends />} />
+      <Route path="/friends" element={<UserRoute><Friends /></UserRoute>} />
       
       {/* TOPIC ROUTES */}
-      <Route path="/web-dev" element={<TopicProjects />} />
-      <Route path="/cyb" element={<TopicProjects />} />
-      <Route path="/dl" element={<TopicProjects />} />
-      <Route path="/robo" element={<TopicProjects />} />
-      <Route path="/ds" element={<TopicProjects />} />
-      <Route path="/blockchain" element={<TopicProjects />} />
+      <Route path="/web-dev" element={<UserRoute><TopicProjects /></UserRoute>} />
+      <Route path="/cyb" element={<UserRoute><TopicProjects /></UserRoute>} />
+      <Route path="/dl" element={<UserRoute><TopicProjects /></UserRoute>} />
+      <Route path="/robo" element={<UserRoute><TopicProjects /></UserRoute>} />
+      <Route path="/ds" element={<UserRoute><TopicProjects /></UserRoute>} />
+      <Route path="/blockchain" element={<UserRoute><TopicProjects /></UserRoute>} />
       
-      {/* RECRUITER ROUTES */}
-      <Route path="/recruiter-home" element={<RecruiterHome />} />
-      <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
-      <Route path="/rec-job" element={<RecruiterJobs />} />
-      <Route path="/rec-app" element={<RecruiterApplications />} />
-      <Route path="/rec-not" element={<RecruiterNotifications />} />
-      <Route path="/rec-prof" element={<RecruiterProfile />} />
+      {/* RECRUITER ROUTES (role: recruiter only) */}
+      <Route path="/recruiter-home" element={<RecruiterRoute><RecruiterHome /></RecruiterRoute>} />
+      <Route path="/recruiter-dashboard" element={<RecruiterRoute><RecruiterDashboard /></RecruiterRoute>} />
+      <Route path="/rec-job" element={<RecruiterRoute><RecruiterJobs /></RecruiterRoute>} />
+      <Route path="/rec-app" element={<RecruiterRoute><RecruiterApplications /></RecruiterRoute>} />
+      <Route path="/rec-not" element={<RecruiterRoute><RecruiterNotifications /></RecruiterRoute>} />
+      <Route path="/rec-prof" element={<RecruiterRoute><RecruiterProfile /></RecruiterRoute>} />
 
-      {/* ADMIN ROUTES */}
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/students" element={<AdminStudents />} />
-      <Route path="/admin/recruiters" element={<AdminRecruiters />} />
-      <Route path="/admin/projects" element={<AdminProjects />} />
-      <Route path="/admin/doubts" element={<AdminDoubts />} />
-      <Route path="/admin/messages" element={<AdminMessages />} />
-      <Route path="/admin/profile" element={<AdminProfile />} />
-      <Route path="/admin/administrators" element={<AdminAdministrators />} />
+      {/* ADMIN ROUTES (role: admin only) */}
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin/students" element={<AdminRoute><AdminStudents /></AdminRoute>} />
+      <Route path="/admin/recruiters" element={<AdminRoute><AdminRecruiters /></AdminRoute>} />
+      <Route path="/admin/projects" element={<AdminRoute><AdminProjects /></AdminRoute>} />
+      <Route path="/admin/doubts" element={<AdminRoute><AdminDoubts /></AdminRoute>} />
+      <Route path="/admin/messages" element={<AdminRoute><AdminMessages /></AdminRoute>} />
+      <Route path="/admin/profile" element={<AdminRoute><AdminProfile /></AdminRoute>} />
+      <Route path="/admin/administrators" element={<AdminRoute><AdminAdministrators /></AdminRoute>} />
+
+      {/* ACCESS DENIED — shown when a logged-in user tries a wrong-role route */}
+      <Route path="/not-allowed" element={<ProtectedRoute><NotAllowed /></ProtectedRoute>} />
     </Routes>
   );
 }

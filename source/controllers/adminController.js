@@ -18,7 +18,7 @@ exports.getAdminDashboard = (req, res) => {
     res.render('admin', {
         activePage: 'dashboard',
         dashboardData: {
-            adminName: req.session.user.name,
+            adminName: req.user.name,
             adminRole: 'Super Admin',
             period: '30 days',
             dashboardCards: []
@@ -60,7 +60,7 @@ exports.getDashboardData = async (req, res) => {
         ]);
 
         const dashboardData = {
-            adminName: req.session?.user?.name || 'Admin',
+            adminName: req.user?.name || 'Admin',
             adminRole: "Super Admin",
             period: `${periodDays} days`,
             dashboardCards: [
@@ -84,7 +84,7 @@ exports.getDashboardData = async (req, res) => {
 exports.getStudentsPage = (req, res) => {
     res.render('admin-stud', {
         activePage: 'dashboard',
-        adminName: req.session.user.name
+        adminName: req.user.name
     });
 };
 
@@ -144,7 +144,7 @@ exports.getDoubtsPage = async (req, res) => {
     
         res.render('admin-doubts', {
             activePage: 'doubts',
-            adminName: req.session.user.name,
+            adminName: req.user.name,
             doubtsData
         });
     } catch (err) {
@@ -189,7 +189,7 @@ exports.getDoubtsData = async (req, res) => {
 exports.getRecruitersPage = (req, res) => {
     res.render('admin-rec', {
         activePage: 'dashboard',
-        adminName: req.session.user.name
+        adminName: req.user.name
     });
 };
 
@@ -261,7 +261,7 @@ exports.getRecruitersData = async (req, res) => {
 exports.getProjectsPage = (req, res) => {
     const dashboardData = {
         currentPage: "projects",
-        adminName: req.session.user.name,
+        adminName: req.user.name,
         adminRole: "Super Admin"
     };
     res.render("admin-proj", { activePage: "projects", dashboardData });
@@ -339,7 +339,7 @@ exports.getAdminMessagesPage = (req, res) => {
 exports.getProfileData = async (req, res) => {
     try {
         // If no session, return default admin data
-        if (!req.session?.user?.id) {
+        if (!req.user?.id) {
             return res.json({
                 fullName: 'Admin User',
                 email: 'admin@relabteams.com',
@@ -350,7 +350,7 @@ exports.getProfileData = async (req, res) => {
             });
         }
         
-        const admin = await User.findById(req.session.user.id)
+        const admin = await User.findById(req.user.id)
             .select('name email phone createdAt')
             .lean();
         

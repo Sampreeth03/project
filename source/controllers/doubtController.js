@@ -12,7 +12,7 @@ const { upload } = require("../middleware/uploadMiddleware"); // Needed for doub
 // =========================================================================
 exports.getDoubtBoard = async (req, res) => {
     const { navData } = require('../config/constants');
-    const currentUserId = req.session.user.id;
+    const currentUserId = req.user.id;
 
     try {
         const doubts = await Doubt.find({ visible_to_all: true })
@@ -49,12 +49,12 @@ exports.getDoubtBoard = async (req, res) => {
         });
 
         res.render("doubt", {
-            user: req.session.user, doubts: formattedDoubts, success: req.query.success, 
+            user: req.user, doubts: formattedDoubts, success: req.query.success, 
             error: req.query.error, homeUrl: navData.homeUrl, navLinks: navData.navLinks
         });
     } catch (err) {
         console.error("Error fetching doubts:", err.message);
-        res.render("doubt", { user: req.session.user, doubts: [], success: null, error: "Failed to load doubts", homeUrl: navData.homeUrl, navLinks: navData.navLinks });
+        res.render("doubt", { user: req.user, doubts: [], success: null, error: "Failed to load doubts", homeUrl: navData.homeUrl, navLinks: navData.navLinks });
     }
 };
 
@@ -75,9 +75,9 @@ exports.postDoubt = async (req, res) => {
     const { message } = req.body;
     // Store a relative path (served under /uploads) instead of an absolute server path
     const filePath = req.file ? path.join('uploads', req.file.filename).replace(/\\/g, '/') : null;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
-    if (req.session.user.role !== "user") {
+    if (req.user.role !== "user") {
         return res.json({ success: false, message: "Only users can raise doubts" });
     }
 
@@ -86,7 +86,7 @@ exports.postDoubt = async (req, res) => {
         if (existingDoubt) return res.json({ success: false, message: "Doubt already exists" });
 
         const doubt = await Doubt.create({
-            author: req.session.user.name, text: message, file_path: filePath, 
+            author: req.user.name, text: message, file_path: filePath, 
             timestamp: new Date(), user_id: userId, visible_to_all: true
         });
 
@@ -108,7 +108,7 @@ exports.postDoubt = async (req, res) => {
 // =========================================================================
 exports.postReply = async (req, res) => {
     const { doubtId, text, isPrivate } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const doubt = await Doubt.findById(doubtId);
@@ -124,7 +124,7 @@ exports.postReply = async (req, res) => {
         }
 
         const reply = await Reply.create({
-            doubt_id: doubtId, author: req.session.user.name, text, timestamp: new Date(),
+            doubt_id: doubtId, author: req.user.name, text, timestamp: new Date(),
             user_id: userId, visible_to_all: !isPrivate
         });
         await Doubt.findByIdAndUpdate(doubtId, { $push: { replies: reply._id } });
@@ -145,8 +145,8 @@ exports.postReply = async (req, res) => {
 // 5. Project Notifications View (GET /not) <-- FIXES YOUR ISSUE
 // =========================================================================
 exports.getProjectNotifications = async (req, res) => {
-    const userId = req.session.user.id;
-    const navLinks = getNavLinks(req.session.user);
+    const userId = req.user.id;
+    const navLinks = getNavLinks(req.user);
     const { navData } = require('../config/constants');
     
     try {
@@ -166,7 +166,7 @@ exports.getProjectNotifications = async (req, res) => {
             .then(results => results.filter(jr => jr.project_id && jr.status === 'pending')); // Filter for pending status
 
         res.render('proj_notif', {
-            user: req.session.user,
+            user: req.user,
             taskNotifications: taskNotifications.map(n => ({ /* map data */ id: n._id, message: n.message, type: n.type, created_at: n.createdAt, task_title: n.task_id?.title })),
             projectCreationNotifications: projectCreationNotifications.map(n => ({ /* map data */ id: n._id, message: n.message, type: n.type, created_at: n.createdAt })),
             joinRequests: joinRequests.map(jr => ({ /* map data */ id: jr._id, user_id: jr.user_id._id, user_name: jr.user_id.name, project_title: jr.project_id.title, requested_at: jr.requested_at, status: jr.status })),
@@ -181,7 +181,7 @@ exports.getProjectNotifications = async (req, res) => {
 
 // JSON provider for client-side React app
 exports.getDoubtsJSON = async (req, res) => {
-    const currentUserId = (req.session && req.session.user && req.session.user.id) ? req.session.user.id : null;
+    const currentUserId = req.user?.id || null;
     try {
         const doubts = await Doubt.find({ visible_to_all: true })
             .populate({
@@ -227,7 +227,7 @@ exports.getDoubtsJSON = async (req, res) => {
 // 6. Project Notifications JSON API (GET /api/notifications)
 // =========================================================================
 exports.getProjectNotificationsJSON = async (req, res) => {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     
     try {
         // Task-related notifications (assignment, review, completion)

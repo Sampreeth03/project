@@ -1,7 +1,8 @@
-// controllers/authController.js (UPDATED FOR API - Focus on 3, 5, 6, 7)
+// controllers/authController.js
 
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
+const { signToken, COOKIE_NAME, PLATFORM_ADMIN_COOKIE_NAME, COOKIE_OPTIONS } = require('../config/jwt');
 const { User, UserMetrics, PendingRecruiter, PendingStudent } = require("../database"); 
 const { validatePassword } = require("../services/helperService");
 const { upload } = require("../middleware/uploadMiddleware"); 
@@ -47,23 +48,14 @@ exports.postLogin = async (req, res, next) => {
             return res.status(401).json({ success: false, error: "Invalid email or password" });
         }
 
-        req.session.user = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-        
-        req.session.save(err => {
-            if (err) {
-                console.error("Error saving session:", err);
-                err.statusCode = 500;
-                err.publicMessage = "Server error during login session setup";
-                return next(err);
-            }
-            
-            // Return JSON payload with minimal user data and a suggested redirect path
-            res.status(200).json({ 
-                success: true, 
-                message: "Login successful",
-                user: { id: user._id.toString(), name: user.name, email: user.email, role: user.role },
-                redirectPath: user.role === "admin" ? "/admin" : (user.role === "recruiter" ? "/recruiter-home" : "/home")
-            });
+        const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+        const token = signToken(userData);
+        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+        res.status(200).json({ 
+            success: true, 
+            message: "Login successful",
+            user: userData,
+            redirectPath: user.role === "admin" ? "/admin" : (user.role === "recruiter" ? "/recruiter-home" : "/home")
         });
 
     } catch (err) {
@@ -285,34 +277,23 @@ exports.postStudentVerifyOTP = async (req, res) => {
         // Delete pending record
         await PendingStudent.deleteOne({ email: email.toLowerCase() });
 
-        // Auto-login: Create session
-        req.session.user = { 
-            id: user._id.toString(), 
-            name: user.name, 
-            email: user.email, 
-            role: user.role 
-        };
-        
-        req.session.save(err => {
-            if (err) {
-                console.error("Error saving session:", err);
-                return res.status(500).json({ success: false, error: "Server error during login" });
-            }
-            
-            res.status(201).json({ 
-                success: true, 
-                message: "Signup successful! Welcome to RelabTeams.",
-                user: { 
-                    id: user._id.toString(), 
-                    name: user.name, 
-                    email: user.email, 
-                    role: user.role,
-                    onboardingCompleted: false,
-                    isNewSignup: true // Flag to trigger onboarding on client
-                },
-                redirectPath: '/home',
+        // Auto-login: issue JWT cookie
+        const jwtPayload = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+        const token = signToken(jwtPayload);
+        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+        res.status(201).json({ 
+            success: true, 
+            message: "Signup successful! Welcome to RelabTeams.",
+            user: { 
+                id: user._id.toString(), 
+                name: user.name, 
+                email: user.email, 
+                role: user.role,
+                onboardingCompleted: false,
                 isNewSignup: true
-            });
+            },
+            redirectPath: '/home',
+            isNewSignup: true
         });
 
     } catch (err) {
@@ -574,22 +555,15 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
         // Delete pending record
         await PendingRecruiter.deleteOne({ email: email.toLowerCase() });
 
-        // Auto-login the recruiter
-        req.session.user = { 
-            id: user._id.toString(), 
-            name: user.name, 
-            email: user.email, 
-            role: "recruiter" 
-        };
-        
-        req.session.save(err => {
-            if (err) console.error("Error saving session:", err);
-            res.status(201).json({ 
-                success: true, 
-                message: "Account created successfully!",
-                redirectPath: "/recruiter-home",
-                user: { id: user._id.toString(), name: user.name, email: user.email, role: "recruiter" }
-            });
+        // Auto-login the recruiter: issue JWT cookie
+        const userData = { id: user._id.toString(), name: user.name, email: user.email, role: "recruiter" };
+        const token = signToken(userData);
+        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+        res.status(201).json({ 
+            success: true, 
+            message: "Account created successfully!",
+            redirectPath: "/recruiter-home",
+            user: userData
         });
 
     } catch (err) {
@@ -647,15 +621,12 @@ exports.postRecruiterSignup = async (req, res) => {
             console.error('Error assigning platform admin to legacy recruiter:', assignErr.message);
         }
         
-        req.session.user = { id: user._id.toString(), name, email, role: "recruiter", verified: false };
-        
-        req.session.save(err => {
-            if (err) console.error("Error saving session during recruiter signup:", err);
-            res.status(201).json({ 
-                success: true, 
-                message: "Recruiter signup successful. Redirect to dashboard.", 
-                redirectPath: "/recruiter-home" 
-            });
+        const token = signToken({ id: user._id.toString(), name, email, role: "recruiter" });
+        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+        res.status(201).json({ 
+            success: true, 
+            message: "Recruiter signup successful. Redirect to dashboard.", 
+            redirectPath: "/recruiter-home" 
         });
 
     } catch (err) {
@@ -778,7 +749,9 @@ exports.postResetPassword = async (req, res) => {
 // =========================================================================
 exports.logout = (req, res) => {
     // Session destroy now returns a JSON success message.
-    req.session.destroy(() => res.json({ success: true, message: "Logged out successfully" }));
+    res.clearCookie(COOKIE_NAME);
+    res.clearCookie(PLATFORM_ADMIN_COOKIE_NAME);
+    res.json({ success: true, message: "Logged out successfully" });
 };
 
 // =========================================================================
@@ -820,23 +793,16 @@ exports.postLoginRequestOtp = async (req, res) => {
         // Skip OTP for default test users
         const defaultUserEmails = ['srihesh@gm.co', 'priya@gm.co', 'shiva@gm.co', 'arjun@gm.co'];
         if (defaultUserEmails.includes(user.email.toLowerCase())) {
-            req.session.user = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-            
-            req.session.save(err => {
-                if (err) {
-                    console.error('Error saving session:', err);
-                    return res.status(500).json({ success: false, error: 'Server error during login session setup' });
-                }
-                
-                return res.status(200).json({
-                    success: true,
-                    message: 'Login successful (default user, OTP skipped)',
-                    skipOtp: true,
-                    user: { id: user._id.toString(), name: user.name, email: user.email, role: user.role },
-                    redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
-                });
+            const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+            const token = signToken(userData);
+            res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+            return res.status(200).json({
+                success: true,
+                message: 'Login successful (default user, OTP skipped)',
+                skipOtp: true,
+                user: userData,
+                redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
             });
-            return; // Important: prevent further execution
         }
 
         // Always send OTP to the email stored on the account 
@@ -921,20 +887,14 @@ exports.postLoginVerifyOtp = async (req, res) => {
             return res.status(401).json({ success: false, error: 'User not found' });
         }
 
-        req.session.user = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-
-        req.session.save(err => {
-            if (err) {
-                console.error('Error saving session:', err);
-                return res.status(500).json({ success: false, error: 'Server error during login session setup' });
-            }
-
-            return res.status(200).json({
-                success: true,
-                message: 'Login successful',
-                user: { id: user._id.toString(), name: user.name, email: user.email, role: user.role },
-                redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
-            });
+        const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+        const token = signToken(userData);
+        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            user: userData,
+            redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
         });
     } catch (err) {
         console.error('Error verifying OTP:', err?.message || err);

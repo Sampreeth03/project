@@ -38,10 +38,9 @@ const MetricsBanner = () => {
     }, [user]);
 
     const handleLogout = async () => {
-        // Add confirmation with style
         if (window.confirm('Are you sure you want to logout?')) {
             await logoutUser();
-            navigate('/login');
+            navigate('/login', { replace: true });
         }
     };
 

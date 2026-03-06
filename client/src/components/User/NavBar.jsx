@@ -76,11 +76,11 @@ const Navbar = ({ onSearchChange }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleLogout = (e) => {
+    const handleLogout = async (e) => {
         e.preventDefault(); 
         if (window.confirm('Are you sure you want to logout?')) {
-            logoutUser(); 
-            navigate('/login');
+            await logoutUser(); 
+            navigate('/login', { replace: true });
         }
     };
     

@@ -1,14 +1,17 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 const AdminSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { logoutUser } = useAuth();
 
     const isActive = (path) => location.pathname === path;
 
-    const handleLogout = () => {
-        navigate('/login');
+    const handleLogout = async () => {
+        await logoutUser();
+        navigate('/login', { replace: true });
     };
 
     return (
