@@ -1,4 +1,4 @@
-/* Profile Page Styles (scoped to .profile-page to avoid leaking into NavBar/Footer) */
+/* Profile Page Styles (scoped to */
 
 .profile-page {
     --p-bg: #000;
