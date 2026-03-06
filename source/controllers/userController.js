@@ -5,13 +5,14 @@ const bcrypt = require("bcrypt");
 const { User, UserMetrics, Project } = require("../database"); 
 const { getNavLinks, getTimeAgo } = require("../services/helperService"); 
 const { upload } = require("../middleware/uploadMiddleware");
+const { signToken, COOKIE_NAME, COOKIE_OPTIONS } = require('../config/jwt');
 
 // =========================================================================
 // 1. User Home Page (GET /home) - CONVERTED TO JSON API
 //    Public endpoint: returns user if session exists, else null
 // =========================================================================
 exports.getHome = async (req, res) => {
-    const hasSession = !!(req.session && req.session.user);
+    const hasSession = !!req.user;
     
     if (!hasSession) {
         return res.json({
@@ -23,10 +24,10 @@ exports.getHome = async (req, res) => {
     
     try {
         // Fetch user from database to get onboardingCompleted status and profile fields
-        const dbUser = await User.findById(req.session.user.id).select('onboardingCompleted about skills interests resumeUrl profileImageUrl');
+        const dbUser = await User.findById(req.user.id).select('onboardingCompleted about skills interests resumeUrl profileImageUrl');
         
         // Debug: Log the actual database values
-        console.log('[Profile Check] User ID:', req.session.user.id);
+        console.log('[Profile Check] User ID:', req.user.id);
         console.log('[Profile Check] DB User fields:', {
             about: dbUser?.about,
             skills: dbUser?.skills,
@@ -62,10 +63,10 @@ exports.getHome = async (req, res) => {
         if (!profileFields.resume) missingFields.push('Resume');
         
         const user = {
-            id: req.session.user.id,
-            name: req.session.user.name,
-            role: req.session.user.role,
-            email: req.session.user.email,
+            id: req.user.id,
+            name: req.user.name,
+            role: req.user.role,
+            email: req.user.email,
             onboardingCompleted: dbUser?.onboardingCompleted === true, // false if undefined or false
             isProfileComplete: isProfileComplete,
             profileFields: profileFields, // Individual field status
@@ -83,10 +84,10 @@ exports.getHome = async (req, res) => {
             success: true,
             message: "User home data requested.",
             user: {
-                id: req.session.user.id,
-                name: req.session.user.name,
-                role: req.session.user.role,
-                email: req.session.user.email,
+                id: req.user.id,
+                name: req.user.name,
+                role: req.user.role,
+                email: req.user.email,
                 onboardingCompleted: true, // Default to true on error to prevent repeated onboarding
                 isProfileComplete: true,
                 profileFields: {
@@ -107,12 +108,12 @@ exports.getHome = async (req, res) => {
 //     Marks the user's onboarding as completed
 // =========================================================================
 exports.completeOnboarding = async (req, res) => {
-    if (!req.session.user) {
+    if (!req.user) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        await User.findByIdAndUpdate(req.session.user.id, { onboardingCompleted: true });
+        await User.findByIdAndUpdate(req.user.id, { onboardingCompleted: true });
         res.json({ success: true, message: 'Onboarding completed' });
     } catch (err) {
         console.error('Error completing onboarding:', err);
@@ -135,8 +136,8 @@ exports.getDashboard = (req, res) => {
 // 3. Dashboard Metrics API (GET /api/dashboard-metrics) - NO CHANGE NEEDED
 // =========================================================================
 exports.getDashboardMetrics = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const userId = req.session.user.id;
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user.id;
 
     try {
         const user = await User.findById(userId);
@@ -181,7 +182,7 @@ exports.getHomeTopics = (req, res) => {
 // =========================================================================
 exports.getProfile = async (req, res) => {
     // This endpoint now serves only as the shell trigger. Data is fetched separately.
-    const targetId = req.params.id || req.session.user.id;
+    const targetId = req.params.id || req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(targetId)) {
         return res.status(400).json({ success: false, error: 'Invalid user id' });
@@ -195,7 +196,7 @@ exports.getProfile = async (req, res) => {
 // 6. Update Profile (POST /profile) - NO CHANGE NEEDED
 // =========================================================================
 exports.postProfile = async (req, res) => {
-    const userId = (req.session && req.session.user && req.session.user.id) || null;
+    const userId = req.user?.id || null;
     if (!userId) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
     try {
@@ -220,10 +221,10 @@ exports.postProfile = async (req, res) => {
         const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true });
         if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
-        // Update session user info
-        if (req.session && req.session.user && String(req.session.user.id) === String(user._id)) {
-            req.session.user.name = user.name;
-            req.session.user.email = user.email;
+        // Re-issue JWT with updated name/email so token stays fresh
+        if (req.user && String(req.user.id) === String(user._id)) {
+            const newToken = signToken({ id: user._id.toString(), name: user.name, email: user.email, role: req.user.role });
+            res.cookie(COOKIE_NAME, newToken, COOKIE_OPTIONS);
         }
 
         const respUser = { 
@@ -243,7 +244,7 @@ exports.postProfile = async (req, res) => {
 // 7. Lightweight Profile Data API (GET /profile-data/:id) - NO CHANGE NEEDED
 // =========================================================================
 exports.getProfileData = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Invalid user id' });
     
@@ -325,7 +326,7 @@ exports.getProfileData = async (req, res) => {
 // ========= Friends & Search APIs =========
 
 exports.searchUsers = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     const q = (req.query.q || '').trim();
     if (!q) return res.json({ users: [] });
 
@@ -333,12 +334,12 @@ exports.searchUsers = async (req, res) => {
         const regex = new RegExp(q, 'i');
         const users = await User.find({
             $or: [ { name: regex }, { email: regex } ],
-            _id: { $ne: req.session.user.id }
+            _id: { $ne: req.user.id }
         }).select('name email profileImageUrl').limit(20).lean();
 
         // Enrich with friend request status
         const FriendRequest = require('../database').FriendRequest;
-        const currentId = req.session.user.id;
+        const currentId = req.user.id;
         const userIds = users.map(u => u._id);
         const existing = await FriendRequest.find({
             $or: [
@@ -363,9 +364,9 @@ exports.searchUsers = async (req, res) => {
 };
 
 exports.sendFriendRequest = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     const { toUserId } = req.body;
-    const fromUserId = req.session.user.id;
+    const fromUserId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(toUserId)) return res.status(400).json({ success: false, message: 'Invalid user id' });
     if (toUserId === fromUserId) return res.status(400).json({ success: false, message: 'Cannot send request to yourself' });
@@ -382,7 +383,7 @@ exports.sendFriendRequest = async (req, res) => {
         if (exists) return res.json({ success: false, message: 'Friend request already exists' });
 
         await FriendRequest.create({ from_user: fromUserId, to_user: toUserId });
-        await require('../database').Notification.create({ user_id: toUserId, message: `${req.session.user.name} sent you a friend request`, type: 'other' });
+        await require('../database').Notification.create({ user_id: toUserId, message: `${req.user.name} sent you a friend request`, type: 'other' });
         res.json({ success: true, message: 'Request sent' });
     } catch (err) {
         console.error('Send friend request error:', err.message);
@@ -391,10 +392,10 @@ exports.sendFriendRequest = async (req, res) => {
 };
 
 exports.getFriendRequests = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     try {
         const FriendRequest = require('../database').FriendRequest;
-        const requests = await FriendRequest.find({ to_user: req.session.user.id, status: 'pending' }).populate('from_user', 'name email').lean();
+        const requests = await FriendRequest.find({ to_user: req.user.id, status: 'pending' }).populate('from_user', 'name email').lean();
         res.json({ requests });
     } catch (err) {
         console.error('Get friend requests error:', err.message);
@@ -403,7 +404,7 @@ exports.getFriendRequests = async (req, res) => {
 };
 
 exports.respondFriendRequest = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     const { requestId, action } = req.body;
     if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
 
@@ -411,15 +412,15 @@ exports.respondFriendRequest = async (req, res) => {
         const FriendRequest = require('../database').FriendRequest;
         const reqDoc = await FriendRequest.findById(requestId);
         if (!reqDoc) return res.status(404).json({ success: false, message: 'Request not found' });
-        if (String(reqDoc.to_user) !== req.session.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
+        if (String(reqDoc.to_user) !== req.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
 
         reqDoc.status = action === 'accept' ? 'accepted' : 'rejected';
         await reqDoc.save();
 
         if (action === 'accept') {
-            await require('../database').Notification.create({ user_id: reqDoc.from_user, message: `${req.session.user.name} accepted your friend request`, type: 'other' });
+            await require('../database').Notification.create({ user_id: reqDoc.from_user, message: `${req.user.name} accepted your friend request`, type: 'other' });
         } else {
-            await require('../database').Notification.create({ user_id: reqDoc.from_user, message: `${req.session.user.name} rejected your friend request`, type: 'other' });
+            await require('../database').Notification.create({ user_id: reqDoc.from_user, message: `${req.user.name} rejected your friend request`, type: 'other' });
         }
 
         res.json({ success: true });
@@ -430,11 +431,11 @@ exports.respondFriendRequest = async (req, res) => {
 };
 
 exports.getFriends = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     try {
         const FriendRequest = require('../database').FriendRequest;
-        const rels = await FriendRequest.find({ $or: [ { from_user: req.session.user.id }, { to_user: req.session.user.id } ], status: 'accepted' }).lean();
-        const friendIds = rels.map(r => (String(r.from_user) === req.session.user.id ? r.to_user : r.from_user));
+        const rels = await FriendRequest.find({ $or: [ { from_user: req.user.id }, { to_user: req.user.id } ], status: 'accepted' }).lean();
+        const friendIds = rels.map(r => (String(r.from_user) === req.user.id ? r.to_user : r.from_user));
         const friends = await User.find({ _id: { $in: friendIds } }).select('name email profileImageUrl').lean();
         res.json({ friends });
     } catch (err) {

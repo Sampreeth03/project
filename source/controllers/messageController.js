@@ -8,10 +8,10 @@ const fs = require('fs');
 // Get all projects for the current user (both created and joined)
 const getUserProjects = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
 
         // Projects created by user
         const createdProjects = await Project.find({ user_id: userId, status: 'active' })
@@ -44,10 +44,10 @@ const getUserProjects = async (req, res) => {
 // Get channels for a specific project
 const getProjectChannels = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { projectId } = req.params;
 
         // Verify user is a member or creator of the project
@@ -77,10 +77,10 @@ const getProjectChannels = async (req, res) => {
 // Get members of a specific project
 const getProjectMembers = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { projectId } = req.params;
 
         // Verify user is a member or creator
@@ -130,10 +130,10 @@ const getProjectMembers = async (req, res) => {
 // Get messages for a specific channel
 const getChannelMessages = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { channelId } = req.params;
 
         // Verify channel exists and user has access
@@ -184,10 +184,10 @@ const getChannelMessages = async (req, res) => {
 // Send a message to a channel
 const sendChannelMessage = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { channelId } = req.params;
         const { text } = req.body;
 
@@ -272,10 +272,10 @@ const sendChannelMessage = async (req, res) => {
 // Get direct messages between current user and another user in a project
 const getDirectMessages = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { projectId, otherUserId } = req.params;
 
         // Verify both users are in the same project
@@ -333,10 +333,10 @@ const getDirectMessages = async (req, res) => {
 // Send a direct message
 const sendDirectMessage = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { projectId, otherUserId } = req.params;
         const { text } = req.body;
 
@@ -416,10 +416,10 @@ const sendDirectMessage = async (req, res) => {
 // Create a new channel (only project creator)
 const createChannel = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { projectId } = req.params;
         const { channelName } = req.body;
 
@@ -470,10 +470,10 @@ const createChannel = async (req, res) => {
 // Get unread message counts for all projects
 const getUnreadCounts = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
 
         // Get all user's projects
         const createdProjects = await Project.find({ user_id: userId, status: 'active' }).select('_id').lean();
@@ -551,10 +551,10 @@ const getUnreadCounts = async (req, res) => {
 // Mark channel messages as read
 const markChannelAsRead = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { channelId } = req.params;
 
         // Get channel to get project_id
@@ -589,10 +589,10 @@ const markChannelAsRead = async (req, res) => {
 // Mark DMs as read
 const markDMAsRead = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { projectId, otherUserId } = req.params;
 
         await UserReadStatus.findOneAndUpdate(
@@ -622,10 +622,10 @@ const markDMAsRead = async (req, res) => {
 // Search messages in a channel
 const searchChannelMessages = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { channelId } = req.params;
         const { query } = req.query;
 
@@ -685,10 +685,10 @@ const searchChannelMessages = async (req, res) => {
 // Pin/Unpin a message (owner only)
 const togglePinMessage = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { messageId } = req.params;
 
         // Get message and verify it exists
@@ -725,10 +725,10 @@ const togglePinMessage = async (req, res) => {
 // Get pinned messages for a channel
 const getPinnedMessages = async (req, res) => {
     try {
-        if (!req.session.user) {
+        if (!req.user) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { channelId } = req.params;
 
         // Verify channel access

@@ -18,10 +18,10 @@ const PROJECT_PRICE_PAISE = 9900; // ₹99 (Stripe uses paise for INR)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1.  POST /api/payment/create-order
-//     Creates a Stripe PaymentIntent, stashes project data in session.
+//     Creates a Stripe PaymentIntent; project data stored in metadata.
 // ─────────────────────────────────────────────────────────────────────────────
 exports.createOrder = async (req, res) => {
-    if (!req.session.user) {
+    if (!req.user) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -37,11 +37,9 @@ exports.createOrder = async (req, res) => {
         const paymentIntent = await stripe.paymentIntents.create({
             amount:   PROJECT_PRICE_PAISE,
             currency: 'inr',
-            metadata: { userId: req.session.user.id, title },
+            // Store all project data in PaymentIntent metadata (no session required)
+            metadata: { userId: req.user.id, title, description, capacity: String(capacity), topic, deadline },
         });
-
-        // Stash project data in session so it survives the round-trip
-        req.session.pendingProject = { title, description, capacity, topic, deadline };
 
         return res.json({
             success:         true,
@@ -61,7 +59,7 @@ exports.createOrder = async (req, res) => {
 //     then creates the project.
 // ─────────────────────────────────────────────────────────────────────────────
 exports.verifyAndCreateProject = async (req, res) => {
-    if (!req.session.user) {
+    if (!req.user) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -83,18 +81,17 @@ exports.verifyAndCreateProject = async (req, res) => {
         }
 
         // Sanity check: payment belongs to this user
-        if (intent.metadata.userId !== req.session.user.id) {
+        if (intent.metadata.userId !== req.user.id) {
             return res.status(403).json({ success: false, error: 'Payment mismatch' });
         }
 
-        const userId  = req.session.user.id;
-        const pending = req.session.pendingProject;
+        const userId = req.user.id;
+        // Read project data from PaymentIntent metadata (stored at creation time)
+        const { title, description, capacity, topic, deadline } = intent.metadata;
 
-        if (!pending) {
-            return res.status(400).json({ success: false, error: 'No pending project in session' });
+        if (!title || !description || !capacity || !topic || !deadline) {
+            return res.status(400).json({ success: false, error: 'Incomplete project data in payment metadata' });
         }
-
-        const { title, description, capacity, topic, deadline } = pending;
         const normalizedTopic = topicNormalizationMap[topic.toLowerCase()] || topic;
 
         const project = await Project.create({
@@ -132,8 +129,6 @@ exports.verifyAndCreateProject = async (req, res) => {
             message: `Project "${title}" created after payment.`,
             type:    'project_creation',
         });
-
-        delete req.session.pendingProject;
 
         return res.json({ success: true, message: 'Payment verified. Project created!', projectId: project._id });
     } catch (err) {

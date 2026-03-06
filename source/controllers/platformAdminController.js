@@ -1,14 +1,21 @@
 // controllers/platformAdminController.js
 
 const { PlatformAdministrator, User, Notification } = require('../database');
+const { signToken, verifyToken, PLATFORM_ADMIN_COOKIE_NAME, COOKIE_OPTIONS } = require('../config/jwt');
 
 // Helper: ensure request is from an authenticated platform administrator
 function ensurePlatformAdmin(req, res) {
-  if (!req.session || !req.session.platformAdmin) {
+  const token = req.cookies?.[PLATFORM_ADMIN_COOKIE_NAME];
+  if (!token) {
     res.status(401).json({ success: false, error: 'Unauthorized: platform administrator login required' });
     return null;
   }
-  return req.session.platformAdmin;
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ success: false, error: 'Unauthorized: invalid or expired session' });
+    return null;
+  }
+  return payload;
 }
 
 // POST /platform-admin/login
@@ -29,19 +36,17 @@ exports.loginPlatformAdmin = async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid administrator credentials' });
     }
 
-    req.session.platformAdmin = {
+    const adminPayload = {
       id: admin._id.toString(),
       email: admin.email,
       adminId: admin.adminId,
+      role: 'platform_admin',
     };
-
-    req.session.save(err => {
-      if (err) {
-        console.error('Error saving platform admin session:', err);
-        return res.status(500).json({ success: false, error: 'Failed to create admin session' });
-      }
-
-      return res.status(200).json({
+    const token = signToken(adminPayload);
+    res
+      .cookie(PLATFORM_ADMIN_COOKIE_NAME, token, COOKIE_OPTIONS)
+      .status(200)
+      .json({
         success: true,
         message: 'Platform administrator login successful',
         admin: {
@@ -51,7 +56,6 @@ exports.loginPlatformAdmin = async (req, res) => {
         },
         redirectPath: '/platform-admin',
       });
-    });
   } catch (err) {
     console.error('Platform admin login error:', err.message);
     return res.status(500).json({ success: false, error: 'Server error during login' });

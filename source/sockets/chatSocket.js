@@ -100,13 +100,11 @@ const setupChatSocket = (io) => {
     };
 
     io.on('connection', (socket) => {
-        const sessionUser = socket.request?.session?.user;
-        if (!sessionUser?.id) {
+        const userId = socket.data.userId;
+        if (!userId) {
             socket.disconnect(true);
             return;
         }
-
-        const userId = sessionUser.id.toString();
         socket.data.userId = userId;
         socket.data.joinedProjects = new Set();
 

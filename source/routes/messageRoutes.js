@@ -4,6 +4,10 @@ const express = require('express');
 const router = express.Router();
 const messageController = require('../controllers/messageController');
 const { upload } = require('../middleware/uploadMiddleware');
+const { isAuthenticatedAPI } = require('../middleware/authMiddleware');
+
+// All message routes require an authenticated user
+router.use(isAuthenticatedAPI);
 
 // Get all projects for current user (created + joined)
 router.get('/projects', messageController.getUserProjects);

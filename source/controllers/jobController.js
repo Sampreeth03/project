@@ -9,7 +9,7 @@ const { navData, userNav } = require("../config/constants");
 // 1. Job Listings View (GET /apply) - React & EJS Support
 // =========================================================================
 exports.getJobApplyPage = async (req, res) => {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     try {
         // Fetch all active listings (user_id is null/missing) excluding rejected applications
         const jobs = await JobApplication.find({
@@ -46,7 +46,7 @@ exports.getJobApplyPage = async (req, res) => {
         }
 
         res.render('applyjobs', {
-            user: req.session.user,
+            user: req.user,
             homeUrl: userNav.homeUrl,
             navLinks: userNav.navLinks,
             jobs: jobsWithStatus
@@ -65,7 +65,7 @@ exports.getJobApplyPage = async (req, res) => {
 // =========================================================================
 exports.applyForJob = async (req, res) => {
     const { jobId, customAnswers } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     const resumePath = req.file?.path;
     
     // Parse custom answers if provided
@@ -98,7 +98,7 @@ exports.applyForJob = async (req, res) => {
             custom_answers: parsedAnswers, user_id: userId, resume_path: resumePath, active: true, date_applied: new Date()
         });
 
-        await Notification.create({ user_id: job.posted_by, message: `New application for "${job.job_title}" from ${req.session.user.name}.`, type: 'job_application', is_read: false });
+        await Notification.create({ user_id: job.posted_by, message: `New application for "${job.job_title}" from ${req.user.name}.`, type: 'job_application', is_read: false });
         await UserMetrics.findOneAndUpdate({ user_id: userId }, { $inc: { job_applications: 1 } }, { upsert: true });
 
         res.json({ success: true, message: 'Application submitted successfully.' });
@@ -113,15 +113,12 @@ exports.applyForJob = async (req, res) => {
 exports.getStudentApplications = async (req, res) => {
     try {
         // Check if session and user exist
-        if (!req.session || !req.session.user || !req.session.user.id) {
-            console.error("Session or user not found in getStudentApplications");
-            if (req.headers.accept && req.headers.accept.includes('application/json')) {
-                return res.status(401).json({ error: 'Unauthorized: Please log in again' });
-            }
-            return res.redirect("/login?error=Session expired. Please log in again.");
+        if (!req.user?.id) {
+            console.error("User not found in getStudentApplications");
+            return res.status(401).json({ error: 'Unauthorized: Please log in again' });
         }
 
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         
         // Only show Waiting and Approved applications, rejected ones are removed
         const applications = await JobApplication.find({ 
@@ -153,12 +150,12 @@ exports.getStudentApplications = async (req, res) => {
 exports.getJobNotifications = async (req, res) => {
     try {
         // Check if session and user exist
-        if (!req.session || !req.session.user || !req.session.user.id) {
-            console.error("Session or user not found in getJobNotifications");
+        if (!req.user?.id) {
+            console.error("User not found in getJobNotifications");
             return res.status(401).json({ error: 'Unauthorized: Please log in again' });
         }
 
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         
         // Fetch all job applications by this user including rejected ones
         const applications = await JobApplication.find({ user_id: userId })
@@ -250,11 +247,11 @@ exports.deleteNotification = async (req, res) => {
 
 exports.revokeApplication = async (req, res) => {
     try {
-        if (!req.session || !req.session.user || !req.session.user.id) {
+        if (!req.user?.id) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
         const { applicationId } = req.body;
-        const userId = req.session.user.id;
+        const userId = req.user.id;
 
         if (!applicationId || !mongoose.Types.ObjectId.isValid(applicationId)) {
             return res.status(400).json({ success: false, error: 'Invalid application ID' });

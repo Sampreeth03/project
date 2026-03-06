@@ -17,7 +17,7 @@ const forwardError = (next, err, publicMessage, statusCode = 500) => {
 // =========================================================================
 exports.getAllProjects = async (req, res, next) => {
     // Authentication handled by isAuthenticatedAPI middleware
-    const userId = req.session.user.id; 
+    const userId = req.user.id; 
 
     try {
         // 1. Fetch Projects Created by User
@@ -68,7 +68,7 @@ exports.getAllProjects = async (req, res, next) => {
         // Return JSON payload with all data (SUCCESS)
         res.json({
             success: true,
-            user: { id: userId, role: req.session.user.role },
+            user: { id: userId, role: req.user.role },
             createdProjects: createdProjects || [],
             availableProjects: availableProjects || []
         });
@@ -83,7 +83,7 @@ exports.getAllProjects = async (req, res, next) => {
 // 2. Joined Projects View (GET /joined-projects) - CONVERTED TO JSON
 // =========================================================================
 exports.getJoinedProjects = async (req, res, next) => {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -141,7 +141,7 @@ exports.getJoinedProjects = async (req, res, next) => {
         // Return JSON payload (SUCCESS)
         res.json({
             success: true,
-            user: { id: userId, role: req.session.user.role },
+            user: { id: userId, role: req.user.role },
             projects: [...formattedProjects, ...pendingProjects],
             tasksByProject: tasksByProject,
         });
@@ -157,7 +157,7 @@ exports.getJoinedProjects = async (req, res, next) => {
 // =========================================================================
 exports.getProjectDetails = async (req, res, next) => {
     const projectId = req.params.id;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -231,7 +231,7 @@ exports.getProjectDetails = async (req, res, next) => {
 // 4. Topic Specific Projects (GET /web-dev, /cyb, etc.) - CONVERTED TO JSON
 // =========================================================================
 exports.getTopicProjects = async (req, res, next) => {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     
     // NOTE: Requires parsing the topic path from the original URL
     const path = req.originalUrl.split('/api')[1];
@@ -270,7 +270,7 @@ exports.getTopicProjects = async (req, res, next) => {
 // =========================================================================
 exports.getCreateProjectView = async (req, res, next) => {
     // This endpoint now serves the list of created projects needed for the form's dashboard pane.
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     
     try {
         const createdProjects = await Project.aggregate([
@@ -294,10 +294,10 @@ exports.getCreateProjectView = async (req, res, next) => {
 // 6. Create Project API (POST /create-project)
 // =========================================================================
 exports.createProject = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     
     const { title, description, capacity, topic, deadline } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     
     const userProjectCount = await Project.countDocuments({ user_id: new mongoose.Types.ObjectId(userId) });
     if (userProjectCount >= 6) {
@@ -353,10 +353,10 @@ exports.createProject = async (req, res, next) => {
 // 7. Join Project (POST /join-project)
 // =========================================================================
 exports.joinProject = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { projectId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(userId)) {
         return res.status(400).json({ success: false, message: 'Invalid ID' });
@@ -383,7 +383,7 @@ exports.joinProject = async (req, res, next) => {
 
         await Notification.create({
             user_id: project.user_id,
-            message: `User ${req.session.user.name || userId} has requested to join your project "${project.title}"`,
+            message: `User ${req.user.name || userId} has requested to join your project "${project.title}"`,
             type: 'join_request'
         });
 
@@ -398,10 +398,10 @@ exports.joinProject = async (req, res, next) => {
 // 8. Approve Join Request (POST /approve-join-request)
 // =========================================================================
 exports.approveJoinRequest = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(requestId)) return res.status(400).json({ success: false, message: 'Invalid request ID' });
 
@@ -444,10 +444,10 @@ exports.approveJoinRequest = async (req, res, next) => {
 // 9. Reject Join Request (POST /reject-join-request)
 // =========================================================================
 exports.rejectJoinRequest = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(requestId)) return res.status(400).json({ success: false, message: 'Invalid request ID' });
 
@@ -480,7 +480,7 @@ exports.rejectJoinRequest = async (req, res, next) => {
 // =========================================================================
 exports.deleteJoinRequest = async (req, res, next) => {
     const { requestId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const request = await JoinRequest.findOne({ _id: requestId }).populate('project_id');
@@ -501,9 +501,9 @@ exports.deleteJoinRequest = async (req, res, next) => {
 
 // ========= Project Invite (Owner -> Friend) =========
 exports.inviteFriendToProject = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { projectId, toUserId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(toUserId)) return res.status(400).json({ success: false, message: 'Invalid ids' });
 
@@ -517,7 +517,7 @@ exports.inviteFriendToProject = async (req, res, next) => {
         if (existing && existing.status === 'pending') return res.json({ success: false, message: 'Invite already pending' });
 
         await ProjectInvite.create({ project_id: projectId, from_user: userId, to_user: toUserId });
-        await require('../database').Notification.create({ user_id: toUserId, message: `${req.session.user.name} invited you to join project "${project.title}"`, type: 'join_request' });
+        await require('../database').Notification.create({ user_id: toUserId, message: `${req.user.name} invited you to join project "${project.title}"`, type: 'join_request' });
         res.json({ success: true, message: 'Invite sent' });
     } catch (err) {
         console.error('Invite friend error:', err.message);
@@ -526,10 +526,10 @@ exports.inviteFriendToProject = async (req, res, next) => {
 };
 
 exports.getProjectInvites = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     try {
         const ProjectInvite = require('../database').ProjectInvite;
-        const invites = await ProjectInvite.find({ to_user: req.session.user.id }).populate('project_id').populate('from_user', 'name').lean();
+        const invites = await ProjectInvite.find({ to_user: req.user.id }).populate('project_id').populate('from_user', 'name').lean();
         res.json({ invites });
     } catch (err) {
         console.error('Get project invites error:', err.message);
@@ -538,7 +538,7 @@ exports.getProjectInvites = async (req, res, next) => {
 };
 
 exports.respondProjectInvite = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { inviteId, action } = req.body;
     if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
 
@@ -546,7 +546,7 @@ exports.respondProjectInvite = async (req, res, next) => {
         const ProjectInvite = require('../database').ProjectInvite;
         const invite = await ProjectInvite.findById(inviteId).populate('project_id');
         if (!invite) return res.status(404).json({ success: false, message: 'Invite not found' });
-        if (String(invite.to_user) !== req.session.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
+        if (String(invite.to_user) !== req.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
 
         invite.status = action === 'accept' ? 'accepted' : 'rejected';
         await invite.save();
@@ -557,11 +557,11 @@ exports.respondProjectInvite = async (req, res, next) => {
             if (memberCount >= invite.project_id.capacity) {
                 return res.json({ success: false, message: 'Project is full' });
             }
-            await ProjectMember.create({ project_id: invite.project_id._id, user_id: req.session.user.id, joined_at: new Date() });
-            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.session.user.name} accepted your project invite for "${invite.project_id.title}"`, type: 'join_request_approved' });
-            await require('../database').Notification.create({ user_id: req.session.user.id, message: `You joined project "${invite.project_id.title}"`, type: 'project_creation' });
+            await ProjectMember.create({ project_id: invite.project_id._id, user_id: req.user.id, joined_at: new Date() });
+            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.user.name} accepted your project invite for "${invite.project_id.title}"`, type: 'join_request_approved' });
+            await require('../database').Notification.create({ user_id: req.user.id, message: `You joined project "${invite.project_id.title}"`, type: 'project_creation' });
         } else {
-            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.session.user.name} rejected your project invite for "${invite.project_id.title}"`, type: 'other' });
+            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.user.name} rejected your project invite for "${invite.project_id.title}"`, type: 'other' });
         }
 
         res.json({ success: true });
@@ -573,9 +573,9 @@ exports.respondProjectInvite = async (req, res, next) => {
 
 // ========= Project Invite (Owner -> Friend) =========
 exports.inviteFriendToProject = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { projectId, toUserId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(toUserId)) return res.status(400).json({ success: false, message: 'Invalid ids' });
 
@@ -589,7 +589,7 @@ exports.inviteFriendToProject = async (req, res) => {
         if (existing && existing.status === 'pending') return res.json({ success: false, message: 'Invite already pending' });
 
         await ProjectInvite.create({ project_id: projectId, from_user: userId, to_user: toUserId });
-        await require('../database').Notification.create({ user_id: toUserId, message: `${req.session.user.name} invited you to join project "${project.title}"`, type: 'join_request' });
+        await require('../database').Notification.create({ user_id: toUserId, message: `${req.user.name} invited you to join project "${project.title}"`, type: 'join_request' });
         res.json({ success: true, message: 'Invite sent' });
     } catch (err) {
         console.error('Invite friend error:', err.message);
@@ -598,10 +598,10 @@ exports.inviteFriendToProject = async (req, res) => {
 };
 
 exports.getProjectInvites = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     try {
         const ProjectInvite = require('../database').ProjectInvite;
-        const invites = await ProjectInvite.find({ to_user: req.session.user.id }).populate('project_id').populate('from_user', 'name').lean();
+        const invites = await ProjectInvite.find({ to_user: req.user.id }).populate('project_id').populate('from_user', 'name').lean();
         res.json({ invites });
     } catch (err) {
         console.error('Get project invites error:', err.message);
@@ -610,7 +610,7 @@ exports.getProjectInvites = async (req, res) => {
 };
 
 exports.respondProjectInvite = async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { inviteId, action } = req.body;
     if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
 
@@ -618,7 +618,7 @@ exports.respondProjectInvite = async (req, res) => {
         const ProjectInvite = require('../database').ProjectInvite;
         const invite = await ProjectInvite.findById(inviteId).populate('project_id');
         if (!invite) return res.status(404).json({ success: false, message: 'Invite not found' });
-        if (String(invite.to_user) !== req.session.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
+        if (String(invite.to_user) !== req.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
 
         invite.status = action === 'accept' ? 'accepted' : 'rejected';
         await invite.save();
@@ -629,11 +629,11 @@ exports.respondProjectInvite = async (req, res) => {
             if (memberCount >= invite.project_id.capacity) {
                 return res.json({ success: false, message: 'Project is full' });
             }
-            await ProjectMember.create({ project_id: invite.project_id._id, user_id: req.session.user.id, joined_at: new Date() });
-            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.session.user.name} accepted your project invite for "${invite.project_id.title}"`, type: 'join_request_approved' });
-            await require('../database').Notification.create({ user_id: req.session.user.id, message: `You joined project "${invite.project_id.title}"`, type: 'project_creation' });
+            await ProjectMember.create({ project_id: invite.project_id._id, user_id: req.user.id, joined_at: new Date() });
+            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.user.name} accepted your project invite for "${invite.project_id.title}"`, type: 'join_request_approved' });
+            await require('../database').Notification.create({ user_id: req.user.id, message: `You joined project "${invite.project_id.title}"`, type: 'project_creation' });
         } else {
-            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.session.user.name} rejected your project invite for "${invite.project_id.title}"`, type: 'other' });
+            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.user.name} rejected your project invite for "${invite.project_id.title}"`, type: 'other' });
         }
 
         res.json({ success: true });
@@ -647,10 +647,10 @@ exports.respondProjectInvite = async (req, res) => {
 // 11. Delete Project (POST /delete-project)
 // =========================================================================
 exports.deleteProject = async (req, res, next) => {
-    if (!req.session.user || req.session.user.role !== 'user') return res.status(403).json({ success: false, error: 'Unauthorized' });
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ success: false, error: 'Unauthorized' });
 
     const { projectId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const project = await Project.findById(projectId);
@@ -681,7 +681,7 @@ exports.deleteProject = async (req, res, next) => {
 // =========================================================================
 exports.createTask = async (req, res, next) => {
     const { projectId, title, description, assignedTo, dueDate } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     // ... validation and security checks ...
     try {
         if (!projectId || !title || !dueDate) return res.status(400).json({ success: false, message: 'Project ID, title, and due date are required' });
@@ -741,7 +741,7 @@ exports.extendDeadline = async (req, res, next) => {
 
 exports.submitGithubLink = async (req, res, next) => {
     const { taskId, githubLink, projectId } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     try {
         const task = await Task.findOneAndUpdate({ _id: taskId, assigned_to: userId }, { github_link: githubLink, status: 'Review' }, { new: true });
         if (!task) return res.status(404).json({ success: false, message: 'Task not found or not assigned to you' });
@@ -757,7 +757,7 @@ exports.submitGithubLink = async (req, res, next) => {
 exports.reviewSubmission = async (req, res, next) => {
     // FIX FOR HANGING ISSUE: Ensure reliable response path
     const { taskId, projectId, action, feedback } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const project = await Project.findById(projectId);
@@ -824,7 +824,7 @@ exports.reviewSubmission = async (req, res, next) => {
 exports.finishProject = async (req, res, next) => {
     try {
         const projectId = req.params.id;
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         
         const project = await Project.findById(projectId);
         if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
@@ -901,10 +901,10 @@ exports.getTaskProject = async (req, res, next) => {
 // Get Join Request Messages (GET /join-request-messages/:requestId)
 // =========================================================================
 exports.getJoinRequestMessages = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId } = req.params;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const joinRequest = await JoinRequest.findById(requestId).populate('project_id').populate('user_id', 'name');
@@ -943,10 +943,10 @@ exports.getJoinRequestMessages = async (req, res, next) => {
 // Send Join Request Message (POST /send-join-request-message)
 // =========================================================================
 exports.sendJoinRequestMessage = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { requestId, message } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const joinRequest = await JoinRequest.findById(requestId).populate('project_id');
@@ -977,7 +977,7 @@ exports.sendJoinRequestMessage = async (req, res, next) => {
 // Upload Join Request File (POST /upload-join-request-file)
 // =========================================================================
 exports.uploadJoinRequestFile = async (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     upload.single('file')(req, res, async (err) => {
         if (err) {
@@ -990,7 +990,7 @@ exports.uploadJoinRequestFile = async (req, res, next) => {
         }
 
         const { requestId } = req.body;
-        const userId = req.session.user.id;
+        const userId = req.user.id;
 
         try {
             const joinRequest = await JoinRequest.findById(requestId).populate('project_id');

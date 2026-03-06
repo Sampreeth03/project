@@ -36,14 +36,14 @@ const getRecruiterNav = () => ({
 // 1. Recruiter Home Page (GET /recruiter-home)
 // =========================================================================
 exports.getRecruiterHome = (req, res) => {
-    res.json({ user: req.session.user, ...getRecruiterNav() });
+    res.json({ user: req.user, ...getRecruiterNav() });
 };
 
 // =========================================================================
 // 2. Recruiter Job Creation/Management Page (GET /rec-job)
 // =========================================================================
 exports.getRecruiterJobs = async (req, res) => {
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     const navData = getRecruiterNav(); 
 
     try {
@@ -55,7 +55,7 @@ exports.getRecruiterJobs = async (req, res) => {
             .lean();
 
         res.json({
-            user: req.session.user,
+            user: req.user,
             homeUrl: navData.homeUrl,
             navLinks: navData.navLinks,
             totalJobs: totalJobs || 0,
@@ -73,7 +73,7 @@ exports.getRecruiterJobs = async (req, res) => {
 // 3. Recruiter Dashboard Page (GET /recruiter-dashboard)
 // =========================================================================
 exports.getRecruiterDashboard = async (req, res) => {
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     const recruiterNav = getRecruiterNav();
 
     try {
@@ -149,7 +149,7 @@ exports.getRecruiterDashboard = async (req, res) => {
             };
 
         const dashboardData = {
-            user: req.session.user,
+            user: req.user,
             ...recruiterNav,
             totalJobs: jobCount || 0,
             totalParticipants: participantCount || 0,
@@ -172,7 +172,7 @@ exports.getRecruiterDashboard = async (req, res) => {
 // 4. Recruiter Applications Page (GET /rec-app)
 // =========================================================================
 exports.getRecruiterApplications = async (req, res) => {
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     
     try {
         console.log('Fetching applications for recruiter:', recruiterId);
@@ -208,7 +208,7 @@ exports.getRecruiterApplications = async (req, res) => {
         const recruiterNav = getRecruiterNav();
 
         res.json({
-            user: req.session.user,
+            user: req.user,
             homeUrl: recruiterNav.homeUrl,
             navLinks: recruiterNav.navLinks,
             applications: formattedApplications
@@ -224,11 +224,11 @@ exports.getRecruiterApplications = async (req, res) => {
 // 5. Recruiter Notifications Page (GET /rec-not)
 // =========================================================================
 exports.getRecruiterNotifications = async (req, res) => {
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     try {
         const notifications = await Notification.find({ user_id: recruiterId }).sort({ createdAt: -1 }).lean();
         const recruiterNav = getRecruiterNav(); 
-        res.json({ user: req.session.user, ...recruiterNav, notifications });
+        res.json({ user: req.user, ...recruiterNav, notifications });
     } catch (err) {
         console.error('Error in /rec-not route:', err.message);
         res.status(500).json({ error: 'Failed to load notifications' });
@@ -240,7 +240,7 @@ exports.getRecruiterNotifications = async (req, res) => {
 // =========================================================================
 exports.viewResume = async (req, res) => {
     const applicationId = req.params.id;
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
 
     try {
         const application = await JobApplication.findOne({ _id: applicationId, posted_by: recruiterId, user_id: { $ne: null } });
@@ -276,7 +276,7 @@ exports.viewResume = async (req, res) => {
 // =========================================================================
 exports.updateApplicationStatus = async (req, res) => {
     const applicationId = req.params.id || req.body.applicationId;
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     
     // Handle different status formats
     let status = req.body.status;
@@ -327,7 +327,7 @@ exports.updateApplicationStatus = async (req, res) => {
 // =========================================================================
 exports.createRecruiterJob = async (req, res) => {
     const { jobTitle, companyName, description, salaryRange, skills, customQuestions } = req.body;
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
 
     try {
         // Ensure recruiter has been verified by a platform administrator
@@ -377,7 +377,7 @@ exports.createRecruiterJob = async (req, res) => {
 // =========================================================================
 exports.deleteRecruiterJob = async (req, res) => {
     const jobId = req.params.id;
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
 
     try {
         const job = await JobApplication.findOne({ _id: jobId, posted_by: recruiterId }).lean();
@@ -406,7 +406,7 @@ exports.deleteRecruiterJob = async (req, res) => {
 // =========================================================================
 exports.toggleJobActive = async (req, res) => {
     const jobId = req.params.id;
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     const { active } = req.body;
     try {
         const job = await JobApplication.findOne({ _id: jobId, posted_by: recruiterId }).lean();
@@ -435,7 +435,7 @@ exports.toggleJobActive = async (req, res) => {
 // 11. Get User Profile for Recruiter (GET /user-profile-for-recruiter/:userId)
 // =========================================================================
 exports.getUserProfileForRecruiter = async (req, res) => {
-    const recruiterId = req.session.user.id;
+    const recruiterId = req.user.id;
     const userId = req.params.userId;
 
     try {
