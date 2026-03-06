@@ -26,6 +26,9 @@ exports.getJobApplyPage = async (req, res) => {
             id: job._id.toString(), // Ensure the 'id' property exists for the frontend
             custom_questions: job.custom_questions || []
         }));
+        console.log('[getJobApplyPage] Jobs with custom_questions:',
+            formattedJobs.map(j => ({ title: j.job_title, q_count: j.custom_questions.length, questions: j.custom_questions }))
+        );
         // ----------------------------------------------------
 
         // Check which jobs the current user has already applied for
