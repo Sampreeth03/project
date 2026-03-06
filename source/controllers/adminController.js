@@ -199,23 +199,51 @@ exports.getRecruitersPage = (req, res) => {
 exports.getRecruitersData = async (req, res) => {
     try {
         const recruiters = await User.find({ role: 'recruiter' })
-            .select('name email createdAt')
+            .select('name email createdAt companyName')
             .lean();
 
         const recruitersData = await Promise.all(
             recruiters.map(async (recruiter) => {
-                const jobCount = await JobApplication.countDocuments({ posted_by: recruiter._id });
+                // Job postings: records created by recruiter with no applicant yet
+                const postedJobs = await JobApplication.find({
+                    posted_by: recruiter._id,
+                    user_id: null
+                }).select('job_title company_name createdAt').lean();
+
+                // Hired students: applications with Approved status
+                const hiredApplicants = await JobApplication.find({
+                    posted_by: recruiter._id,
+                    user_id: { $ne: null },
+                    status: 'Approved'
+                }).populate('user_id', 'name email').select('job_title company_name createdAt user_id').lean();
+
                 const fallbackName = recruiter.email ? recruiter.email.split('@')[0] : 'Unnamed Recruiter';
                 return {
                     id: recruiter._id.toString(),
                     name: recruiter.name || fallbackName,
                     email: recruiter.email || 'N/A',
-                    company: recruiter.name || fallbackName,
+                    company: recruiter.companyName || fallbackName,
                     role: 'Recruiter',
                     joinedDate: recruiter.createdAt
                         ? new Date(recruiter.createdAt).toISOString().split('T')[0]
                         : 'N/A',
-                    recruitmentCount: jobCount || 0,
+                    recruitmentCount: hiredApplicants.length,
+                    hiredJobs: [
+                        ...postedJobs.map(j => ({
+                            type: 'posting',
+                            title: j.job_title,
+                            company: j.company_name,
+                            date: j.createdAt ? new Date(j.createdAt).toISOString().split('T')[0] : 'N/A',
+                            personName: null
+                        })),
+                        ...hiredApplicants.map(j => ({
+                            type: 'hired',
+                            title: j.job_title,
+                            company: j.company_name,
+                            date: j.createdAt ? new Date(j.createdAt).toISOString().split('T')[0] : 'N/A',
+                            personName: j.user_id?.name || null
+                        }))
+                    ]
                 };
             })
         );
@@ -248,7 +276,20 @@ exports.getProjectsData = async (req, res) => {
         const now = new Date();
 
         const projectData = await Promise.all(projects.map(async (project) => {
-            const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
+            // Fetch lead (project creator)
+            const lead = await User.findById(project.user_id).select('name email').lean();
+
+            // Fetch participants — members EXCLUDING the creator
+            const memberDocs = await ProjectMember.find({
+                project_id: project._id,
+                user_id: { $ne: project.user_id }
+            }).lean();
+            const participantIds = memberDocs.map(m => m.user_id);
+            const participants = participantIds.length > 0
+                ? await User.find({ _id: { $in: participantIds } }).select('name email').lean()
+                : [];
+
+            const memberCount = participants.length + 1; // +1 for lead
             let derivedStatus = project.status || 'active';
 
             if (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed') {
@@ -268,7 +309,9 @@ exports.getProjectsData = async (req, res) => {
                 status: derivedStatus,
                 description: project.description,
                 deadline: project.deadline,
-                members: memberCount
+                members: memberCount,
+                lead: lead ? { id: lead._id.toString(), name: lead.name, email: lead.email } : null,
+                participants: participants.map(p => ({ id: p._id.toString(), name: p.name, email: p.email }))
             };
         }));
 

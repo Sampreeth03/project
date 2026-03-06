@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AdminSidebar from './AdminSidebar';
 import { fetchProjectsData } from '../../store/adminSlice';
@@ -9,6 +9,24 @@ const AdminProjects = () => {
     const { projects, projectsLoading, projectsError } = useSelector((state) => state.admin);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [expandedProject, setExpandedProject] = useState(null);
+    const popoverRef = useRef(null);
+
+    const toggleMembers = (projectId, e) => {
+        e.stopPropagation();
+        setExpandedProject(prev => prev === projectId ? null : projectId);
+    };
+
+    // Close popover when clicking outside
+    useEffect(() => {
+        const handleOutside = (e) => {
+            if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+                setExpandedProject(null);
+            }
+        };
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
+    }, []);
 
     useEffect(() => {
         dispatch(fetchProjectsData());
@@ -85,28 +103,40 @@ const AdminProjects = () => {
                 {projectsError && <div className="error-message">Error: {projectsError}. Please login as admin.</div>}
                 {!projectsError && (
                 <div className="projects-stats">
-                    <div className="stat-card">
+                    <div
+                        className={`stat-card stat-card-btn${statusFilter === 'all' ? ' stat-card-active' : ''}`}
+                        onClick={() => setStatusFilter(statusFilter === 'all' ? 'all' : 'all')}
+                    >
                         <div className="stat-icon bg-primary"><i className="fas fa-folder"></i></div>
                         <div className="stat-info">
                             <div className="stat-value">{projects.length}</div>
                             <div className="stat-label">Total Projects</div>
                         </div>
                     </div>
-                    <div className="stat-card">
+                    <div
+                        className={`stat-card stat-card-btn${statusFilter === 'active' ? ' stat-card-active stat-card-active-success' : ''}`}
+                        onClick={() => setStatusFilter(prev => prev === 'active' ? 'all' : 'active')}
+                    >
                         <div className="stat-icon bg-success"><i className="fas fa-spinner"></i></div>
                         <div className="stat-info">
                             <div className="stat-value">{projects.filter(p => p.status === 'active').length}</div>
                             <div className="stat-label">Active</div>
                         </div>
                     </div>
-                    <div className="stat-card">
+                    <div
+                        className={`stat-card stat-card-btn${statusFilter === 'completed' ? ' stat-card-active stat-card-active-warning' : ''}`}
+                        onClick={() => setStatusFilter(prev => prev === 'completed' ? 'all' : 'completed')}
+                    >
                         <div className="stat-icon bg-warning"><i className="fas fa-check-circle"></i></div>
                         <div className="stat-info">
                             <div className="stat-value">{projects.filter(p => p.status === 'completed').length}</div>
                             <div className="stat-label">Completed</div>
                         </div>
                     </div>
-                    <div className="stat-card">
+                    <div
+                        className={`stat-card stat-card-btn${statusFilter === 'expired' ? ' stat-card-active stat-card-active-danger' : ''}`}
+                        onClick={() => setStatusFilter(prev => prev === 'expired' ? 'all' : 'expired')}
+                    >
                         <div className="stat-icon bg-danger"><i className="fas fa-times-circle"></i></div>
                         <div className="stat-info">
                             <div className="stat-value">{projects.filter(p => p.status === 'expired').length}</div>
@@ -133,7 +163,37 @@ const AdminProjects = () => {
                             <p className="project-description">{project.description}</p>
                             <div className="project-footer">
                                 <div className="project-meta">
-                                    <span><i className="fas fa-users"></i> {project.members} members</span>
+                                    <span
+                                        className="members-trigger"
+                                        onClick={(e) => toggleMembers(project.id, e)}
+                                        style={{ cursor: 'pointer', position: 'relative' }}
+                                    >
+                                        <i className="fas fa-users"></i> {project.members} members
+                                        {expandedProject === project.id && (
+                                            <div
+                                                ref={popoverRef}
+                                                className="members-popover"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <div className="popover-section-label">Created by</div>
+                                                <div className="member-item member-lead">
+                                                    <i className="fas fa-crown"></i>
+                                                    <span className="member-name">{project.lead?.name || 'Unknown'}</span>
+                                                </div>
+                                                {project.participants && project.participants.length > 0 && (
+                                                    <>
+                                                        <div className="popover-section-label popover-section-members">Members</div>
+                                                        {project.participants.map((p) => (
+                                                            <div key={p.id} className="member-item">
+                                                                <i className="fas fa-user"></i>
+                                                                <span className="member-name">{p.name}</span>
+                                                            </div>
+                                                        ))}
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                    </span>
                                     <span><i className="fas fa-calendar"></i> {formatDate(project.deadline)}</span>
                                 </div>
                             </div>
