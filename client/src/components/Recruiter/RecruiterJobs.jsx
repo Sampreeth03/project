@@ -280,13 +280,21 @@ const RecruiterJobs = () => {
         setIsSubmitting(true);
 
         try {
+            // Auto-include any staged (unconfirmed) question if it has content
+            const questionsToSubmit = [
+                ...customQuestions,
+                ...(stagedQuestion && stagedQuestion.question.trim() ? [stagedQuestion] : [])
+            ].filter(q => q.question.trim() !== '');
+
+            console.log('[RecruiterJobs] Submitting customQuestions:', JSON.stringify(questionsToSubmit));
+
             const jobPayload = { 
                 jobTitle: title, 
                 companyName: companyName,
                 description, 
                 salaryRange, 
                 skills,
-                customQuestions: customQuestions.filter(q => q.question.trim() !== '')
+                customQuestions: questionsToSubmit
             };
             
             const result = await dispatch(createJob(jobPayload)).unwrap();

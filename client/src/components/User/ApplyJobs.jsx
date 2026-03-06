@@ -16,6 +16,7 @@ const ApplyJobs = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'applied', 'notapplied'
+    const [clickKey, setClickKey] = useState(0);
 
     useEffect(() => {
         if (!user) {
@@ -39,10 +40,12 @@ const ApplyJobs = () => {
             }
 
             const data = await response.json();
-            const normalizedJobs = (data.jobs || []).map(job => ({
-                ...job,
-                custom_questions: Array.isArray(job.custom_questions) ? job.custom_questions : []
-            }));
+            console.log('[ApplyJobs] Raw API response jobs count:', (data.jobs || []).length);
+            const normalizedJobs = (data.jobs || []).map(job => {
+                const qs = Array.isArray(job.custom_questions) ? job.custom_questions : [];
+                console.log(`[ApplyJobs] Job "${job.job_title}" has ${qs.length} custom question(s):`, JSON.stringify(qs));
+                return { ...job, custom_questions: qs };
+            });
             setJobs(normalizedJobs);
             setLoading(false);
         } catch (err) {
@@ -220,7 +223,10 @@ const ApplyJobs = () => {
             ...job,
             custom_questions: Array.isArray(job.custom_questions) ? job.custom_questions : []
         };
+        console.log('[ApplyJobs] Selected job:', normalizedJob.job_title);
+        console.log('[ApplyJobs] custom_questions:', JSON.stringify(normalizedJob.custom_questions));
         setSelectedJob(normalizedJob);
+        setClickKey(prev => prev + 1);
         // Reset attempted submit state when switching jobs
         setAttemptedSubmit(prev => ({ ...prev, [job.id]: false }));
     };
@@ -367,7 +373,7 @@ const ApplyJobs = () => {
 
                 {/* Right Panel - Job Details */}
                 {selectedJob && (
-                    <div className="job-details-panel">
+                    <div key={clickKey} className="job-details-panel">
                         <div className="job-details-header">
                             <div className="job-details-title-section">
                                 <div className="job-details-title-row">
@@ -415,10 +421,10 @@ const ApplyJobs = () => {
                                     <div className="application-form">
                                         {/* Custom Questions */}
                                         {selectedJob.custom_questions && selectedJob.custom_questions.length > 0 && (
-                                            <div className="custom-questions-form">
-                                                <h4 className="questions-form-title">Application Questions</h4>
-                                                <p className="questions-form-subtitle">
-                                                    Please answer all questions. <span style={{color: '#ef4444', fontWeight: 600}}>*</span> indicates required fields
+                                            <div className="custom-questions-form" style={{background:'#161625', border:'2px solid #0068ff', borderRadius:'10px', padding:'20px', color:'#fff'}}>
+                                                <h4 className="questions-form-title" style={{color:'#fff', fontSize:'15px', fontWeight:700, marginBottom:'8px', display:'flex', alignItems:'center', gap:'8px'}}> Application Questions</h4>
+                                                <p className="questions-form-subtitle" style={{color:'#d0d0e8', fontSize:'12px', marginBottom:'16px', padding:'8px 12px', background:'rgba(255,68,85,0.12)', borderLeft:'3px solid #ff4455', borderRadius:'0 6px 6px 0'}}>
+                                                    Please answer all questions. <span style={{color:'#ef4444', fontWeight:700}}>*</span> indicates required fields
                                                 </p>
                                                 
                                                 {selectedJob.custom_questions.map((question, qIdx) => {
@@ -428,18 +434,18 @@ const ApplyJobs = () => {
                                                     const showError = attemptedSubmit[selectedJob.id] && question.required && !isAnswered;
                                                     
                                                     return (
-                                                        <div key={question.id || qIdx} className={`question-answer-item ${showError ? 'error' : ''}`}>
-                                                            <label className="question-label">
-                                                                <span className="question-text">Q{qIdx + 1}. {question.question}</span>
-                                                                {question.required && <span className="required-star">*</span>}
+                                                        <div key={question.id || qIdx} className={`question-answer-item ${showError ? 'error' : ''}`} style={{background:'#1e1e30', border:`1px solid ${showError ? 'rgba(255,68,85,0.6)' : 'rgba(255,255,255,0.18)'}`, borderRadius:'8px', padding:'14px 16px', marginBottom:'10px', color:'#fff'}}>
+                                                            <label className="question-label" style={{display:'block', marginBottom:'10px', color:'#fff'}}>
+                                                                <span className="question-text" style={{color:'#fff', fontWeight:600, fontSize:'13px'}}>Q{qIdx + 1}. {question.question}</span>
+                                                                {question.required && <span className="required-star" style={{color:'#ff4455', marginLeft:'4px', fontWeight:900}}>*</span>}
                                                             </label>
                                                             {showError && (
-                                                                <div className="question-error-message">This question is required</div>
+                                                                <div className="question-error-message" style={{color:'#ff7b88', fontSize:'11px', marginBottom:'8px', fontWeight:600}}>⚠ This question is required</div>
                                                             )}
                                                             
                                                             {question.type === 'yesno' && (
-                                                                <div className="yesno-options">
-                                                                    <label className="radio-option">
+                                                                <div className="yesno-options" style={{display:'flex', gap:'10px'}}>
+                                                                    <label className="radio-option" style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', background:'#0e0e1a', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'8px', cursor:'pointer', flex:1, color:'#fff'}}>
                                                                         <input
                                                                             type="radio"
                                                                             name={`question-${selectedJob.id}-${question.id}`}
@@ -447,9 +453,9 @@ const ApplyJobs = () => {
                                                                             checked={customAnswers[selectedJob.id]?.[question.id] === 'yes'}
                                                                             onChange={(e) => handleCustomAnswerChange(selectedJob.id, question.id, e.target.value)}
                                                                         />
-                                                                        <span>Yes</span>
+                                                                        <span style={{color:'#fff'}}>Yes</span>
                                                                     </label>
-                                                                    <label className="radio-option">
+                                                                    <label className="radio-option" style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', background:'#0e0e1a', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'8px', cursor:'pointer', flex:1, color:'#fff'}}>
                                                                         <input
                                                                             type="radio"
                                                                             name={`question-${selectedJob.id}-${question.id}`}
@@ -457,7 +463,7 @@ const ApplyJobs = () => {
                                                                             checked={customAnswers[selectedJob.id]?.[question.id] === 'no'}
                                                                             onChange={(e) => handleCustomAnswerChange(selectedJob.id, question.id, e.target.value)}
                                                                         />
-                                                                        <span>No</span>
+                                                                        <span style={{color:'#fff'}}>No</span>
                                                                     </label>
                                                                 </div>
                                                             )}
@@ -469,6 +475,7 @@ const ApplyJobs = () => {
                                                                     placeholder="Enter your answer..."
                                                                     value={customAnswers[selectedJob.id]?.[question.id] || ''}
                                                                     onChange={(e) => handleCustomAnswerChange(selectedJob.id, question.id, e.target.value)}
+                                                                    style={{width:'100%', padding:'10px 14px', background:'#0e0e1a', border:'1px solid rgba(255,255,255,0.25)', borderRadius:'8px', color:'#fff', fontSize:'13px', outline:'none'}}
                                                                 />
                                                             )}
                                                             
@@ -479,13 +486,14 @@ const ApplyJobs = () => {
                                                                     rows="4"
                                                                     value={customAnswers[selectedJob.id]?.[question.id] || ''}
                                                                     onChange={(e) => handleCustomAnswerChange(selectedJob.id, question.id, e.target.value)}
+                                                                    style={{width:'100%', padding:'10px 14px', background:'#0e0e1a', border:'1px solid rgba(255,255,255,0.25)', borderRadius:'8px', color:'#fff', fontSize:'13px', outline:'none', resize:'vertical', minHeight:'88px'}}
                                                                 />
                                                             )}
                                                             
                                                             {question.type === 'multiple' && question.options && (
-                                                                <div className="multiple-choice-options">
+                                                                <div className="multiple-choice-options" style={{display:'flex', flexDirection:'column', gap:'8px'}}>
                                                                     {question.options.map((option, optIdx) => (
-                                                                        <label key={optIdx} className="radio-option">
+                                                                        <label key={optIdx} className="radio-option" style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', background:'#0e0e1a', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'8px', cursor:'pointer', color:'#fff'}}>
                                                                             <input
                                                                                 type="radio"
                                                                                 name={`question-${selectedJob.id}-${question.id}`}
@@ -493,7 +501,7 @@ const ApplyJobs = () => {
                                                                                 checked={customAnswers[selectedJob.id]?.[question.id] === option}
                                                                                 onChange={(e) => handleCustomAnswerChange(selectedJob.id, question.id, e.target.value)}
                                                                             />
-                                                                            <span>{option}</span>
+                                                                            <span style={{color:'#fff'}}>{option}</span>
                                                                         </label>
                                                                     ))}
                                                                 </div>

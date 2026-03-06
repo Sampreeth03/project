@@ -343,6 +343,8 @@ exports.createRecruiterJob = async (req, res) => {
             return res.status(403).json({ success: false, error: message });
         }
 
+        console.log('[createRecruiterJob] customQuestions received:', JSON.stringify(customQuestions));
+
         const jobDoc = await JobApplication.create({
             posted_by: recruiterId,
             job_title: jobTitle,
@@ -353,6 +355,8 @@ exports.createRecruiterJob = async (req, res) => {
             custom_questions: customQuestions || [],
             active: 1
         });
+
+        console.log('[createRecruiterJob] Stored custom_questions:', JSON.stringify(jobDoc.custom_questions));
 
         const createdAt = new Date();
         await Notification.create({
