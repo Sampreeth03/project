@@ -8,6 +8,18 @@ const AdminRecruiters = () => {
     const dispatch = useDispatch();
     const { recruiters, recruitersLoading, recruitersError } = useSelector((state) => state.admin);
     const [searchQuery, setSearchQuery] = useState('');
+    const [expandedRecruiter, setExpandedRecruiter] = useState(null);
+
+    const toggleRecruiter = (id) => {
+        setExpandedRecruiter(prev => prev === id ? null : id);
+    };
+
+    const formatJobDate = (dateStr) => {
+        if (!dateStr || dateStr === 'N/A') return 'N/A';
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    };
 
     useEffect(() => {
         dispatch(fetchRecruitersData());
@@ -80,31 +92,66 @@ const AdminRecruiters = () => {
                                         <th>Recruiter</th>
                                         <th>Email</th>
                                         <th>Role</th>
+                                        <th>Company</th>
                                         <th>Recruitments</th>
                                         <th>Joined Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredRecruiters.map((recruiter) => (
-                                        <tr key={recruiter.id}>
-                                            <td>
-                                                <div className="user-info">
-                                                    <div className="user-avatar bg-success">{getInitials(recruiter.name)}</div>
-                                                    <div className="user-details">
-                                                        <div className="user-name">{recruiter.name}</div>
-                                                        <div className="user-email">{recruiter.company}</div>
+                                        <React.Fragment key={recruiter.id}>
+                                            <tr
+                                                className={`recruiter-row${expandedRecruiter === recruiter.id ? ' recruiter-row-active' : ''}`}
+                                                onClick={() => toggleRecruiter(recruiter.id)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <td>
+                                                    <div className="user-info">
+                                                        <div className="user-avatar bg-success">{getInitials(recruiter.name)}</div>
+                                                        <div className="user-details">
+                                                            <div className="user-name">{recruiter.name}</div>
+                                                            <div className="user-email">{recruiter.email}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td>{recruiter.email}</td>
-                                            <td><span className="badge badge-primary">{recruiter.role}</span></td>
-                                            <td>{recruiter.recruitmentCount || 0}</td>
-                                            <td>{formatDate(recruiter.joinedDate)}</td>
-                                        </tr>
+                                                </td>
+                                                <td>{recruiter.email}</td>
+                                                <td><span className="badge badge-primary">{recruiter.role}</span></td>
+                                                <td>{recruiter.company || '—'}</td>
+                                                <td>{recruiter.recruitmentCount || 0}</td>
+                                                <td>{formatDate(recruiter.joinedDate)}</td>
+                                            </tr>
+                                            {expandedRecruiter === recruiter.id && (
+                                                <tr className="recruiter-expand-row">
+                                                    <td colSpan="6">
+                                                        <div className="recruiter-expand-body">
+                                                            {(() => {
+                                                                const hired = (recruiter.hiredJobs || []).filter(j => j.type === 'hired');
+                                                                return hired.length > 0 ? (
+                                                                    <>
+                                                                        <div className="expand-label">Hired Members</div>
+                                                                        <div className="hired-jobs-list">
+                                                                            {hired.map((job, idx) => (
+                                                                                <div key={idx} className="hired-job-item">
+                                                                                    <span className="hired-person-name"><i className="fas fa-user-check"></i> {job.personName || '—'}</span>
+                                                                                    <span className="hired-role-title">{job.title}</span>
+                                                                                    <span className="hired-job-date"><i className="fas fa-calendar-alt"></i> {formatJobDate(job.date)}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="no-jobs-msg">No one hired yet.</div>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
                                     ))}
                                     {filteredRecruiters.length === 0 && (
                                         <tr>
-                                            <td colSpan="5" className="no-data">No recruiters found</td>
+                                            <td colSpan="6" className="no-data">No recruiters found</td>
                                         </tr>
                                     )}
                                 </tbody>

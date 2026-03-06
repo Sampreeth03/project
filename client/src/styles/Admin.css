@@ -1111,3 +1111,230 @@
         margin-bottom: 5px;
     }
 }
+
+/* Clickable stat cards (AdminProjects) */
+.stat-card-btn {
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+    border: 2px solid transparent;
+}
+
+.stat-card-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+.stat-card-active {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
+}
+
+.stat-card-active-success {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important;
+}
+
+.stat-card-active-warning {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.18) !important;
+}
+
+.stat-card-active-danger {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.18) !important;
+}
+
+/* ── Members Popover (AdminProjects) ─────────────────────────── */
+.members-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.members-trigger:hover {
+    color: var(--primary);
+}
+
+.members-popover {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    min-width: 210px;
+    background: #1e2130;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 12px;
+    z-index: 200;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    animation: popoverIn 0.15s ease;
+}
+
+@keyframes popoverIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 13px;
+    color: #c9d1d9;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.member-item:last-child {
+    border-bottom: none;
+}
+
+.member-item i {
+    width: 14px;
+    text-align: center;
+    color: var(--gray-text);
+}
+
+.member-lead i {
+    color: #f0a500;
+}
+
+.member-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Popover section labels */
+.popover-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-text);
+    padding: 4px 0 3px 0;
+    margin-top: 2px;
+}
+
+.popover-section-label.popover-section-members {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Recruiter Row Expand (AdminRecruiters) ──────────────────── */
+.recruiter-row {
+    transition: background 0.2s;
+}
+
+.recruiter-row:hover,
+.recruiter-row-active {
+    background: rgba(99, 102, 241, 0.08) !important;
+}
+
+.recruiter-expand-row td {
+    padding: 0 !important;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.25);
+}
+
+.recruiter-expand-body {
+    padding: 14px 20px 16px 56px;
+    background: rgba(30, 33, 48, 0.7);
+    animation: expandIn 0.2s ease;
+}
+
+@keyframes expandIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.expand-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-text);
+    margin-bottom: 8px;
+}
+
+.hired-jobs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hired-job-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.hired-person-name {
+    min-width: 110px;
+    color: #e2e8f0;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.hired-person-name i {
+    margin-right: 6px;
+    color: #6ee7b7;
+}
+
+.hired-role-title {
+    flex: 1;
+    color: #a5b4fc;
+    font-size: 13px;
+}
+
+.hired-job-date {
+    color: var(--gray-text);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.hired-job-date i {
+    margin-right: 4px;
+    color: #6ee7b7;
+}
+
+.no-jobs-msg {
+    color: var(--gray-text);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.hired-job-person {
+    color: #a5b4fc;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.hired-job-person i {
+    margin-right: 4px;
+}
+
+.hired-type-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.hired-type-tag.hired {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.hired-type-tag.posting {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
