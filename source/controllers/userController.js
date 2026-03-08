@@ -501,8 +501,9 @@ exports.searchUsers = async (req, res) => {
         const regex = new RegExp(q, 'i');
         const users = await User.find({
             $or: [ { name: regex }, { email: regex } ],
-            _id: { $ne: req.user.id }
-        }).select('name email profileImageUrl').limit(20).lean();
+            _id: { $ne: req.user.id },
+            role: 'user'
+        }).select('name email profileImageUrl role').limit(20).lean();
 
         // Enrich with friend request status
         const FriendRequest = require('../database').FriendRequest;
@@ -562,8 +563,11 @@ exports.getFriendRequests = async (req, res) => {
     if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     try {
         const FriendRequest = require('../database').FriendRequest;
-        const requests = await FriendRequest.find({ to_user: req.user.id, status: 'pending' }).populate('from_user', 'name email').lean();
-        res.json({ requests });
+        const requests = await FriendRequest.find({ to_user: req.user.id, status: 'pending' })
+            .populate('from_user', 'name email role')
+            .lean();
+        const userOnlyRequests = requests.filter(r => r?.from_user?.role === 'user');
+        res.json({ requests: userOnlyRequests });
     } catch (err) {
         console.error('Get friend requests error:', err.message);
         res.status(500).json({ success: false, message: 'Server error' });
@@ -603,7 +607,7 @@ exports.getFriends = async (req, res) => {
         const FriendRequest = require('../database').FriendRequest;
         const rels = await FriendRequest.find({ $or: [ { from_user: req.user.id }, { to_user: req.user.id } ], status: 'accepted' }).lean();
         const friendIds = rels.map(r => (String(r.from_user) === req.user.id ? r.to_user : r.from_user));
-        const friends = await User.find({ _id: { $in: friendIds } }).select('name email profileImageUrl').lean();
+        const friends = await User.find({ _id: { $in: friendIds }, role: 'user' }).select('name email profileImageUrl role').lean();
         res.json({ friends });
     } catch (err) {
         console.error('Get friends error:', err.message);

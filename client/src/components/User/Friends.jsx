@@ -13,6 +13,16 @@ const Friends = () => {
   const [error, setError] = useState(null);
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
 
+  const isUserRole = (entry) => {
+    if (!entry) return false;
+    if (!entry.role) return true; // Backward compatibility for older records without role field
+    return String(entry.role).toLowerCase() === 'user';
+  };
+
+  const visibleResults = results.filter(isUserRole);
+  const visibleFriends = friends.filter(isUserRole);
+  const visibleIncoming = incoming.filter((r) => isUserRole(r?.from || r?.from_user));
+
   useEffect(() => {
     fetchFriends();
     fetchIncoming();
@@ -119,9 +129,9 @@ const Friends = () => {
 
           {loading && <div className="friends-loading">Searching...</div>}
 
-          {results.length > 0 && (
+          {visibleResults.length > 0 && (
             <div>
-              {results.map(u => (
+              {visibleResults.map(u => (
                 <div key={u._id} className="friends-user-card">
                   <div className="friends-user-info">
                     <div className="friends-avatar">{(u.name || 'U').charAt(0)}</div>
@@ -152,11 +162,11 @@ const Friends = () => {
           {/* Incoming Requests */}
           <div className="friends-section-header">
             <span className="friends-section-title">Incoming Requests</span>
-            {incoming.length > 0 && <span className="friends-section-count">{incoming.length}</span>}
+            {visibleIncoming.length > 0 && <span className="friends-section-count">{visibleIncoming.length}</span>}
           </div>
-          {incoming.length === 0
+          {visibleIncoming.length === 0
             ? <div className="friends-empty"><i className="fas fa-inbox"></i> No incoming requests</div>
-            : incoming.map(r => {
+            : visibleIncoming.map(r => {
                 const from = r.from || r.from_user || {};
                 return (
                   <div key={r._id} className="friends-user-card">
@@ -182,11 +192,11 @@ const Friends = () => {
           {/* Your Friends */}
           <div className="friends-section-header">
             <span className="friends-section-title">Your Friends</span>
-            {friends.length > 0 && <span className="friends-section-count">{friends.length}</span>}
+            {visibleFriends.length > 0 && <span className="friends-section-count">{visibleFriends.length}</span>}
           </div>
-          {friends.length === 0
+          {visibleFriends.length === 0
             ? <div className="friends-empty"><i className="fas fa-user-friends"></i> No friends yet</div>
-            : friends.map(f => (
+            : visibleFriends.map(f => (
                 <div key={f._id} className="friends-user-card">
                   <div className="friends-user-info">
                     <div className="friends-avatar">{(f.name || 'U').charAt(0)}</div>
