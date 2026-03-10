@@ -108,6 +108,7 @@ const ProjectDetails = () => {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewAction, setReviewAction] = useState({ taskId: null, action: null });
     const [pendingTasksCount, setPendingTasksCount] = useState(0);
+    const [finishEligibility, setFinishEligibility] = useState({ eligible: true, reasons: [], rules: null });
 
     // Invite friends state
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -132,6 +133,7 @@ const ProjectDetails = () => {
                     
                     const pendingCheck = await axios.get(`/api/project/${projectId}/pending-tasks`);
                     setPendingTasksCount(pendingCheck.data.pendingTasks || 0);
+                    setFinishEligibility(pendingCheck.data.finishEligibility || { eligible: true, reasons: [], rules: null });
                     
                 } else {
                     setError(response.data.error || "Project not found.");
@@ -223,11 +225,10 @@ const ProjectDetails = () => {
                         {/* Group Chat Button - Available for all members */}
                         {(isCreator || project.hasJoined || project.request_status === 'approved') && (
                             <button 
-                                className="btn btn-primary" 
+                                className="btn btn-primary project-action-btn group-chat-btn" 
                                 onClick={() => window.location.href = `/group-chat/${projectId}`}
-                                style={{ marginRight: '10px' }}
                             >
-                                💬 Group Chat
+                                Group Chat
                                 {unreadCount > 0 && (
                                     <span className="unread-badge">
                                         {unreadCount > 99 ? '99+' : unreadCount}
@@ -239,10 +240,10 @@ const ProjectDetails = () => {
                         {/* Finish Project Button (Restored) */}
                         {isCreator && project.status !== 'completed' && (
                             <>
-                                <button className="finish-project-btn" onClick={() => setIsFinishModalOpen(true)}>
+                                <button className="finish-project-btn project-action-btn" onClick={() => setIsFinishModalOpen(true)}>
                                     Finish Project
                                 </button>
-                                <button className="invite-friends-btn" style={{ marginLeft: '8px' }} onClick={async () => {
+                                <button className="invite-friends-btn project-action-btn" onClick={async () => {
                                     setIsInviteModalOpen(true);
                                     try {
                                         const res = await axios.get('/api/friends');
@@ -358,12 +359,39 @@ const ProjectDetails = () => {
                     <p>Are you sure you want to mark this project as completed?</p>
                     {pendingTasksCount > 0 && (
                         <div id="pendingTasksWarning" style={{ color: '#FFC107', marginTop: '12px' }}>
-                            <strong>Warning:</strong> There are still {pendingTasksCount} pending tasks. Finishing will mark all tasks as completed.
+                            <strong>Warning:</strong> There are still {pendingTasksCount} non-completed tasks.
                         </div>
                     )}
+
+                    {finishEligibility?.rules && (
+                        <div style={{ marginTop: '12px', color: '#d0d0d0', fontSize: '14px' }}>
+                            <div>Total Tasks: {finishEligibility.rules.totalTasks}</div>
+                            <div>Completed Tasks: {finishEligibility.rules.completedTasks}</div>
+                            <div>Assigned Members: {finishEligibility.rules.assignedMemberCount}</div>
+                            <div>Halfway Rule: {finishEligibility.rules.isHalfwayReached ? 'Reached' : 'Not reached'}</div>
+                        </div>
+                    )}
+
+                    {!finishEligibility?.eligible && finishEligibility?.reasons?.length > 0 && (
+                        <div style={{ marginTop: '12px', color: '#ff9f9f' }}>
+                            <strong>Cannot finish yet:</strong>
+                            <ul style={{ marginTop: '8px', marginLeft: '18px' }}>
+                                {finishEligibility.reasons.map((reason, index) => (
+                                    <li key={index}>{reason}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     <div className="modal-buttons">
                         <button className="cancel-btn" onClick={() => setIsFinishModalOpen(false)}>Cancel</button>
-                        <button className="confirm-btn" onClick={() => { setIsFinishModalOpen(false); confirmFinishProject(); }}>Confirm</button>
+                        <button
+                            className="confirm-btn"
+                            disabled={!finishEligibility?.eligible}
+                            onClick={() => { setIsFinishModalOpen(false); confirmFinishProject(); }}
+                        >
+                            Confirm
+                        </button>
                     </div>
                 </div>
             </div>

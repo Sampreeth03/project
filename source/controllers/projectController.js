@@ -709,15 +709,101 @@ exports.createTask = async (req, res, next) => {
     }
 };
 
+const MIN_TASKS_FOR_COMPLETION = 3;
+const MIN_ASSIGNEES_FOR_COMPLETION = 2;
+
+const toDateLabel = (d) =>
+    new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+const getFinishEligibility = (project, tasks) => {
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t) => t.status === 'Completed').length;
+    const nonCompletedTasks = totalTasks - completedTasks;
+    const uniqueAssignees = new Set(
+        tasks
+            .filter((t) => t.assigned_to)
+            .map((t) => String(t.assigned_to))
+    );
+    const assignedMemberCount = uniqueAssignees.size;
+
+    const startDate = project.createdAt || project.created_at;
+    const deadlineDate = project.deadline;
+    let halfwayDate = null;
+    let isHalfwayReached = true;
+
+    if (startDate && deadlineDate) {
+        const startMs = new Date(startDate).getTime();
+        const endMs = new Date(deadlineDate).getTime();
+        if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
+            halfwayDate = new Date(startMs + (endMs - startMs) / 2);
+            isHalfwayReached = Date.now() >= halfwayDate.getTime();
+        } else {
+            isHalfwayReached = false;
+        }
+    } else {
+        isHalfwayReached = false;
+    }
+
+    const reasons = [];
+
+    if (totalTasks === 0) {
+        reasons.push('Add tasks before finishing the project.');
+    }
+    if (totalTasks < MIN_TASKS_FOR_COMPLETION) {
+        reasons.push(`Project needs at least ${MIN_TASKS_FOR_COMPLETION} tasks to be completed.`);
+    }
+    if (completedTasks < MIN_TASKS_FOR_COMPLETION) {
+        reasons.push(`At least ${MIN_TASKS_FOR_COMPLETION} completed tasks are required before finishing.`);
+    }
+    if (nonCompletedTasks > 0) {
+        reasons.push('All tasks must be in Completed status before finishing the project.');
+    }
+    if (assignedMemberCount < MIN_ASSIGNEES_FOR_COMPLETION) {
+        reasons.push(`At least ${MIN_ASSIGNEES_FOR_COMPLETION} different members must be assigned tasks.`);
+    }
+    if (!isHalfwayReached) {
+        if (halfwayDate) {
+            reasons.push(`Project can be finished only after halfway point: ${toDateLabel(halfwayDate)}.`);
+        } else {
+            reasons.push('Project timeline is invalid for completion check. Please verify created date and deadline.');
+        }
+    }
+
+    return {
+        eligible: reasons.length === 0,
+        rules: {
+            minTasksRequired: MIN_TASKS_FOR_COMPLETION,
+            minAssigneesRequired: MIN_ASSIGNEES_FOR_COMPLETION,
+            totalTasks,
+            completedTasks,
+            nonCompletedTasks,
+            assignedMemberCount,
+            isHalfwayReached,
+            halfwayDate,
+            deadline: deadlineDate || null,
+        },
+        reasons,
+    };
+};
+
 exports.getPendingTasks = async (req, res, next) => {
     try {
         const projectId = req.params.id;
+        const project = await Project.findById(projectId).select('createdAt deadline').lean();
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        const tasks = await Task.find({ project_id: projectId }).select('status assigned_to').lean();
+        const eligibility = getFinishEligibility(project, tasks);
+
         // Exclude both Completed and Rejected tasks from pending count
-        const pendingTasks = await Task.countDocuments({ 
-            project_id: projectId, 
-            status: { $nin: ['Completed', 'Rejected'] } 
+        const pendingTasks = tasks.filter((t) => t.status !== 'Completed').length;
+        res.json({
+            success: true,
+            pendingTasks,
+            finishEligibility: eligibility,
         });
-        res.json({ pendingTasks });
     } catch (err) {
         return forwardError(next, err, 'Server error');
     }
@@ -839,17 +925,21 @@ exports.finishProject = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Project is already completed' });
         }
 
+        const tasks = await Task.find({ project_id: projectId }).select('status assigned_to').lean();
+        const eligibility = getFinishEligibility(project, tasks);
+        if (!eligibility.eligible) {
+            return res.status(400).json({
+                success: false,
+                message: eligibility.reasons[0] || 'Project is not eligible for completion yet.',
+                finishEligibility: eligibility,
+            });
+        }
+
         // Update project status and set completion timestamp
         await Project.findByIdAndUpdate(projectId, { 
             status: 'completed',
             completedAt: new Date()
         });
-        
-        // Mark all non-completed tasks as completed (but don't count rejected tasks)
-        await Task.updateMany(
-            { project_id: projectId, status: { $nin: ['Completed'] } }, 
-            { status: 'Completed' }
-        );
 
         // Get all project members and update their metrics
         const projectMembers = await ProjectMember.find({ project_id: projectId }).select('user_id');

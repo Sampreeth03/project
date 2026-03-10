@@ -43,13 +43,6 @@ const useProjectActions = (projectId) => {
     const handleFinishProject = async () => {
         setIsFinishing(true);
         try {
-            // Step 1: Check for pending tasks
-            const pendingCheck = await axios.get(`/api/project/${projectId}/pending-tasks`);
-            const pendingTasks = pendingCheck.data.pendingTasks;
-            
-            // Step 2: Show confirmation/warning modal (logic handled in JSX)
-            
-            // Step 3: API call to finalize
             const finishResponse = await axios.post(`/api/project/${projectId}/finish`);
 
             if (finishResponse.data.success) {
@@ -62,7 +55,8 @@ const useProjectActions = (projectId) => {
             }
 
         } catch (err) {
-            showNotification('Error finishing project: Network error', 'error');
+            const backendMessage = err?.response?.data?.message || err?.response?.data?.error;
+            showNotification(backendMessage || 'Error finishing project: Network error', 'error');
             return false;
         } finally {
             setIsFinishing(false);
