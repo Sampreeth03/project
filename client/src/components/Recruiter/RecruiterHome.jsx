@@ -28,8 +28,6 @@ const RecruiterHome = () => {
         <div className="rh-root">
             {/* Blueprint grid background */}
             <div className="rh-grid-bg" />
-            {/* Cursor ghost dot */}
-            <div className="rh-cursor-ghost" style={{ left: mousePos.x, top: mousePos.y }} />
 
             <RecruiterNavbar />
 
