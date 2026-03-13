@@ -169,6 +169,126 @@ exports.getRecruiterDashboard = async (req, res) => {
 };
 
 // =========================================================================
+// 3b. Recruiter Dashboard Trends (GET /recruiter-dashboard-trends)
+// =========================================================================
+exports.getRecruiterDashboardTrends = async (req, res) => {
+    const recruiterId = req.user.id;
+    const recruiterObjId = new mongoose.Types.ObjectId(recruiterId);
+
+    try {
+        const now = new Date();
+        const twelveWeeksAgo = new Date(now);
+        twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
+
+        // Build 12 weekly buckets
+        const weeks = [];
+        for (let i = 11; i >= 0; i--) {
+            const end = new Date(now);
+            end.setHours(23, 59, 59, 999);
+            end.setDate(end.getDate() - i * 7);
+            const start = new Date(end);
+            start.setDate(start.getDate() - 6);
+            start.setHours(0, 0, 0, 0);
+            weeks.push({ label: `${start.getMonth() + 1}/${start.getDate()}`, start, end: new Date(end.getTime() + 1) });
+        }
+        const inWeek = (date, w) => date >= w.start && date < w.end;
+
+        // All applications for this recruiter
+        const allApps = await JobApplication.find({ posted_by: recruiterId, user_id: { $ne: null } }).lean();
+        const recentApps = allApps.filter(a => a.createdAt >= twelveWeeksAgo);
+
+        // All job postings (template docs with user_id = null)
+        const allJobs = await JobApplication.find({ posted_by: recruiterId, user_id: null }).lean();
+        const recentJobs = allJobs.filter(j => j.createdAt >= twelveWeeksAgo);
+
+        // 1. Application Inflow Trend (line chart)
+        const applicationInflow = weeks.map(w => ({
+            label: w.label,
+            count: recentApps.filter(a => inWeek(a.createdAt, w)).length
+        }));
+
+        // 2. Hiring Pipeline (stacked bar: pending/approved/rejected per week)
+        const hiringPipeline = weeks.map(w => {
+            const wa = recentApps.filter(a => inWeek(a.createdAt, w));
+            return {
+                label: w.label,
+                pending: wa.filter(a => a.status === 'Pending' || a.status === 'Waiting').length,
+                approved: wa.filter(a => a.status === 'Approved').length,
+                rejected: wa.filter(a => a.status === 'Rejected').length
+            };
+        });
+
+        // 3. Job Posting Activity (line chart)
+        const jobPostingActivity = weeks.map(w => ({
+            label: w.label,
+            count: recentJobs.filter(j => inWeek(j.createdAt, w)).length
+        }));
+
+        // 4. Hiring Success Rate Trend (cumulative % per week)
+        let cumApproved = allApps.filter(a => a.createdAt < twelveWeeksAgo && a.status === 'Approved').length;
+        let cumTotal = allApps.filter(a => a.createdAt < twelveWeeksAgo).length;
+        const successRateTrend = weeks.map(w => {
+            const wa = recentApps.filter(a => inWeek(a.createdAt, w));
+            cumTotal += wa.length;
+            cumApproved += wa.filter(a => a.status === 'Approved').length;
+            return {
+                label: w.label,
+                rate: cumTotal > 0 ? Math.round((cumApproved / cumTotal) * 100) : 0
+            };
+        });
+
+        // 5. Top Jobs Comparison (horizontal bar data)
+        const jobMap = {};
+        allApps.forEach(a => {
+            const t = a.job_title || 'Unknown';
+            if (!jobMap[t]) jobMap[t] = { title: t, total: 0, approved: 0, pending: 0, rejected: 0 };
+            jobMap[t].total++;
+            if (a.status === 'Approved') jobMap[t].approved++;
+            else if (a.status === 'Rejected') jobMap[t].rejected++;
+            else jobMap[t].pending++;
+        });
+        const topJobs = Object.values(jobMap).sort((a, b) => b.total - a.total).slice(0, 8);
+
+        // 6. Activity Heatmap (91 days)
+        const d91 = new Date(now);
+        d91.setDate(d91.getDate() - 91);
+        d91.setHours(0, 0, 0, 0);
+
+        const dayMap = {};
+        for (let i = 0; i < 91; i++) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            dayMap[d.toISOString().slice(0, 10)] = 0;
+        }
+        const addDay = (dt) => {
+            if (!dt) return;
+            const k = new Date(dt).toISOString().slice(0, 10);
+            if (k in dayMap) dayMap[k]++;
+        };
+
+        // Count: apps received, jobs posted, notifications created
+        allApps.forEach(a => addDay(a.createdAt));
+        allJobs.forEach(j => addDay(j.createdAt));
+        const recruiterNotifs = await Notification.find({ user_id: recruiterObjId, createdAt: { $gte: d91 } }).select('createdAt').lean();
+        recruiterNotifs.forEach(n => addDay(n.createdAt));
+
+        const maxAct = Math.max(...Object.values(dayMap), 1);
+        const activityHeatmap = Object.entries(dayMap)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([date, count]) => ({
+                date,
+                count,
+                level: count === 0 ? 0 : Math.min(Math.ceil((count / maxAct) * 4), 4)
+            }));
+
+        res.json({ applicationInflow, hiringPipeline, jobPostingActivity, successRateTrend, topJobs, activityHeatmap });
+    } catch (err) {
+        console.error('Error fetching recruiter dashboard trends:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// =========================================================================
 // 4. Recruiter Applications Page (GET /rec-app)
 // =========================================================================
 exports.getRecruiterApplications = async (req, res) => {

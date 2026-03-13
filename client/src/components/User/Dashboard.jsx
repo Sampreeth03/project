@@ -4,42 +4,38 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext.jsx';
 import NavBar from './NavBar.jsx';
 import UserFooter from './UserFooter.jsx';
+import { LineChart, DualLineChart, StackedBarChart, Heatmap } from './TrendCharts.jsx';
 import '../../styles/Dashboard.css';
 
 const Dashboard = () => {
     const { user: currentUser } = useAuth();
     const [dashboardData, setDashboardData] = useState(null);
+    const [trendData, setTrendData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        fetchDashboardMetrics();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
-    const fetchDashboardMetrics = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get('/api/dashboard-metrics');
-            
-            if (response.data) {
-                setDashboardData(response.data);
-            } else {
-                setError('Failed to load dashboard data');
-            }
+            const [metricsRes, trendsRes] = await Promise.all([
+                axios.get('/api/dashboard-metrics'),
+                axios.get('/api/dashboard-trends')
+            ]);
+            setDashboardData(metricsRes.data);
+            setTrendData(trendsRes.data);
         } catch (err) {
-            console.error('Error fetching dashboard metrics:', err);
-            setError(err.response?.data?.error || 'Failed to load dashboard. Please try again.');
+            console.error('Error fetching dashboard:', err);
+            setError(err.response?.data?.error || 'Failed to load dashboard.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Metric cards data based on API response
     const getMetricCards = () => {
         if (!dashboardData?.metrics) return [];
-        
         const m = dashboardData.metrics;
         return [
             { title: 'Total Collaborations', value: m.total_collaborations || 0 },
@@ -49,14 +45,9 @@ const Dashboard = () => {
             { title: 'Inquiries Initiated', value: m.inquiriesInitiated || 0 },
             { title: 'Job Applications', value: m.job_applications || 0 },
             { title: 'Projects as Member', value: m.projects_as_member || 0 },
-            { title: 'Solutions Provided', value: m.solutions_provided || 0 }
+            { title: 'Solutions Provided', value: m.solutions_provided || 0 },
         ];
     };
-
-    // Filter metrics based on search term
-    const filteredMetrics = getMetricCards().filter(metric => 
-        metric.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     // Format date for display
     const formatDate = (dateString) => {
@@ -79,15 +70,7 @@ const Dashboard = () => {
         return '?';
     };
 
-    // Get display name
-    const getDisplayName = () => {
-        return dashboardData?.username || currentUser?.name || 'User';
-    };
-
-    // Handle search input change
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-    };
+    const getDisplayName = () => dashboardData?.username || currentUser?.name || 'User';
 
     // Render loading state
     if (loading) {
@@ -113,7 +96,7 @@ const Dashboard = () => {
                 <div className="dashboard-main-content">
                     <div className="error-container">
                         <p>{error}</p>
-                        <button className="retry-button" onClick={fetchDashboardMetrics}>
+                        <button className="retry-button" onClick={fetchData}>
                             Try Again
                         </button>
                     </div>
@@ -127,6 +110,15 @@ const Dashboard = () => {
         <div className="dashboard-wrapper">
             <NavBar />
             
+            {/* Fixed top-right profile badge */}
+            <div className="user-profile-fixed">
+                <div className="profile-image">{getInitial()}</div>
+                <div className="profile-info">
+                    <div className="profile-name">{getDisplayName()}</div>
+                    <div className="profile-role">Student │ IIIT Sri City</div>
+                </div>
+            </div>
+
             <div className="dashboard-main-content">
                 {/* Dashboard Header */}
                 <div className="dashboard-header">
@@ -136,38 +128,90 @@ const Dashboard = () => {
                             Welcome back, {getDisplayName()}. Here's your current performance summary.
                         </p>
                     </div>
-                    <div className="user-profile">
-                        <div className="profile-image">{getInitial()}</div>
-                        <div className="profile-info">
-                            <div className="profile-name">{getDisplayName()}</div>
-                            <div className="profile-role">Student │ IIIT Sri City</div>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Search Box for Metrics */}
-                <input
-                    type="text"
-                    placeholder="Search metrics..."
-                    className="dashboard-search-box"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                />
+               
 
-                {/* Metrics Container */}
+                {/* ── Metric Cards ── */}
                 <div className="metrics-container">
-                    {filteredMetrics.length > 0 ? (
-                        filteredMetrics.map((metric, index) => (
-                            <div className="metric-card" key={index}>
-                                <div className="metric-title">{metric.title}</div>
-                                <div className="metric-value">{metric.value}</div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="no-data">
-                            <p>No metrics found matching "{searchTerm}"</p>
+                    {getMetricCards().map((metric, index) => (
+                        <div className="metric-card" key={index}>
+                            <div className="metric-value">{metric.value}</div>
+                            <div className="metric-title">{metric.title}</div>
                         </div>
-                    )}
+                    ))}
+                </div>
+
+                {/* ── Trend Charts ── */}
+                <div className="trends-section">
+                    {/* 1. Project Growth Trend */}
+                    <div className="trend-card">
+                        <div className="trend-header">
+                            <h3 className="trend-title">Project Growth Trend</h3>
+                            <span className="trend-subtitle">Members joining your projects per week</span>
+                        </div>
+                        <LineChart data={trendData?.memberGrowth} valueKey="count" color="#0066ee" id="gMG" />
+                    </div>
+
+                    {/* 2. Creation vs Participation */}
+                    <div className="trend-card">
+                        <div className="trend-header">
+                            <h3 className="trend-title">Creation vs Participation</h3>
+                            <div className="trend-legend">
+                                <span className="tl-item"><span className="tl-line" style={{ background: '#0066ee' }} />Created</span>
+                                <span className="tl-item"><span className="tl-line tl-dashed" style={{ background: '#a855f7' }} />Joined</span>
+                            </div>
+                        </div>
+                        <DualLineChart data={trendData?.projectComparison} k1="created" k2="joined" c1="#0066ee" c2="#a855f7" l1="Created" l2="Joined" id="gPC" />
+                    </div>
+
+                    {/* 3. Task Progress Timeline */}
+                    <div className="trend-card">
+                        <div className="trend-header">
+                            <h3 className="trend-title">Task Progress Timeline</h3>
+                            <span className="trend-subtitle">Cumulative completed tasks</span>
+                        </div>
+                        <LineChart data={trendData?.taskProgress} valueKey="cumulative" color="#10b981" id="gTP" />
+                    </div>
+
+                    {/* 4. Community Contribution */}
+                    <div className="trend-card">
+                        <div className="trend-header">
+                            <h3 className="trend-title">Community Contribution</h3>
+                            <div className="trend-legend">
+                                <span className="tl-item"><span className="tl-line" style={{ background: '#f59e0b' }} />Doubts</span>
+                                <span className="tl-item"><span className="tl-line tl-dashed" style={{ background: '#06b6d4' }} />Replies</span>
+                            </div>
+                        </div>
+                        <DualLineChart data={trendData?.communityTrend} k1="doubts" k2="replies" c1="#f59e0b" c2="#06b6d4" l1="Doubts" l2="Replies" id="gCC" />
+                    </div>
+
+                    {/* 5. Job Application Activity */}
+                    <div className="trend-card">
+                        <div className="trend-header">
+                            <h3 className="trend-title">Job Application Activity</h3>
+                            <div className="trend-legend">
+                                <span className="tl-item"><span className="tl-dot" style={{ background: '#f59e0b' }} />Pending</span>
+                                <span className="tl-item"><span className="tl-dot" style={{ background: '#10b981' }} />Approved</span>
+                                <span className="tl-item"><span className="tl-dot" style={{ background: '#ef4444' }} />Rejected</span>
+                            </div>
+                        </div>
+                        <StackedBarChart
+                            data={trendData?.jobActivity}
+                            keys={['pending', 'approved', 'rejected']}
+                            colors={['#f59e0b', '#10b981', '#ef4444']}
+                            labels={['Pending', 'Approved', 'Rejected']}
+                        />
+                    </div>
+
+                    {/* 6. Activity Heatmap */}
+                    <div className="trend-card trend-card-wide">
+                        <div className="trend-header">
+                            <h3 className="trend-title">Activity Heatmap</h3>
+                            <span className="trend-subtitle">Last 13 weeks</span>
+                        </div>
+                        <Heatmap data={trendData?.activityHeatmap} />
+                    </div>
                 </div>
 
                 {/* Completed Projects Section */}

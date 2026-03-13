@@ -177,6 +177,20 @@ export const deleteNotification = createAsyncThunk(
     }
 );
 
+// Fetch Dashboard Trends
+export const fetchDashboardTrends = createAsyncThunk(
+    'recruiter/fetchDashboardTrends',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await fetch('/api/recruiter-dashboard-trends', { credentials: 'include' });
+            if (!response.ok) throw new Error('Failed to fetch trends');
+            return await response.json();
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 // Fetch User Profile for Recruiter
 export const fetchUserProfile = createAsyncThunk(
     'recruiter/fetchUserProfile',
@@ -227,6 +241,8 @@ const initialState = {
         rejectedApplications: 0,
         hiringSuccessRate: 0,
         topMostAppliedJob: { jobTitle: 'No applications yet', applicationCount: 0 },
+        trends: null,
+        trendsLoading: false,
         loading: false,
         error: null
     },
@@ -302,6 +318,18 @@ const recruiterSlice = createSlice({
             .addCase(fetchDashboard.rejected, (state, action) => {
                 state.dashboard.loading = false;
                 state.dashboard.error = action.payload;
+            })
+
+            // ============ Fetch Dashboard Trends ============
+            .addCase(fetchDashboardTrends.pending, (state) => {
+                state.dashboard.trendsLoading = true;
+            })
+            .addCase(fetchDashboardTrends.fulfilled, (state, action) => {
+                state.dashboard.trendsLoading = false;
+                state.dashboard.trends = action.payload;
+            })
+            .addCase(fetchDashboardTrends.rejected, (state) => {
+                state.dashboard.trendsLoading = false;
             })
 
             // ============ Fetch Applications ============

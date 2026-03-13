@@ -2,7 +2,7 @@
 
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const { User, UserMetrics, Project } = require("../database"); 
+const { User, UserMetrics, Project, ProjectMember, JobApplication, Task, Doubt, Reply, Message, DirectMessage } = require("../database");
 const { getNavLinks, getTimeAgo } = require("../services/helperService"); 
 const { upload } = require("../middleware/uploadMiddleware");
 const { signToken, COOKIE_NAME, COOKIE_OPTIONS } = require('../config/jwt');
@@ -133,7 +133,7 @@ exports.getDashboard = (req, res) => {
 };
 
 // =========================================================================
-// 3. Dashboard Metrics API (GET /api/dashboard-metrics) - NO CHANGE NEEDED
+// 3. Dashboard Metrics API (GET /api/dashboard-metrics)
 // =========================================================================
 exports.getDashboardMetrics = async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
@@ -150,14 +150,181 @@ exports.getDashboardMetrics = async (req, res) => {
 
         const completedProjects = await Project.find({ user_id: userId, status: 'completed' });
 
+        // --- Chart data ---
+        const topicNames = ['Web Development', 'Cyber Security', 'Robotics', 'Data Science', 'Deep Learning', 'Blockchain'];
+
+        // 1) Projects I created, grouped by topic
+        const myProjects = await Project.find({ user_id: userId }).lean();
+        const topicProjects = topicNames.map(t => ({
+            topic: t,
+            count: myProjects.filter(p => p.topic === t).length
+        }));
+
+        // 2) Projects I joined (as member) that I did NOT create, grouped by topic
+        const memberDocs = await ProjectMember.find({ user_id: userId }).lean();
+        const joinedProjectIds = memberDocs.map(m => m.project_id);
+        const joinedProjects = await Project.find({
+            _id: { $in: joinedProjectIds },
+            user_id: { $ne: userId }
+        }).lean();
+        const joinedByTopic = topicNames.map(t => ({
+            topic: t,
+            count: joinedProjects.filter(p => p.topic === t).length
+        }));
+
+        // 3) Job application stats (applied by me)
+        const myApps = await JobApplication.find({ user_id: userId }).lean();
+        const jobStats = {
+            total: myApps.length,
+            pending: myApps.filter(a => a.status === 'Pending' || a.status === 'Waiting').length,
+            approved: myApps.filter(a => a.status === 'Approved').length,
+            rejected: myApps.filter(a => a.status === 'Rejected').length
+        };
+
         res.json({
             username: user.name,
             metrics,
-            completedProjects
+            completedProjects,
+            topicProjects,
+            joinedByTopic,
+            jobStats
         });
 
     } catch (err) {
         console.error('Error fetching dashboard metrics:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// =========================================================================
+// 3b. Dashboard Trends API (GET /api/dashboard-trends)
+// =========================================================================
+exports.getDashboardTrends = async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user.id;
+    const userObjId = new mongoose.Types.ObjectId(userId);
+
+    try {
+        const now = new Date();
+        const twelveWeeksAgo = new Date(now);
+        twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
+
+        // Generate 12 weekly buckets
+        const weeks = [];
+        for (let i = 11; i >= 0; i--) {
+            const end = new Date(now);
+            end.setHours(23, 59, 59, 999);
+            end.setDate(end.getDate() - i * 7);
+            const start = new Date(end);
+            start.setDate(start.getDate() - 6);
+            start.setHours(0, 0, 0, 0);
+            weeks.push({ label: `${start.getMonth() + 1}/${start.getDate()}`, start, end: new Date(end.getTime() + 1) });
+        }
+
+        const inWeek = (date, w) => date >= w.start && date < w.end;
+
+        // 1. Project Growth — members joining user's projects
+        const userProjIds = (await Project.find({ user_id: userId }).select('_id').lean()).map(p => p._id);
+        const memberJoins = await ProjectMember.find({
+            project_id: { $in: userProjIds },
+            user_id: { $ne: userId },
+            joined_at: { $gte: twelveWeeksAgo }
+        }).lean();
+        const memberGrowth = weeks.map(w => ({
+            label: w.label,
+            count: memberJoins.filter(m => inWeek(m.joined_at, w)).length
+        }));
+
+        // 2. Creation vs Participation
+        const createdProjs = await Project.find({ user_id: userId, createdAt: { $gte: twelveWeeksAgo } }).lean();
+        const myMemberships = await ProjectMember.find({ user_id: userId, joined_at: { $gte: twelveWeeksAgo } }).lean();
+        const joinedNotMineIds = new Set(
+            (await Project.find({ _id: { $in: myMemberships.map(m => m.project_id) }, user_id: { $ne: userId } })
+                .select('_id').lean()).map(p => p._id.toString())
+        );
+        const projectComparison = weeks.map(w => ({
+            label: w.label,
+            created: createdProjs.filter(p => inWeek(p.createdAt, w)).length,
+            joined: myMemberships.filter(m => joinedNotMineIds.has(m.project_id.toString()) && inWeek(m.joined_at, w)).length
+        }));
+
+        // 3. Task Progress (cumulative)
+        const doneTasks = await Task.find({ assigned_to: userObjId, status: 'Completed' }).lean();
+        doneTasks.sort((a, b) => a._id.getTimestamp() - b._id.getTimestamp());
+        let prior = doneTasks.filter(t => t._id.getTimestamp() < twelveWeeksAgo).length;
+        const taskProgress = weeks.map(w => {
+            const c = doneTasks.filter(t => inWeek(t._id.getTimestamp(), w)).length;
+            prior += c;
+            return { label: w.label, cumulative: prior, count: c };
+        });
+
+        // 4. Community — doubts vs replies
+        const myDoubts = await Doubt.find({ user_id: userObjId, createdAt: { $gte: twelveWeeksAgo } }).lean();
+        const myReplies = await Reply.find({ user_id: userObjId, createdAt: { $gte: twelveWeeksAgo } }).lean();
+        const communityTrend = weeks.map(w => ({
+            label: w.label,
+            doubts: myDoubts.filter(d => inWeek(d.createdAt, w)).length,
+            replies: myReplies.filter(r => inWeek(r.createdAt, w)).length
+        }));
+
+        // 5. Job Application Activity
+        const myApps = await JobApplication.find({ user_id: userId, createdAt: { $gte: twelveWeeksAgo } }).lean();
+        const jobActivity = weeks.map(w => {
+            const wa = myApps.filter(a => inWeek(a.createdAt, w));
+            return {
+                label: w.label,
+                total: wa.length,
+                pending: wa.filter(a => a.status === 'Pending' || a.status === 'Waiting').length,
+                approved: wa.filter(a => a.status === 'Approved').length,
+                rejected: wa.filter(a => a.status === 'Rejected').length
+            };
+        });
+
+        // 6. Activity Heatmap (91 days)
+        const d91 = new Date(now);
+        d91.setDate(d91.getDate() - 91);
+        d91.setHours(0, 0, 0, 0);
+
+        const [msgs, dms, hmTasks, hmDoubts, hmReplies, hmMembers] = await Promise.all([
+            Message.find({ sender_id: userObjId, created_at: { $gte: d91 } }).select('created_at').lean(),
+            DirectMessage.find({ sender_id: userObjId, created_at: { $gte: d91 } }).select('created_at').lean(),
+            Task.find({ assigned_to: userObjId }).lean(),
+            Doubt.find({ user_id: userObjId, createdAt: { $gte: d91 } }).select('createdAt').lean(),
+            Reply.find({ user_id: userObjId, createdAt: { $gte: d91 } }).select('createdAt').lean(),
+            ProjectMember.find({ user_id: userId, joined_at: { $gte: d91 } }).select('joined_at').lean()
+        ]);
+
+        const dayMap = {};
+        for (let i = 0; i < 91; i++) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            dayMap[d.toISOString().slice(0, 10)] = 0;
+        }
+        const addDay = (dt) => {
+            if (!dt) return;
+            const k = new Date(dt).toISOString().slice(0, 10);
+            if (k in dayMap) dayMap[k]++;
+        };
+
+        msgs.forEach(m => addDay(m.created_at));
+        dms.forEach(m => addDay(m.created_at));
+        hmTasks.forEach(t => addDay(t._id.getTimestamp()));
+        hmDoubts.forEach(d => addDay(d.createdAt));
+        hmReplies.forEach(r => addDay(r.createdAt));
+        hmMembers.forEach(m => addDay(m.joined_at));
+
+        const maxAct = Math.max(...Object.values(dayMap), 1);
+        const activityHeatmap = Object.entries(dayMap)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([date, count]) => ({
+                date,
+                count,
+                level: count === 0 ? 0 : Math.min(Math.ceil((count / maxAct) * 4), 4)
+            }));
+
+        res.json({ memberGrowth, projectComparison, taskProgress, communityTrend, jobActivity, activityHeatmap });
+    } catch (err) {
+        console.error('Error fetching dashboard trends:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };

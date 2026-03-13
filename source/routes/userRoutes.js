@@ -23,6 +23,7 @@ router.get('/home/topics', userController.getHomeTopics);
 router.post('/complete-onboarding', isAuthenticatedAPI, userController.completeOnboarding);
 router.get('/dashboard', isAuthenticatedAPI, userController.getDashboard);
 router.get('/dashboard-metrics', isAuthenticatedAPI, userController.getDashboardMetrics); // CORRECTED Path (No /api)
+router.get('/dashboard-trends', isAuthenticatedAPI, userController.getDashboardTrends);
 
 // --- Profile Routes ---
 router.get('/profile', isAuthenticatedAPI, userController.getProfile); 
