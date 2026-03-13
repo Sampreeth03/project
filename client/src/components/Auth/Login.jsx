@@ -190,6 +190,14 @@ function Login() {
     return (
         <div className="login-container" id="login-container">
             <form className="login-form" onSubmit={handleSubmit}>
+                <button
+                    type="button"
+                    className="auth-back-btn"
+                    onClick={() => navigate('/')}
+                    aria-label="Back to landing page"
+                >
+                    Back
+                </button>
                 <h2>Login</h2>
                 
                 {serverError && <p className="error">{serverError}</p>}
@@ -222,7 +230,7 @@ function Login() {
                 </div>
                 
                 {/* Password Input Group */}
-                <div className="password-group" id="password-group"
+                 <div className="password-group no-label" id="password-group"
                      onMouseEnter={() => document.getElementById('password-group').classList.add('focused')}
                      onMouseLeave={() => document.getElementById('password-group').classList.remove('focused')}>
                     <input

@@ -128,6 +128,9 @@ input.input-error::placeholder {
 .password-group .toggle-password {
     top: calc(50% + 11px);
 }
+.password-group.no-label .toggle-password {
+    top: 50%;
+}
 
 /* --- CAPS LOCK WARNING (Login) --- */
 .caps-lock-warning {
@@ -305,4 +308,38 @@ input.input-error::placeholder {
     font-size: 24px;
     letter-spacing: 8px;
     font-weight: bold;
+}
+.auth-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: none;
+    border: none;
+    color: #c9d1d9;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 12px;
+    text-decoration: none;
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+.auth-back-btn::before {
+    content: "\2190";
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: opacity 0.2s ease, width 0.2s ease;
+}
+.auth-back-btn:hover {
+    color: #0068ff;
+    text-decoration: underline;
+}
+.auth-back-btn:hover::before {
+    opacity: 1;
+    width: 14px;
+}
+.auth-back-btn:focus-visible {
+    outline: none;
+    text-decoration: underline;
 }
