@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import RecruiterNavbar from './RecruiterNavbar';
 import { fetchJobs, createJob, deleteJob, toggleJobActive, clearJobsError, fetchDashboard } from '../../store/recruiterSlice';
-import '../../styles/Recruiter.css';
 
 const RecruiterJobs = () => {
     const dispatch = useDispatch();

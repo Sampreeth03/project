@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import RecruiterNavbar from './RecruiterNavbar';
 import { fetchNotifications, markNotificationRead, deleteNotification as deleteNotificationAction, clearNotificationsError } from '../../store/recruiterSlice';
-import '../../styles/Recruiter.css';
 
 const JOB_MGMT_TYPES = ['job_created', 'job_deleted', 'job_activated', 'job_deactivated'];
 

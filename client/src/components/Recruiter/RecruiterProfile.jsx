@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RecruiterNavbar from './RecruiterNavbar';
 import { useAuth } from '../../context/AuthContext';
-import '../../styles/Recruiter.css';
 
 const RecruiterProfile = () => {
     const { user } = useAuth();

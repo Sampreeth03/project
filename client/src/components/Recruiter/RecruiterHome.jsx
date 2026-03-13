@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import RecruiterNavbar from './RecruiterNavbar';
-import '../../styles/Recruiter.css';
 
 const RecruiterHome = () => {
     const [optionsVisible, setOptionsVisible] = useState(false);

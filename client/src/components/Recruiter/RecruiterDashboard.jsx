@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import RecruiterNavbar from './RecruiterNavbar';
 import { fetchDashboard, fetchDashboardTrends } from '../../store/recruiterSlice';
 import { LineChart, DualLineChart, StackedBarChart } from '../User/TrendCharts.jsx';
-import '../../styles/Recruiter.css';
 
 const RecruiterDashboard = () => {
     const dispatch = useDispatch();

@@ -6,7 +6,6 @@ import {
     fetchApplications, fetchJobs,
     updateApplicationStatus, clearApplicationsError, fetchDashboard
 } from '../../store/recruiterSlice';
-import '../../styles/Recruiter.css';
 
 /* ─── tiny animated counter ─────────────────────────── */
 function AnimatedCount({ value }) {
