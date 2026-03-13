@@ -44,10 +44,10 @@ const jobApplicationLimiter = rateLimit({
     },
 });
 
-// Project creation limiter: 5 per hour
+// Project creation limiter: 100 per hour (increased for development/testing)
 const projectCreationLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
-    max: 5,
+    max: 100,
     message: {
         success: false,
         error: 'Too many project creation requests. Please try again later.'

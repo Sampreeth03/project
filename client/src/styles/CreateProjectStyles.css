@@ -336,6 +336,76 @@
     background: rgba(255, 255, 255, 0.02);
 }
 
+.create-extension-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 16px;
+}
+
+.create-extension-modal {
+    width: 100%;
+    max-width: 460px;
+    background: var(--cp-form-bg);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.create-extension-title {
+    margin: 0;
+    color: var(--cp-blue-soft);
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.create-extension-subtitle {
+    margin: 10px 0 18px;
+    color: #bcbcbc;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.create-extension-form-group {
+    margin-bottom: 18px;
+}
+
+.create-extension-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.create-extension-cancel,
+.create-extension-pay {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.create-extension-cancel {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #dfdfdf;
+}
+
+.create-extension-pay {
+    background: var(--cp-blue);
+    color: var(--cp-white);
+}
+
+.create-extension-pay:hover {
+    background: var(--cp-blue-soft);
+}
+
 @media (max-width: 768px) {
     .create-project-page .project-form {
         padding: 20px;
@@ -348,5 +418,14 @@
     .create-project-page .create-project-meta {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .create-extension-actions {
+        flex-direction: column-reverse;
+    }
+
+    .create-extension-cancel,
+    .create-extension-pay {
+        width: 100%;
     }
 }

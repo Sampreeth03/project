@@ -12,16 +12,26 @@ const forwardError = (next, err, publicMessage, statusCode = 500) => {
     return next(err);
 };
 
+const isJoinClosedByDeadline = (project) => {
+    if (!project?.deadline) return false;
+    return new Date(project.deadline).getTime() <= Date.now();
+};
+
 // =========================================================================
 // 1. All Projects View (GET /project - Created & Available) - CONVERTED TO JSON
 // =========================================================================
 exports.getAllProjects = async (req, res, next) => {
     // Authentication handled by isAuthenticatedAPI middleware
-    const userId = req.user.id; 
+    const userId = req.user.id;
+    const now = new Date();
 
     try {
         // 1. Fetch Projects Created by User
-        const createdProjects = await Project.find({ user_id: userId }).lean();
+        const createdProjectsRaw = await Project.find({ user_id: userId }).lean();
+        const createdProjects = createdProjectsRaw.map((p) => ({
+            ...p,
+            isExpiredByDeadline: p.status !== 'completed' && new Date(p.deadline).getTime() <= now.getTime(),
+        }));
         
         // 2. Fetch Projects Available to Join (Complex Aggregation)
         const availableProjects = await Project.aggregate([
@@ -61,7 +71,8 @@ exports.getAllProjects = async (req, res, next) => {
             { $match: {
                 user_id: { $ne: new mongoose.Types.ObjectId(userId) },
                 is_member: false,
-                status: { $ne: 'completed' }
+                status: { $ne: 'completed' },
+                deadline: { $gt: now }
             } }
         ]);
         
@@ -84,6 +95,7 @@ exports.getAllProjects = async (req, res, next) => {
 // =========================================================================
 exports.getJoinedProjects = async (req, res, next) => {
     const userId = req.user.id;
+    const now = new Date();
 
     try {
         const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -93,13 +105,25 @@ exports.getJoinedProjects = async (req, res, next) => {
             { $lookup: { from: 'projectmembers', localField: '_id', foreignField: 'project_id', as: 'members' } },
             { $match: { $expr: { $and: [
                 { $in: [userObjectId, '$members.user_id'] },
-                { $ne: ['$user_id', userObjectId] }
+                { $ne: ['$user_id', userObjectId] },
+                {
+                    $or: [
+                        { $eq: ['$status', 'completed'] },
+                        { $gt: ['$deadline', now] }
+                    ]
+                }
             ] } } },
             { $addFields: { member_count: { $size: '$members' } } }
         ]);
 
         // 2. Pending Join Requests sent by this user
-        const pendingRequests = await JoinRequest.find({ user_id: userId, status: 'pending' }).populate('project_id').lean();
+        const pendingRequestsRaw = await JoinRequest.find({ user_id: userId, status: 'pending' }).populate('project_id').lean();
+        const pendingRequests = pendingRequestsRaw.filter((reqItem) => {
+            const p = reqItem.project_id;
+            if (!p) return false;
+            if (p.status === 'completed') return false;
+            return new Date(p.deadline).getTime() > now.getTime();
+        });
         
         // 3. Tasks assigned to this user across these projects
         const projectIds = projects.map(project => project._id);
@@ -208,6 +232,16 @@ exports.getProjectDetails = async (req, res, next) => {
         if (!projects || projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
 
         const project = projects[0];
+
+        const isCreator = project.user_id.toString() === userId;
+        const isExpiredByDeadline = project.status !== 'completed' && new Date(project.deadline).getTime() <= Date.now();
+        if (isExpiredByDeadline && !isCreator) {
+            return res.status(403).json({
+                success: false,
+                error: 'This project has crossed its deadline and is only visible to the creator.',
+            });
+        }
+
         const tasks = await Task.find({ project_id: projectId }).populate('assigned_to', 'name');
         const projectMembers = await ProjectMember.find({ project_id: projectId }).populate({ path: 'user_id', select: 'name email' }).lean();
         const userProjects = await Project.find({ user_id: userId }); 
@@ -232,6 +266,7 @@ exports.getProjectDetails = async (req, res, next) => {
 // =========================================================================
 exports.getTopicProjects = async (req, res, next) => {
     const userId = req.user.id;
+    const now = new Date();
     
     // NOTE: Requires parsing the topic path from the original URL
     const path = req.originalUrl.split('/api')[1];
@@ -242,7 +277,16 @@ exports.getTopicProjects = async (req, res, next) => {
 
     try {
         const projects = await Project.aggregate([
-            { $match: { topic: { $regex: `^${topic}$`, $options: 'i' } } },
+            {
+                $match: {
+                    topic: { $regex: `^${topic}$`, $options: 'i' },
+                    status: { $ne: 'completed' },
+                    $or: [
+                        { user_id: new mongoose.Types.ObjectId(userId) },
+                        { deadline: { $gt: now } }
+                    ]
+                }
+            },
             { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'creator' } },
             { $unwind: '$creator' },
             { $lookup: { from: 'projectmembers', localField: '_id', foreignField: 'project_id', as: 'members' } },
@@ -271,13 +315,36 @@ exports.getTopicProjects = async (req, res, next) => {
 exports.getCreateProjectView = async (req, res, next) => {
     // This endpoint now serves the list of created projects needed for the form's dashboard pane.
     const userId = req.user.id;
+    const now = new Date();
     
     try {
         const createdProjects = await Project.aggregate([
             { $match: { user_id: new mongoose.Types.ObjectId(userId) } },
             { $lookup: { from: 'projectmembers', localField: '_id', foreignField: 'project_id', as: 'members' } },
             { $addFields: { memberCount: { $size: '$members' } } },
-            { $project: { id: '$_id', title: 1, description: 1, capacity: 1, memberCount: 1, topic: 1, deadline: { $dateToString: { format: '%Y-%m-%d', date: '$deadline' } } } }
+            {
+                $addFields: {
+                    isExpiredByDeadline: {
+                        $and: [
+                            { $ne: ['$status', 'completed'] },
+                            { $lte: ['$deadline', now] }
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    id: '$_id',
+                    title: 1,
+                    description: 1,
+                    capacity: 1,
+                    memberCount: 1,
+                    topic: 1,
+                    status: 1,
+                    isExpiredByDeadline: 1,
+                    deadline: { $dateToString: { format: '%Y-%m-%d', date: '$deadline' } }
+                }
+            }
         ]);
 
         // Return JSON payload (SUCCESS)
@@ -299,8 +366,12 @@ exports.createProject = async (req, res, next) => {
     const { title, description, capacity, topic, deadline } = req.body;
     const userId = req.user.id;
     
-    const userProjectCount = await Project.countDocuments({ user_id: new mongoose.Types.ObjectId(userId) });
-    if (userProjectCount >= 6) {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const metrics = await UserMetrics.findOne({ user_id: userObjectId }).lean();
+    const fallbackCurrentProjects = await Project.countDocuments({ user_id: userObjectId });
+    const createdLifetime = Math.max(metrics?.projects_created_lifetime || 0, fallbackCurrentProjects);
+
+    if (createdLifetime >= 6) {
         // Payment required – frontend must go through /api/payment/create-order → /api/payment/verify
         return res.json({ requirePayment: true });
     }
@@ -313,11 +384,11 @@ exports.createProject = async (req, res, next) => {
 
     try {
         const project = await Project.create({
-            user_id: new mongoose.Types.ObjectId(userId), title, description, capacity,
+            user_id: userObjectId, title, description, capacity,
             topic: normalizedTopic, deadline, status: 'active', created_at: new Date()
         });
 
-        await ProjectMember.create({ project_id: project._id, user_id: new mongoose.Types.ObjectId(userId), joined_at: new Date() });
+        await ProjectMember.create({ project_id: project._id, user_id: userObjectId, joined_at: new Date() });
         
         // Create default channels for the project
         const defaultChannels = ['general', 'announcements'];
@@ -325,19 +396,19 @@ exports.createProject = async (req, res, next) => {
             await Channel.create({
                 project_id: project._id,
                 name: channelName,
-                created_by: new mongoose.Types.ObjectId(userId),
+                created_by: userObjectId,
                 created_at: new Date()
             });
         }
         
         await UserMetrics.findOneAndUpdate(
-            { user_id: new mongoose.Types.ObjectId(userId) },
-            { $inc: { active_projects: 1, total_collaborations: 1, leadership_roles: 1 } },
+            { user_id: userObjectId },
+            { $inc: { active_projects: 1, total_collaborations: 1, leadership_roles: 1, projects_created_lifetime: 1 } },
             { upsert: true }
         );
 
         await Notification.create({
-            user_id: new mongoose.Types.ObjectId(userId),
+            user_id: userObjectId,
             message: `Project "${title}" has been successfully created.`,
             type: 'project_creation'
         });
@@ -372,6 +443,9 @@ exports.joinProject = async (req, res, next) => {
         const project = await Project.findById(projectId);
         if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
         if (project.user_id.toString() === userId) return res.json({ success: false, message: 'You cannot join your own project' });
+        if (project.status === 'completed' || isJoinClosedByDeadline(project)) {
+            return res.json({ success: false, message: 'This project is no longer open for joining.' });
+        }
 
         const existingRequest = await JoinRequest.findOne({ project_id: projectObjectId, user_id: userObjectId });
         if (existingRequest) return res.json({ success: false, message: 'You have already requested to join this project' });
@@ -412,6 +486,9 @@ exports.approveJoinRequest = async (req, res, next) => {
         const project = joinRequest.project_id;
         if (project.user_id.toString() !== userId) return res.status(403).json({ success: false, message: 'Only the creator can approve' });
         if (joinRequest.status !== 'pending') return res.json({ success: false, message: 'Request already processed' });
+        if (project.status === 'completed' || isJoinClosedByDeadline(project)) {
+            return res.status(400).json({ success: false, message: 'Project deadline is over. New members cannot be approved.' });
+        }
 
         const memberCount = await ProjectMember.countDocuments({ project_id: project._id });
         if (memberCount >= project.capacity) return res.json({ success: false, message: 'Project is already at full capacity' });
@@ -552,6 +629,9 @@ exports.respondProjectInvite = async (req, res, next) => {
         await invite.save();
 
         if (action === 'accept') {
+            if (invite.project_id.status === 'completed' || isJoinClosedByDeadline(invite.project_id)) {
+                return res.json({ success: false, message: 'Project deadline is over. Invite can no longer be accepted.' });
+            }
             // Add as project member if capacity allows
             const memberCount = await ProjectMember.countDocuments({ project_id: invite.project_id._id });
             if (memberCount >= invite.project_id.capacity) {
@@ -666,7 +746,16 @@ exports.deleteProject = async (req, res, next) => {
             JoinRequest.deleteMany({ project_id: projectId })
         ]);
 
-        const updates = members.map(member => ProjectMember.findOneAndUpdate({ user_id: member.user_id }, { $inc: { active_projects: -1, projects_participated: -1, ...(member.user_id.toString() !== userId ? { projects_as_member: -1 } : {}) } }));
+        const updates = members.map((member) => UserMetrics.findOneAndUpdate(
+            { user_id: member.user_id },
+            {
+                $inc: {
+                    active_projects: -1,
+                    ...(member.user_id.toString() !== userId ? { projects_as_member: -1 } : {})
+                }
+            },
+            { upsert: true }
+        ));
         await Promise.all(updates);
 
         res.json({ success: true });

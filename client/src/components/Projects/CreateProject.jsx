@@ -14,6 +14,19 @@ const initialProjectData = {
     title: '', description: '', topic: '', capacity: 3, deadline: '', paid: false
 };
 
+const formatDateInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getTomorrowDateString = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatDateInput(tomorrow);
+};
+
 const CreateProject = () => {
     // --- STATE HOOKS ---
     const [isFormVisible, setIsFormVisible] = useState(false); // Hidden by default, toggled by button
@@ -44,7 +57,12 @@ const CreateProject = () => {
         };
     const [serverMessage, setServerMessage] = useState({ type: null, text: '' });
     const [isSaving, setIsSaving] = useState(false);
-    const [paymentModal, setPaymentModal] = useState(null); // { clientSecret, paymentIntentId, publishableKey }
+    const [paymentModal, setPaymentModal] = useState(null); // { clientSecret, paymentIntentId, publishableKey, paymentType, amount, title }
+    const [extensionPicker, setExtensionPicker] = useState({
+        isOpen: false,
+        project: null,
+        newDeadline: '',
+    });
     
     const { formData, validation, isFormValid, updateField, setFormDataDirectly, normalizedString } = useCreateProjectValidation(initialProjectData);
     
@@ -101,10 +119,15 @@ const CreateProject = () => {
     };
 
     // ── Stripe checkout helper ────────────────────────────────────────────────
-    const openStripeCheckout = async () => {
+    const openStripeCheckout = async (paymentPayload, paymentMeta = {}) => {
         setServerMessage({ type: null, text: '' });
         try {
-            const res = await axios.post('/api/payment/create-order', formData);
+            const res = await axios.post('/api/payment/create-order', paymentPayload, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
             if (!res.data.success) {
                 setServerMessage({ type: 'error', text: res.data.error || 'Could not create payment.' });
                 return;
@@ -113,10 +136,63 @@ const CreateProject = () => {
                 clientSecret:    res.data.clientSecret,
                 paymentIntentId: res.data.paymentIntentId,
                 publishableKey:  res.data.publishableKey,
+                mockMode: !!res.data.mockMode,
+                paymentType: paymentMeta.paymentType || res.data.paymentType,
+                amount: paymentMeta.amount || (res.data.amount ? Math.round(Number(res.data.amount) / 100) : 99),
+                title: paymentMeta.title || 'Complete Payment',
             });
-        } catch {
-            setServerMessage({ type: 'error', text: 'Network error while creating payment.' });
+        } catch (err) {
+            console.error('Payment creation error:', err);
+            const errorMsg = err?.response?.data?.error || 
+                           err?.message || 
+                           'Network error while creating payment. Make sure backend is running on localhost:5000';
+            setServerMessage({ type: 'error', text: errorMsg });
         }
+    };
+
+    const openExtendDeadlinePicker = (project) => {
+        setExtensionPicker({
+            isOpen: true,
+            project,
+            newDeadline: getTomorrowDateString(),
+        });
+    };
+
+    const closeExtendDeadlinePicker = () => {
+        setExtensionPicker({
+            isOpen: false,
+            project: null,
+            newDeadline: '',
+        });
+    };
+
+    const confirmExtendProjectDeadline = async () => {
+        if (!extensionPicker.project) return;
+
+        const { project, newDeadline } = extensionPicker;
+        const parsed = new Date(`${newDeadline}T00:00:00`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (!newDeadline || Number.isNaN(parsed.getTime()) || parsed.getTime() <= today.getTime()) {
+            setServerMessage({ type: 'error', text: 'Please select a future deadline date.' });
+            return;
+        }
+
+        closeExtendDeadlinePicker();
+
+        await openStripeCheckout(
+            {
+                paymentType: 'project_extension',
+                projectId: project.id,
+                newDeadline,
+            },
+            {
+                paymentType: 'project_extension',
+                amount: 49,
+                title: 'Pay Rs 49 to Extend Deadline',
+            }
+        );
     };
 
     // ── Primary submit handler ─────────────────────────────────────────────────
@@ -134,8 +210,12 @@ const CreateProject = () => {
             const result   = response.data;
 
             if (result.requirePayment) {
-                // Limit reached → open Stripe checkout modal
-                await openStripeCheckout();
+                // 7th+ lifetime project requires payment
+                await openStripeCheckout(formData, {
+                    paymentType: 'project_creation',
+                    amount: 99,
+                    title: 'Pay Rs 99 to Create Project',
+                });
                 return;
             }
 
@@ -234,6 +314,16 @@ const CreateProject = () => {
                                         >
                                             View Details
                                         </Link>
+                                        {project.isExpiredByDeadline && project.status !== 'completed' && (
+                                            <button
+                                                className="create-view-btn"
+                                                type="button"
+                                                onClick={() => openExtendDeadlinePicker(project)}
+                                                style={{ marginLeft: '8px' }}
+                                            >
+                                                Extend (Rs 49)
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -242,15 +332,53 @@ const CreateProject = () => {
                 </div>
             </div>
 
-            {/* Stripe Payment Modal — shown when 4th project requires payment */}
+            {/* Extend deadline calendar modal */}
+            {extensionPicker.isOpen && (
+                <div className="create-extension-overlay" onClick={closeExtendDeadlinePicker}>
+                    <div className="create-extension-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="create-extension-title">Choose New Deadline</h3>
+                        <p className="create-extension-subtitle">
+                            Select a future date to continue to payment and extend this project.
+                        </p>
+                        <div className="form-group create-extension-form-group">
+                            <label htmlFor="extension-deadline">New Deadline</label>
+                            <input
+                                id="extension-deadline"
+                                type="date"
+                                min={getTomorrowDateString()}
+                                value={extensionPicker.newDeadline}
+                                onChange={(e) => setExtensionPicker((prev) => ({ ...prev, newDeadline: e.target.value }))}
+                            />
+                        </div>
+                        <div className="create-extension-actions">
+                            <button type="button" className="create-extension-cancel" onClick={closeExtendDeadlinePicker}>
+                                Cancel
+                            </button>
+                            <button type="button" className="create-extension-pay" onClick={confirmExtendProjectDeadline}>
+                                Continue to Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Stripe Payment Modal */}
             {paymentModal && (
                 <StripePaymentModal
-                    clientSecret={paymentModal.clientSecret}
                     paymentIntentId={paymentModal.paymentIntentId}
+                    clientSecret={paymentModal.clientSecret}
                     publishableKey={paymentModal.publishableKey}
-                    onSuccess={() => {
+                    mockMode={paymentModal.mockMode}
+                    paymentType={paymentModal.paymentType}
+                    amount={paymentModal.amount}
+                    title={paymentModal.title}
+                    onSuccess={(result) => {
                         setPaymentModal(null);
-                        setServerMessage({ type: 'success', text: '✅ Payment successful! Project created.' });
+                        const successText =
+                            result?.purpose === 'project_extension'
+                                ? 'Payment successful! Project deadline extended.'
+                                : 'Payment successful! Project created.';
+                        setServerMessage({ type: 'success', text: successText });
                         localStorage.removeItem('projectFormDraft');
                         setTimeout(() => window.location.reload(), 1500);
                     }}

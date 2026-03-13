@@ -65,6 +65,8 @@ const userMetricsSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   total_collaborations: { type: Number, default: 0 },
   active_projects: { type: Number, default: 0 },
+  projects_created_lifetime: { type: Number, default: 0 },
+  project_deadline_extensions_paid: { type: Number, default: 0 },
   completed_tasks: { type: Number, default: 0 },
   leadership_roles: { type: Number, default: 0 },
   inquiriesInitiated: { type: Number, default: 0 },
@@ -169,7 +171,7 @@ const notificationSchema = new mongoose.Schema({
   task_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
   type: {
       type: String,
-  enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'join_request_rejected', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected', 'job_shortlisted'],
+     enum: ['task', 'project_creation', 'project_completion', 'join_request', 'join_request_approved', 'join_request_rejected', 'other', 'task_assignment', 'task_accepted', 'task_rejected', 'job_application', 'job_created', 'job_deleted', 'job_hired', 'job_rejected', 'job_shortlisted', 'job_activated', 'job_deactivated'],
       default: 'task'
   },
   is_read: { type: Boolean, default: false }

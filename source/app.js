@@ -1,4 +1,5 @@
 const express = require("express");
+const swaggerUi = require('swagger-ui-express');
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -24,6 +25,7 @@ const { globalLimiter, helmetConfig, corsOptions } = require("./middleware/secur
 const { morganMiddleware } = require("./middleware/loggingMiddleware");
 const { notFoundHandler, errorHandler } = require("./middleware/errorMiddleware");
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("./database"); 
+const { swaggerSpec } = require('./config/swagger');
 
 const app = express();
 
@@ -50,6 +52,9 @@ app.use("/uploads", express.static("uploads"));
 app.use(cookieParser());
 
 // Mount API routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
+
 app.use('/api', authRoutes); 
 app.use('/api', adminRoutes);
 app.use('/api', platformAdminRoutes);
