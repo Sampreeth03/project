@@ -7,7 +7,6 @@ import { useCreateProjectValidation } from '../../hooks/useCreateProjectValidati
 import Navbar from '../User/NavBar.jsx'; 
 
 import '../../styles/CreateProjectStyles.css'; // Contains all dedicated form styles
-import '../../styles/ProjectStyles.css'; // Contains the Project Card and Grid styles
 import ProjectForm from './ProjectForm';
 import StripePaymentModal from './StripePaymentModal';
 
@@ -168,7 +167,7 @@ const CreateProject = () => {
     return (
         <>
             <Navbar />
-            <div className="container main-content" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto' }}>
+            <div className="container main-content create-project-page" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto' }}>
                 
                 {serverMessage.text && (
                     <div className={serverMessage.type === 'error' ? 'error-message' : 'success-message'} style={{ color: serverMessage.type === 'error' ? 'var(--red)' : 'var(--success-color)' }}>
@@ -202,33 +201,40 @@ const CreateProject = () => {
                 </div>
             
                 {/* --- Existing Projects Section (LIST RENDERING RESTORED) --- */}
-                <div className="projects-section">
-                    <h2>Your Projects</h2>
-                    <div className="projects-container" id="projects-container">
+                <div className="create-projects-section">
+                    <h2 className="create-projects-title">Your Projects</h2>
+                    <div className="create-projects-grid" id="projects-container">
                         {existingProjects.length === 0 ? (
-                            <div className="no-projects">No projects available. Create a new project to get started!</div>
+                            <div className="create-no-projects">No projects available. Create a new project to get started!</div>
                         ) : (
                             // FINAL FIX: This loop renders the projects with the correct structure and grid styling
                             existingProjects.map(project => (
-                                <div key={project.id} className="project-card" data-id={project.id}>
-                                    <div className="project-content">
-                                        <div className="project-header">
-                                            <h3 className="project-title">{project.title}</h3>
-                                            <button
-                                                className="delete-btn"
-                                                title="Delete Project"
-                                                onClick={() => handleDeleteProject(project.id)}
-                                                disabled={deletingId === project.id}
-                                                style={deletingId === project.id ? { opacity: 0.5, pointerEvents: 'none' } : {}}
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                        <p className="project-description">{project.description}</p>
-                                        <div className="project-meta"><span>Posted by: YOU</span><span>Capacity: {project.memberCount}/{project.capacity}</span></div>
-                                        <div className="project-meta"><span>Deadline: {project.deadline}</span><span>Topic: {project.topic}</span></div>
+                                <div key={project.id} className="create-project-card" data-id={project.id}>
+                                    <div className="create-project-header">
+                                        <h3 className="create-project-title">{project.title}</h3>
+                                        <button
+                                            className="create-delete-btn"
+                                            title="Delete Project"
+                                            onClick={() => handleDeleteProject(project.id)}
+                                            disabled={deletingId === project.id}
+                                            style={deletingId === project.id ? { opacity: 0.5, pointerEvents: 'none' } : {}}
+                                        >
+                                            ×
+                                        </button>
                                     </div>
-                                    <Link to={`/project/${project.id}`} className="view-btn" style={{ textDecoration: 'none' }}>View Project</Link>
+                                    <p className="create-project-description">{project.description || <span style={{color:'#555', fontStyle:'italic'}}>No description provided.</span>}</p>
+                                    <div className="create-project-meta"><span>Posted by: YOU</span><span>Capacity: {project.memberCount}/{project.capacity}</span></div>
+                                    <div className="create-project-meta"><span>Deadline: {project.deadline}</span><span>Topic: {project.topic}</span></div>
+                                    <div className="create-project-footer">
+                                        <Link
+                                            to={`/project/${project.id}`}
+                                            className="create-view-btn"
+                                            title="View Details"
+                                            style={{ textDecoration: 'none' }}
+                                        >
+                                            View Details
+                                        </Link>
+                                    </div>
                                 </div>
                             ))
                         )}
