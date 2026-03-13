@@ -157,7 +157,6 @@ const StripePaymentForm = ({ clientSecret, paymentIntentId, amount, onProcessing
 
         setLoading(true);
         setError('');
-        onProcessing(true);
 
         try {
             // 1. Confirm the payment with Stripe using the card data
@@ -177,6 +176,7 @@ const StripePaymentForm = ({ clientSecret, paymentIntentId, amount, onProcessing
             }
 
             // 2. Payment succeeded on Stripe — now tell our backend to create the project / extend deadline
+            onProcessing(true);
             const verifyData = await verifyOnBackend();
             onSuccess(verifyData);
         } catch (err) {

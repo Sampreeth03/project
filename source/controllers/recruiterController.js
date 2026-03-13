@@ -500,11 +500,34 @@ exports.deleteRecruiterJob = async (req, res) => {
     const recruiterId = req.user.id;
 
     try {
-        const job = await JobApplication.findOne({ _id: jobId, posted_by: recruiterId }).lean();
-        const result = await JobApplication.deleteOne({ _id: jobId, posted_by: recruiterId });
-        if (result.deletedCount === 0) {
-            return res.status(404).json({ success: false, error: "Job not found or not authorized to delete" });
+        if (!mongoose.Types.ObjectId.isValid(jobId)) {
+            return res.status(400).json({ success: false, error: "Invalid job ID" });
         }
+
+        // Only allow deleting actual job postings (template docs), not applicant rows.
+        const job = await JobApplication.findOne({ _id: jobId, posted_by: recruiterId, user_id: null }).lean();
+        if (!job) {
+            return res.status(404).json({ success: false, error: "Job posting not found or not authorized to delete" });
+        }
+
+        // Cascade delete: remove the posting and all applications derived from this posting snapshot.
+        const relatedApplicationFilter = {
+            posted_by: recruiterId,
+            user_id: { $ne: null },
+            job_title: job.job_title,
+            company_name: job.company_name,
+            salary_range: job.salary_range,
+            description: job.description,
+            skills: job.skills,
+            custom_questions: job.custom_questions || []
+        };
+
+        const result = await JobApplication.deleteMany({
+            $or: [
+                { _id: job._id },
+                relatedApplicationFilter
+            ]
+        });
         
         const deletedAt = new Date();
         const title = job?.job_title || 'your job';
@@ -514,7 +537,14 @@ exports.deleteRecruiterJob = async (req, res) => {
             type: 'job_deleted',
             is_read: false
         });
-        res.json({ success: true });
+
+        const deletedApplications = Math.max(0, (result.deletedCount || 0) - 1);
+        res.json({
+            success: true,
+            message: `Job deleted with ${deletedApplications} related application(s).`,
+            deletedJobId: job._id.toString(),
+            deletedApplications
+        });
     } catch (err) {
         console.error("Error deleting job:", err.message);
         res.status(500).json({ success: false, error: "Database error" });
