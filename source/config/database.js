@@ -172,14 +172,12 @@ async function migrateJobApplications() {
 // --- Main Connection Function ---
 
 function connectDB() {
-    // Perform initial migrations before connecting
-    updateReplies(); // Runs async, but doesn't block connect 
-
     mongoose.connect(MONGODB_URI)
         .then(async () => {
             console.log('Connected to MongoDB');
             
             // Run setup/migrations that require a connection
+            await updateReplies();
             await setupDefaultUsers();
             await setupDefaultProjects();
             await updateDoubts();

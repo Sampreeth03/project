@@ -1,7 +1,7 @@
 // config/constants.js
 
 // 1. Database URI (MongoDB Atlas)
-const MONGODB_URI = 'mongodb+srv://relabUser:Srih12345@cluster0.cnc1zfo.mongodb.net/page-check?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://relabUser:Srih12345@cluster0.cnc1zfo.mongodb.net/page-check?retryWrites=true&w=majority&appName=Cluster0';
 const userNav = {
     homeUrl: "/home",
     navLinks: [
