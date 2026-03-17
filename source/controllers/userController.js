@@ -473,7 +473,9 @@ exports.getProfileData = async (req, res) => {
 
         const user = {
             id: u._id, name: u.name || 'Unknown', email: u.email || '', 
-            avatarUrl: u.profileImageUrl || u.profileImage || null, bio: u.about || u.bio || '',
+            avatarUrl: u.profileImageUrl || null,
+            profileImageUrl: u.profileImageUrl || null,
+            bio: u.about || u.bio || '',
             skills: Array.isArray(u.skills) ? u.skills : (u.skills ? String(u.skills).split(',').map(s => s.trim()).filter(Boolean) : []),
             interests: Array.isArray(u.interests) ? u.interests : (u.interests ? String(u.interests).split(',').map(s => s.trim()).filter(Boolean) : []),
             resumeUrl: u.resumeUrl || null, joinedAt: u.createdAt || u.created_at || null,

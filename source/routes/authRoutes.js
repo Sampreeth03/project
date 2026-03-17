@@ -5,7 +5,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { upload } = require("../middleware/uploadMiddleware"); // Import Multer
 const { authLimiter, otpLimiter } = require('../middleware/securityMiddleware');
-const { validateStudentSignup, validateRecruiterSignup, validateLogin, validateOTP, validateEmail } = require('../middleware/validationMiddleware');
+const { validateStudentSignup, validateRecruiterSignup, validateLogin, validateOTP, validateEmail, validateForgotPasswordReset } = require('../middleware/validationMiddleware');
 
 // Middleware to use for JSON body parsing on specific routes
 const jsonParser = express.json();
@@ -17,7 +17,7 @@ router.post('/login', authLimiter, validateLogin, authController.postLogin);
 router.post('/login/request-otp', otpLimiter, validateEmail, authController.postLoginRequestOtp);
 router.post('/login/verify-otp', authLimiter, validateOTP, authController.postLoginVerifyOtp);
 router.post('/forgot-password/request-otp', otpLimiter, validateEmail, authController.postForgotPasswordRequestOtp);
-router.post('/forgot-password/reset', authLimiter, authController.postForgotPasswordReset);
+router.post('/forgot-password/reset', authLimiter, validateForgotPasswordReset, authController.postForgotPasswordReset);
 router.get('/signup', authController.getSignup);
 // Student signup now accepts file uploads for profile picture and resume
 router.post('/signup', upload.fields([
@@ -41,11 +41,6 @@ router.post('/recruiter/signup/init', authLimiter, authController.postRecruiterS
 router.post('/recruiter/signup/verify-otp', authLimiter, validateOTP, authController.postRecruiterVerifyOTP);
 router.post('/recruiter/signup/resend-otp', otpLimiter, validateEmail, authController.postRecruiterResendOTP);
 router.post('/recruiter/signup/complete', authLimiter, upload.single("companyDocument"), authController.postRecruiterCompleteSignup);
-
-// Forgot Password Routes
-router.post('/forgot-password', otpLimiter, validateEmail, authController.postForgotPassword);
-router.post('/verify-reset-token', authLimiter, authController.postVerifyResetToken);
-router.post('/reset-password', authLimiter, authController.postResetPassword);
 
 // Logout Route
 router.get('/logout', authController.logout);

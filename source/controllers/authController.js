@@ -8,7 +8,6 @@ const { validatePassword } = require("../services/helperService");
 const { upload } = require("../middleware/uploadMiddleware"); 
 const { createLoginOtp, verifyLoginOtp } = require('../services/otpService');
 const { sendLoginOtpEmail, isEmailConfigured } = require('../services/emailService');
-const emailService = require("../services/emailService");
 
 // =========================================================================
 // 1-2. Landing/Login Page (GET / & /login) - REMOVED EJS RENDER
@@ -634,115 +633,6 @@ exports.postRecruiterSignup = async (req, res) => {
         res.status(500).json({ success: false, error: "Database error" });
     }
 };
-
-// =========================================================================
-// 7. Forgot Password Flow
-// =========================================================================
-exports.postForgotPassword = async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) {
-        return res.status(400).json({ success: false, error: "Email is required" });
-    }
-
-    try {
-        const user = await User.findOne({ email: email.toLowerCase() });
-        
-        // Don't reveal if email exists or not (security)
-        if (!user) {
-            return res.status(200).json({ 
-                success: true, 
-                message: "If an account exists with this email, you will receive a password reset link." 
-            });
-        }
-
-        // Generate reset token
-        const resetToken = emailService.generateResetToken();
-        
-        // Send reset email
-        const result = await emailService.sendPasswordResetEmail(email, user.name, resetToken);
-        
-        if (!result.success) {
-            return res.status(500).json({ success: false, error: "Failed to send reset email" });
-        }
-
-        res.status(200).json({ 
-            success: true, 
-            message: "If an account exists with this email, you will receive a password reset link." 
-        });
-
-    } catch (err) {
-        console.error('Forgot password error:', err.message);
-        res.status(500).json({ success: false, error: "Server error" });
-    }
-};
-
-// Verify reset token
-exports.postVerifyResetToken = async (req, res) => {
-    const { email, token } = req.body;
-
-    if (!email || !token) {
-        return res.status(400).json({ success: false, error: "Invalid reset link" });
-    }
-
-    const result = emailService.verifyResetToken(email, token);
-    
-    if (!result.valid) {
-        return res.status(400).json({ success: false, error: result.error });
-    }
-
-    res.status(200).json({ success: true, message: "Token is valid" });
-};
-
-// Reset password
-exports.postResetPassword = async (req, res) => {
-    const { email, token, password, confirmPassword } = req.body;
-
-    if (!email || !token || !password) {
-        return res.status(400).json({ success: false, error: "All fields are required" });
-    }
-
-    if (password !== confirmPassword) {
-        return res.status(400).json({ success: false, error: "Passwords do not match" });
-    }
-
-    if (!validatePassword(password)) {
-        return res.status(400).json({ 
-            success: false, 
-            error: "Password must be at least 8 characters with uppercase, lowercase, number, and special character." 
-        });
-    }
-
-    try {
-        // Verify token
-        const tokenResult = emailService.verifyResetToken(email, token);
-        
-        if (!tokenResult.valid) {
-            return res.status(400).json({ success: false, error: tokenResult.error });
-        }
-
-        // Update password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        await User.findOneAndUpdate(
-            { email: email.toLowerCase() },
-            { password: hashedPassword }
-        );
-
-        // Clear reset token
-        emailService.clearResetToken(email);
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Password reset successful. Please log in with your new password." 
-        });
-
-    } catch (err) {
-        console.error('Reset password error:', err.message);
-        res.status(500).json({ success: false, error: "Failed to reset password" });
-    }
-};
-
 
 // =========================================================================
 // 7. Handle Logout (GET /logout) - CONVERTED TO JSON API

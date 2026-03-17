@@ -2,6 +2,7 @@
 // Input validation middleware using express-validator
 
 const { body, validationResult } = require('express-validator');
+const { validatePassword } = require('../services/helperService');
 
 // Helper function to handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -200,6 +201,32 @@ const validateEmail = [
     handleValidationErrors
 ];
 
+// Validation for forgot password OTP reset
+const validateForgotPasswordReset = [
+    body('email')
+        .trim()
+        .notEmpty().withMessage('Email is required')
+        .isEmail().withMessage('Please enter a valid email address')
+        .normalizeEmail(),
+
+    body('otp')
+        .trim()
+        .notEmpty().withMessage('Verification code is required')
+        .isLength({ min: 4, max: 4 }).withMessage('Verification code must be 4 digits')
+        .isNumeric().withMessage('Verification code must contain only numbers'),
+
+    body('newPassword')
+        .notEmpty().withMessage('New password is required')
+        .custom((value) => {
+            if (!validatePassword(value)) {
+                throw new Error('Password must be at least 6 characters with 1 uppercase letter and 1 special character.');
+            }
+            return true;
+        }),
+
+    handleValidationErrors
+];
+
 module.exports = {
     validateStudentSignup,
     validateRecruiterSignup,
@@ -209,5 +236,6 @@ module.exports = {
     validateProjectCreation,
     validateJobApplication,
     validateEmail,
+    validateForgotPasswordReset,
     handleValidationErrors
 };
