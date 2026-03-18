@@ -12,7 +12,7 @@ const { upload } = require("../middleware/uploadMiddleware"); // Needed for doub
 // =========================================================================
 exports.getDoubtBoard = async (req, res) => {
     const { navData } = require('../config/constants');
-    const currentUserId = req.user.id;
+    const currentUserId = req.user?.id || null;
 
     try {
         const doubts = await Doubt.find({ visible_to_all: true })

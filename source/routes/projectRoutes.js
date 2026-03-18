@@ -38,7 +38,8 @@ router.post('/project/invite/respond', isAuthenticatedAPI, jsonParser, projectCo
 
 // --- Project Completion / Status (Paths are correct) ---
 router.post('/project/:id/finish', isAuthenticatedAPI, jsonParser, projectController.finishProject);
-router.get('/project/:id/pending-tasks', projectController.getPendingTasks);
+router.get('/project/:id/pending-tasks', isAuthenticatedAPI, projectController.getPendingTasks);
+router.post('/project/remove-member', isAuthenticatedAPI, jsonParser, projectController.removeProjectMember);
 
 // --- Task Management APIs (Paths are correct) ---
 router.post('/task/create', isAuthenticatedAPI, jsonParser, projectController.createTask);

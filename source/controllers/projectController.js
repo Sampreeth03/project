@@ -651,83 +651,17 @@ exports.respondProjectInvite = async (req, res, next) => {
     }
 };
 
-// ========= Project Invite (Owner -> Friend) =========
-exports.inviteFriendToProject = async (req, res) => {
-    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-    const { projectId, toUserId } = req.body;
-    const userId = req.user.id;
-
-    if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(toUserId)) return res.status(400).json({ success: false, message: 'Invalid ids' });
-
-    try {
-        const project = await Project.findById(projectId);
-        if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
-        if (String(project.user_id) !== userId) return res.status(403).json({ success: false, message: 'Only creator can invite' });
-
-        const ProjectInvite = require('../database').ProjectInvite;
-        const existing = await ProjectInvite.findOne({ project_id: projectId, to_user: toUserId });
-        if (existing && existing.status === 'pending') return res.json({ success: false, message: 'Invite already pending' });
-
-        await ProjectInvite.create({ project_id: projectId, from_user: userId, to_user: toUserId });
-        await require('../database').Notification.create({ user_id: toUserId, message: `${req.user.name} invited you to join project "${project.title}"`, type: 'join_request' });
-        res.json({ success: true, message: 'Invite sent' });
-    } catch (err) {
-        console.error('Invite friend error:', err.message);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
-
-exports.getProjectInvites = async (req, res) => {
-    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-    try {
-        const ProjectInvite = require('../database').ProjectInvite;
-        const invites = await ProjectInvite.find({ to_user: req.user.id }).populate('project_id').populate('from_user', 'name').lean();
-        res.json({ invites });
-    } catch (err) {
-        console.error('Get project invites error:', err.message);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
-
-exports.respondProjectInvite = async (req, res) => {
-    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-    const { inviteId, action } = req.body;
-    if (!['accept','reject'].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
-
-    try {
-        const ProjectInvite = require('../database').ProjectInvite;
-        const invite = await ProjectInvite.findById(inviteId).populate('project_id');
-        if (!invite) return res.status(404).json({ success: false, message: 'Invite not found' });
-        if (String(invite.to_user) !== req.user.id) return res.status(403).json({ success: false, message: 'Unauthorized' });
-
-        invite.status = action === 'accept' ? 'accepted' : 'rejected';
-        await invite.save();
-
-        if (action === 'accept') {
-            // Add as project member if capacity allows
-            const memberCount = await ProjectMember.countDocuments({ project_id: invite.project_id._id });
-            if (memberCount >= invite.project_id.capacity) {
-                return res.json({ success: false, message: 'Project is full' });
-            }
-            await ProjectMember.create({ project_id: invite.project_id._id, user_id: req.user.id, joined_at: new Date() });
-            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.user.name} accepted your project invite for "${invite.project_id.title}"`, type: 'join_request_approved' });
-            await require('../database').Notification.create({ user_id: req.user.id, message: `You joined project "${invite.project_id.title}"`, type: 'project_creation' });
-        } else {
-            await require('../database').Notification.create({ user_id: invite.from_user, message: `${req.user.name} rejected your project invite for "${invite.project_id.title}"`, type: 'other' });
-        }
-
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Respond project invite error:', err.message);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
-
 // =========================================================================
 // 11. Delete Project (POST /delete-project)
 // =========================================================================
 exports.deleteProject = async (req, res, next) => {
-    if (!req.user || req.user.role !== 'user') return res.status(403).json({ success: false, error: 'Unauthorized' });
+    if (!req.user) return res.status(401).json({ success: false, error: 'Unauthorized: Please log in.' });
+    if (req.user.role !== 'user') {
+        return res.status(403).json({
+            success: false,
+            error: `Forbidden: user role required to delete projects (current role: ${req.user.role || 'unknown'})`
+        });
+    }
 
     const { projectId } = req.body;
     const userId = req.user.id;
@@ -762,6 +696,52 @@ exports.deleteProject = async (req, res, next) => {
     } catch (err) {
         console.error('Error deleting project:', err.message);
         return forwardError(next, err, 'Database error');
+    }
+};
+
+exports.removeProjectMember = async (req, res, next) => {
+    const { projectId, userId } = req.body;
+    const requesterId = req.user.id;
+
+    try {
+        if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: 'Invalid ID' });
+        }
+
+        const project = await Project.findById(projectId);
+        if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+        if (project.user_id.toString() !== requesterId) {
+            return res.status(403).json({ success: false, message: 'Only the project creator can remove members' });
+        }
+
+        if (project.user_id.toString() === userId) {
+            return res.status(400).json({ success: false, message: 'Project creator cannot be removed' });
+        }
+
+        const member = await ProjectMember.findOne({ project_id: projectId, user_id: userId });
+        if (!member) return res.status(404).json({ success: false, message: 'Member not found in project' });
+
+        await ProjectMember.deleteOne({ _id: member._id });
+        await Task.updateMany(
+            { project_id: projectId, assigned_to: userId, status: { $ne: 'Completed' } },
+            { $set: { assigned_to: null, status: 'In Progress', github_link: null } }
+        );
+
+        await UserMetrics.findOneAndUpdate(
+            { user_id: new mongoose.Types.ObjectId(userId) },
+            { $inc: { active_projects: -1, projects_as_member: -1 } },
+            { upsert: true }
+        );
+
+        await Notification.create({
+            user_id: new mongoose.Types.ObjectId(userId),
+            message: `You were removed from project "${project.title}" by the project creator.`,
+            type: 'other'
+        });
+
+        return res.json({ success: true, message: 'Member removed successfully' });
+    } catch (err) {
+        return forwardError(next, err, 'Server error');
     }
 };
 
@@ -945,11 +925,19 @@ exports.submitGithubLink = async (req, res, next) => {
 };
 
 exports.reviewSubmission = async (req, res, next) => {
-    // FIX FOR HANGING ISSUE: Ensure reliable response path
-    const { taskId, projectId, action, feedback } = req.body;
+    const { projectId, action, feedback } = req.body;
+    const taskId = req.body.taskId || req.params.id;
     const userId = req.user.id;
 
     try {
+        if (!taskId || !projectId) {
+            return res.status(400).json({ success: false, message: 'Task ID and project ID are required' });
+        }
+
+        if (!['accept', 'reject'].includes(action)) {
+            return res.status(400).json({ success: false, message: 'Invalid action' });
+        }
+
         const project = await Project.findById(projectId);
         if (!project || project.user_id.toString() !== userId) {
             return res.status(403).json({ success: false, message: 'Only the project creator can review submissions' });
