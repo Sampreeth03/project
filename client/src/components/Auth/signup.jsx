@@ -1,6 +1,7 @@
 // client/src/components/Auth/Signup.jsx
 
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -193,9 +194,11 @@ function Signup() {
 
             if (response.data.success) {
                 // Auto-login: Update auth context
-                loginUser({
-                    ...response.data.user,
-                    isNewSignup: true // Flag for showing onboarding
+                flushSync(() => {
+                    loginUser({
+                        ...response.data.user,
+                        isNewSignup: true // Flag for showing onboarding
+                    });
                 });
                 // Navigate directly to home page
                 navigate(response.data.redirectPath || '/home');

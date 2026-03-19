@@ -1,6 +1,7 @@
 // client/src/components/Auth/Login.jsx
 
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -132,7 +133,9 @@ function Login() {
                     // Check if OTP should be skipped (for default users)
                     if (response.data.skipOtp) {
                         // Returning users logging in - explicitly set isNewSignup to false
-                        loginUser({ ...response.data.user, isNewSignup: false });
+                        flushSync(() => {
+                            loginUser({ ...response.data.user, isNewSignup: false });
+                        });
                         navigate(response.data.redirectPath || '/home');
                         return;
                     }
@@ -178,7 +181,9 @@ function Login() {
 
             if (response.data.success) {
                 // Returning users logging in - explicitly set isNewSignup to false
-                loginUser({ ...response.data.user, isNewSignup: false });
+                flushSync(() => {
+                    loginUser({ ...response.data.user, isNewSignup: false });
+                });
                 navigate(response.data.redirectPath || '/home');
             }
         } catch (err) {

@@ -5,6 +5,20 @@ axios.defaults.withCredentials = true;;
 
 const AuthContext = createContext(null);
 
+function normalizeRole(role) {
+    const normalized = String(role || '').trim().toLowerCase();
+    if (normalized === 'student') return 'user';
+    return normalized;
+}
+
+function normalizeUser(userData) {
+    if (!userData) return null;
+    return {
+        ...userData,
+        role: normalizeRole(userData.role)
+    };
+}
+
 export const AuthProvider = ({ children }) => {
     // State to hold user data (id, name, email, role, onboardingCompleted, isNewSignup)
     const [user, setUser] = useState(null);
@@ -17,7 +31,7 @@ export const AuthProvider = ({ children }) => {
                 const response = await axios.get('/api/home');
                 if (response.data.success && response.data.user) {
                     // Existing session users are NOT new signups (they're returning users)
-                    setUser({ ...response.data.user, isNewSignup: false });
+                    setUser(normalizeUser({ ...response.data.user, isNewSignup: false }));
                 }
             } catch (error) {
                 console.log('No active session');
@@ -31,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     const loginUser = (userData) => {
         // Called by Login.jsx or Signup.jsx on successful API response
         // isNewSignup flag comes from the API response (true for signup, false for login)
-        setUser(userData);
+        setUser(normalizeUser(userData));
     };
 
     const logoutUser = async () => {

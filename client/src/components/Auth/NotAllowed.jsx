@@ -6,10 +6,12 @@ const NotAllowed = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const normalizedRole = String(user?.role || '').trim().toLowerCase();
+
   const handleGoBack = () => {
     if (!user) { navigate('/login'); return; }
-    if (user.role === 'admin') navigate('/admin');
-    else if (user.role === 'recruiter') navigate('/recruiter-home');
+    if (normalizedRole === 'admin') navigate('/admin');
+    else if (normalizedRole === 'recruiter') navigate('/recruiter-home');
     else navigate('/home');
   };
 
