@@ -1,0 +1,74 @@
+components:
+  schemas:
+    RecruiterDashboardResponse:
+      type: object
+      properties:
+        user:
+          type: object
+        totalJobs:
+          type: integer
+        totalParticipants:
+          type: integer
+        approvedApplications:
+          type: integer
+        pendingApplications:
+          type: integer
+        rejectedApplications:
+          type: integer
+        hiringSuccessRate:
+          type: integer
+    RecruiterJobCreateRequest:
+      type: object
+      required: [jobTitle, companyName, description, salaryRange, skills]
+      properties:
+        jobTitle:
+          type: string
+        companyName:
+          type: string
+        description:
+          type: string
+        salaryRange:
+          type: string
+        skills:
+          type: string
+        customQuestions:
+          type: array
+          items:
+            type: string
+    UpdateApplicationStatusRequest:
+      type: object
+      properties:
+        applicationId:
+          type: string
+        status:
+          type: string
+          enum: [Approved, Rejected]
+        statusLc:
+          type: string
+          enum: [approved, rejected]
+    MarkNotificationRequest:
+      type: object
+      required: [notificationId]
+      properties:
+        notificationId:
+          type: string
+    RevokeApplicationRequest:
+      type: object
+      required: [applicationId]
+      properties:
+        applicationId:
+          type: string
+    GenericSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    GenericError:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string

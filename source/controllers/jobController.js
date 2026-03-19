@@ -67,9 +67,15 @@ exports.applyForJob = async (req, res) => {
     const { jobId, customAnswers } = req.body;
     const userId = req.user.id;
     const resumePath = req.file?.path;
-    
-    // Parse custom answers if provided
-    const parsedAnswers = customAnswers ? JSON.parse(customAnswers) : {}; 
+    let parsedAnswers = {};
+
+    if (customAnswers) {
+        try {
+            parsedAnswers = JSON.parse(customAnswers);
+        } catch (parseError) {
+            return res.status(400).json({ success: false, error: 'Invalid customAnswers JSON format.' });
+        }
+    }
 
     // Validation ensures jobId is present (now guaranteed by the hidden input if rendered)
     if (!jobId) {
@@ -199,24 +205,61 @@ exports.getJobNotifications = async (req, res) => {
 exports.markNotificationRead = async (req, res) => {
     const { notificationId } = req.body;
     try {
-        const result = await Notification.updateOne({ _id: notificationId }, { is_read: true });
-        if (result.modifiedCount === 0) return res.json({ success: false, message: 'Notification not found' });
-        res.json({ success: true });
+        if (!req.user?.id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (!notificationId || !mongoose.Types.ObjectId.isValid(notificationId)) {
+            return res.status(400).json({ success: false, message: 'Invalid notification ID' });
+        }
+
+        const notificationResult = await Notification.updateOne(
+            { _id: notificationId, user_id: req.user.id },
+            { is_read: true }
+        );
+
+        if (notificationResult.matchedCount > 0) {
+            return res.json({ success: true, message: 'Notification marked as read' });
+        }
+
+        const applicationExists = await JobApplication.exists({ _id: notificationId, user_id: req.user.id });
+        if (applicationExists) {
+            return res.json({ success: true, message: 'Job notification acknowledged' });
+        }
+
+        return res.status(404).json({ success: false, message: 'Notification not found' });
     } catch (err) {
         console.error('Error marking notification as read:', err.message);
-        res.json({ success: false, message: 'Server Error' });
+        return res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
 exports.deleteNotification = async (req, res) => {
     const { notificationId } = req.body;
     try {
-        const result = await Notification.deleteOne({ _id: notificationId });
-        if (result.deletedCount === 0) return res.json({ success: false, message: 'Notification not found' });
-        res.json({ success: true });
+        if (!req.user?.id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (!notificationId || !mongoose.Types.ObjectId.isValid(notificationId)) {
+            return res.status(400).json({ success: false, message: 'Invalid notification ID' });
+        }
+
+        const notificationResult = await Notification.deleteOne({ _id: notificationId, user_id: req.user.id });
+        if (notificationResult.deletedCount > 0) {
+            return res.json({ success: true, message: 'Notification deleted' });
+        }
+
+        const applicationResult = await JobApplication.deleteOne({ _id: notificationId, user_id: req.user.id });
+        if (applicationResult.deletedCount > 0) {
+            await UserMetrics.findOneAndUpdate({ user_id: req.user.id }, { $inc: { job_applications: -1 } });
+            return res.json({ success: true, message: 'Job notification deleted' });
+        }
+
+        return res.status(404).json({ success: false, message: 'Notification not found' });
     } catch (err) {
         console.error('Error deleting notification:', err.message);
-        res.json({ success: false, message: 'Server Error' });
+        return res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 

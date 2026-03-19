@@ -1,0 +1,316 @@
+paths:
+  /api/recruiter-home:
+    get:
+      tags: [Recruiter]
+      summary: Get recruiter home payload
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiter home data
+        '403':
+          description: Recruiter access required
+
+  /api/rec-job:
+    get:
+      tags: [Recruiter]
+      summary: Get recruiter job management data
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiter jobs and metrics
+
+  /api/recruiter-dashboard:
+    get:
+      tags: [Recruiter]
+      summary: Get recruiter dashboard metrics
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruiterDashboardResponse'
+
+  /api/recruiter-dashboard-trends:
+    get:
+      tags: [Recruiter]
+      summary: Get recruiter trend and hiring pipeline analytics
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Trend payload
+
+  /api/rec-app:
+    get:
+      tags: [Recruiter]
+      summary: Get recruiter applications feed
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Applications list
+
+  /api/rec-not:
+    get:
+      tags: [Recruiter]
+      summary: Get recruiter notifications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notification list
+
+  /api/create-recruiter-job:
+    post:
+      tags: [Recruiter]
+      summary: Create recruiter job posting
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecruiterJobCreateRequest'
+      responses:
+        '200':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        '403':
+          description: Forbidden or recruiter not verified
+
+  /api/delete-recruiter-job/{id}:
+    delete:
+      tags: [Recruiter]
+      summary: Delete recruiter job posting
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job deleted
+        '404':
+          description: Not found
+
+  /api/toggle-job-active/{id}:
+    patch:
+      tags: [Recruiter]
+      summary: Activate/deactivate recruiter job posting
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  oneOf:
+                    - type: boolean
+                    - type: integer
+                      enum: [0, 1]
+      responses:
+        '200':
+          description: Updated
+
+  /api/view-resume/{id}:
+    get:
+      tags: [Recruiter]
+      summary: View applicant resume
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resume stream
+        '404':
+          description: Resume not found
+
+  /api/update-application-status/{id}:
+    patch:
+      tags: [Recruiter]
+      summary: Update application status by path id
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationStatusRequest'
+      responses:
+        '200':
+          description: Updated
+
+  /api/update-application-status:
+    post:
+      tags: [Recruiter]
+      summary: Update application status using body applicationId
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationStatusRequest'
+      responses:
+        '200':
+          description: Updated
+
+  /api/user-profile-for-recruiter/{userId}:
+    get:
+      tags: [Recruiter]
+      summary: Fetch applicant profile visible to recruiter
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profile response
+        '403':
+          description: Forbidden
+
+  /api/apply:
+    get:
+      tags: [Job]
+      summary: Get active jobs for student apply page
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Job listings
+
+  /api/job:
+    get:
+      tags: [Job]
+      summary: Get student job applications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Student applications
+
+  /api/job_not:
+    get:
+      tags: [Job]
+      summary: Get student job notifications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications
+
+  /api/apply-job:
+    post:
+      tags: [Job]
+      summary: Apply for job with resume and custom answers
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [jobId, resume]
+              properties:
+                jobId:
+                  type: string
+                resume:
+                  type: string
+                  format: binary
+                customAnswers:
+                  type: string
+                  description: JSON string map of custom answers
+      responses:
+        '200':
+          description: Application submitted
+        '400':
+          description: Validation or duplicate apply error
+
+  /api/mark-notification-read:
+    post:
+      tags: [Job]
+      summary: Mark notification as read
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkNotificationRequest'
+      responses:
+        '200':
+          description: Updated
+
+  /api/delete-notification:
+    post:
+      tags: [Job]
+      summary: Delete notification
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkNotificationRequest'
+      responses:
+        '200':
+          description: Deleted
+
+  /api/revoke-application:
+    delete:
+      tags: [Job]
+      summary: Revoke student job application
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeApplicationRequest'
+      responses:
+        '200':
+          description: Revoked
+        '400':
+          description: Cannot revoke shortlisted application
