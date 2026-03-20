@@ -9,6 +9,20 @@ import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import Navbar from '../User/NavBar.jsx'; 
 import '../../styles/ProjectStyles.css'; 
 
+const formatLocalDateInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getTomorrowDateString = () => {
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatLocalDateInput(tomorrow);
+};
+
 // Helper component for rendering a single task card
 const TaskCard = ({ task, projectId, isCreator, handleExtendDeadline, openReviewModal, currentUserId }) => {
     const getStatusClass = (status) => status?.toLowerCase().replace(' ', '-') || 'assigned';
@@ -116,6 +130,7 @@ const ProjectDetails = () => {
     const [isInviting, setIsInviting] = useState(false);
 
     const unreadCount = getUnreadCount(projectId);
+    const minimumDueDate = getTomorrowDateString();
 
     // Debug logging
     useEffect(() => {
@@ -174,11 +189,18 @@ const ProjectDetails = () => {
     const handleTaskSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+        const dueDate = formData.get('dueDate');
+
+        if (!dueDate || dueDate < minimumDueDate) {
+            alert('Please select a due date after today.');
+            return;
+        }
+
         const newTask = await handleCreateTask({
             title: formData.get('taskTitle'),
             description: formData.get('taskDescription'),
             assignedTo: formData.get('assignTo'),
-            dueDate: formData.get('dueDate')
+            dueDate
         });
 
         if (newTask) {
@@ -346,7 +368,7 @@ const ProjectDetails = () => {
                                 ))}
                             </select>
                         </div>
-                        <div className="form-group"><label htmlFor="dueDate">Due Date</label><input type="date" id="dueDate" name="dueDate" required /></div>
+                        <div className="form-group"><label htmlFor="dueDate">Due Date</label><input type="date" id="dueDate" name="dueDate" min={minimumDueDate} required /></div>
                         <button type="submit" className="new-task-btn" style={{ width: '100%' }}>Create Task</button>
                     </form>
                 </div>

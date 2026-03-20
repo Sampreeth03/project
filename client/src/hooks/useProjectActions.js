@@ -17,10 +17,25 @@ const useProjectActions = (projectId) => {
     const showNotification = useNotification();
     const [isFinishing, setIsFinishing] = useState(false);
 
+    const isFutureDate = (dateString) => {
+        if (!dateString || typeof dateString !== 'string') return false;
+        const selectedDate = new Date(`${dateString}T00:00:00`);
+        if (Number.isNaN(selectedDate.getTime())) return false;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return selectedDate.getTime() > today.getTime();
+    };
+
     // 1. Task Management
     const handleCreateTask = async (taskData) => {
         if (!taskData.title || !taskData.dueDate) {
             showNotification("Task title and due date are required", 'error');
+            return false;
+        }
+
+        if (!isFutureDate(taskData.dueDate)) {
+            showNotification("Due date must be a future date (after today)", 'error');
             return false;
         }
 

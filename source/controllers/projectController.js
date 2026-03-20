@@ -685,13 +685,28 @@ exports.createTask = async (req, res, next) => {
     // ... validation and security checks ...
     try {
         if (!projectId || !title || !dueDate) return res.status(400).json({ success: false, message: 'Project ID, title, and due date are required' });
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+            return res.status(400).json({ success: false, message: 'Invalid due date format. Use YYYY-MM-DD' });
+        }
+
+        const parsedDueDate = new Date(`${dueDate}T00:00:00`);
+        if (Number.isNaN(parsedDueDate.getTime())) {
+            return res.status(400).json({ success: false, message: 'Invalid due date' });
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (parsedDueDate.getTime() <= today.getTime()) {
+            return res.status(400).json({ success: false, message: 'Due date must be after today' });
+        }
         
         const project = await Project.findById(projectId);
         if (project.user_id.toString() !== userId) return res.status(403).json({ success: false, message: 'Only the project creator can create tasks' });
 
         // ... member verification ...
 
-        const task = new Task({ project_id: projectId, title, description, assigned_to: assignedTo, due_date: new Date(dueDate), status: 'In Progress' });
+        const task = new Task({ project_id: projectId, title, description, assigned_to: assignedTo, due_date: parsedDueDate, status: 'In Progress' });
         await task.save();
         
         // Create notification for the assigned user
