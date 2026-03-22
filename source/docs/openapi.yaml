@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: Project Backend API - Member5
+  version: 1.0.0
+  description: Member5 endpoints only.
+servers:
+  - url: /
+    description: Relative to deployment origin
+
+tags:
+  - name: Member5
+
+paths:
+  /api/platform-admin/login:
+    post:
+      tags: [Member5]
+      summary: Platform admin login
+      operationId: loginPlatformAdmin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformAdminLoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/session:
+    get:
+      tags: [Member5]
+      summary: Get current platform admin session
+      operationId: getPlatformAdminSession
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/logout:
+    post:
+      tags: [Member5]
+      summary: Logout current platform admin session
+      operationId: logoutPlatformAdmin
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/summary:
+    get:
+      tags: [Member5]
+      summary: Platform admin summary
+      operationId: getPlatformAdminSummary
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/recruiters:
+    get:
+      tags: [Member5]
+      summary: Recruiters pending verification
+      operationId: getRecruitersForVerification
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/recruiters/{id}:
+    get:
+      tags: [Member5]
+      summary: Get recruiter verification detail
+      operationId: getRecruiterVerificationDetail
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/recruiters/{id}/verify:
+    post:
+      tags: [Member5]
+      summary: Verify recruiter
+      operationId: updateRecruiterVerification
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/platform-admin/recruiters/bulk-verify:
+    post:
+      tags: [Member5]
+      summary: Bulk verify or request re-upload for recruiters
+      operationId: bulkUpdateRecruiterVerification
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+components:
+  parameters:
+    idPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    ApiSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation successful
+        data:
+          nullable: true
+      required: [success]
+
+    ApiError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Operation failed
+        error:
+          nullable: true
+      required: [success, message]
+
+    PlatformAdminLoginRequest:
+      type: object
+      required: [email, passkey, adminId]
+      properties:
+        email:
+          type: string
+          format: email
+          example: platform.admin@example.com
+        passkey:
+          type: string
+          example: SuperSecretPasskey123
+        adminId:
+          type: string
+          example: PA-001
+
+    AuthPayload:
+      allOf:
+        - $ref: '#/components/schemas/ApiSuccess'
+        - type: object
+          properties:
+            token:
+              type: string
+            user:
+              type: object
+              additionalProperties: true
+
+  responses:
+    SuccessResponse:
+      description: Generic success response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiSuccess'
+
+    ErrorResponse:
+      description: Generic error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    AuthResponse:
+      description: Authentication success response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthPayload'
