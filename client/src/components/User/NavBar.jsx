@@ -40,7 +40,8 @@ const Navbar = ({ onSearchChange }) => {
             href: "/profile",
             submenu: [
                 { name: "Profile", href: "/profile" },
-                { name: "Dashboard", href: "/dashboard" }
+                { name: "Dashboard", href: "/dashboard" },
+                { name: "Contact Us", href: "/contact" }
             ]
         },
         { 

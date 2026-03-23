@@ -5,6 +5,7 @@
 
 import { Routes, Route } from 'react-router-dom';
 import Landing from './components/landing/Landing.jsx';
+import ContactUs from './components/landing/ContactUs.jsx';
 import Signup from './components/Auth/signup.jsx';
 import Login from './components/Auth/Login.jsx';
 import RecruiterSignup from './components/Recruiter/RecruiterSignup.jsx';
