@@ -85,7 +85,28 @@ const helmetConfig = helmet({
 
 // CORS configuration for Vite dev server
 const corsOptions = {
-    origin: 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow localhost and 127.0.0.1 variants for development
+        const allowedPatterns = [
+            /^http:\/\/localhost:\d+$/,
+            /^http:\/\/127\.0\.0\.1:\d+$/,
+            /^http:\/\/\[::1\]:\d+$/,
+        ];
+        
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+            return callback(null, true);
+        }
+        
+        // Check if origin matches any allowed pattern
+        const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+        
+        if (isAllowed || process.env.NODE_ENV !== 'production') {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],

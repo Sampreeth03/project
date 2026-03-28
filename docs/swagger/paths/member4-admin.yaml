@@ -1,0 +1,385 @@
+paths:
+  /admin:
+    get:
+      tags: [Admin]
+      summary: Admin dashboard shell endpoint
+      description: Returns the admin dashboard shell for server-rendered fallback.
+      operationId: getAdminDashboardShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Dashboard shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getAdminDashboard
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /admin/dashboard-data:
+    get:
+      tags: [Admin]
+      summary: Fetch dashboard metrics data
+      operationId: getAdminDashboardData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics payload.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/AdminDashboardResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getDashboardData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminDashboard.jsx
+
+  /stud:
+    get:
+      tags: [Admin]
+      summary: Students management shell endpoint
+      operationId: getAdminStudentsShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Students shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getStudentsPage
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /students:
+    get:
+      tags: [Admin]
+      summary: Fetch students data
+      operationId: getAdminStudentsData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Students data fetched.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../components/member4-schemas.yaml#/components/schemas/AdminStudent
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getStudentsData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminStudents.jsx
+
+  /admin-doubts:
+    get:
+      tags: [Admin]
+      summary: Doubts management shell endpoint
+      operationId: getAdminDoubtsShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Doubts shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getDoubtsPage
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /admin-doubts/data:
+    get:
+      tags: [Admin]
+      summary: Fetch admin doubts metrics
+      operationId: getAdminDoubtsData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Doubts metrics fetched.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../components/member4-schemas.yaml#/components/schemas/AdminDoubtMetrics
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getDoubtsData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminDoubts.jsx
+
+  /admin-rec:
+    get:
+      tags: [Admin]
+      summary: Recruiters management shell endpoint
+      operationId: getAdminRecruitersShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiters shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getRecruitersPage
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /admin-rec/data:
+    get:
+      tags: [Admin]
+      summary: Fetch recruiters analytics data
+      operationId: getAdminRecruitersData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiters data fetched.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/AdminRecruitersResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getRecruitersData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminRecruiters.jsx
+
+  /admin-proj:
+    get:
+      tags: [Admin]
+      summary: Projects management shell endpoint
+      operationId: getAdminProjectsShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Projects shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getProjectsPage
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /projects:
+    get:
+      tags: [Admin]
+      summary: Fetch project records for admin
+      operationId: getAdminProjectsData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Project records fetched.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getProjectsData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminProjects.jsx
+
+  /admin-prof:
+    get:
+      tags: [Admin]
+      summary: Admin profile shell endpoint
+      operationId: getAdminProfileShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Profile shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getAdminProfilePage
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /admin-prof/data:
+    get:
+      tags: [Admin]
+      summary: Fetch admin profile data
+      operationId: getAdminProfileData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Admin profile data fetched.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/AdminProfileResponse
+        '404':
+          description: Admin not found.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getProfileData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminProfile.jsx
+
+  /admin-mess:
+    get:
+      tags: [Admin]
+      summary: Admin messages shell endpoint
+      operationId: getAdminMessagesShell
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Messages shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getAdminMessagesPage
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+
+  /admin-mess/data:
+    get:
+      tags: [Admin]
+      summary: Fetch admin messages data
+      operationId: getAdminMessagesData
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Messages analytics fetched.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/AdminMessagesResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getMessagesData
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminMessages.jsx
+
+  /platform-admins:
+    get:
+      tags: [Admin]
+      summary: List platform administrators
+      operationId: getPlatformAdministrators
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Platform administrators fetched.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/PlatformAdministratorsResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getPlatformAdministrators
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminAdministrators.jsx
+
+    post:
+      tags: [Admin]
+      summary: Create a new platform administrator
+      operationId: createPlatformAdministrator
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../components/member4-schemas.yaml#/components/schemas/CreatePlatformAdminRequest
+      responses:
+        '201':
+          description: Administrator created.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/CreatePlatformAdminResponse
+        '400':
+          description: Missing required fields.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Duplicate email or adminId.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/adminController.js#createPlatformAdministrator
+        route: source/routes/adminRoutes.js
+      x-frontend-consumers:
+        - client/src/store/adminSlice.js
+        - client/src/components/Admin/AdminAdministrators.jsx

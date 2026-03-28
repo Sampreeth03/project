@@ -57,6 +57,7 @@ function App() {
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
         <Route path="/" element={<Landing />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signupforrec" element={<RecruiterSignup />} />

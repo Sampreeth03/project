@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const path = require("path");
 const cors = require("cors");
+const SwaggerParser = require("@apidevtools/swagger-parser");
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -25,9 +26,16 @@ const { globalLimiter, helmetConfig, corsOptions } = require("./middleware/secur
 const { morganMiddleware } = require("./middleware/loggingMiddleware");
 const { notFoundHandler, errorHandler } = require("./middleware/errorMiddleware");
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("./database"); 
-const { swaggerSpec } = require('./config/swagger');
 
 const app = express();
+const swaggerSpecPath = path.join(__dirname, "../docs/swagger/member4-openapi.yaml");
+let bundledSwaggerDocument = null;
+let swaggerUiHandler = (req, res) => {
+	res.status(503).json({
+		success: false,
+		message: 'Swagger documentation is loading. Please refresh in a moment.',
+	});
+};
 
 // Security headers
 app.use(helmetConfig);
@@ -51,9 +59,36 @@ app.use("/uploads", express.static("uploads"));
 // Cookie parser (required for JWT httpOnly cookie auth)
 app.use(cookieParser());
 
+// Swagger UI (SmartBear) documentation route
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', (req, res, next) => swaggerUiHandler(req, res, next));
+
+SwaggerParser.bundle(swaggerSpecPath)
+	.then((swaggerDocument) => {
+		bundledSwaggerDocument = swaggerDocument;
+		swaggerUiHandler = swaggerUi.setup(swaggerDocument);
+	})
+	.catch((error) => {
+		console.error('Failed to bundle OpenAPI spec for Swagger UI:', error.message);
+		swaggerUiHandler = (req, res) => {
+			res.status(500).json({
+				success: false,
+				message: 'Swagger documentation failed to load',
+				error: error.message,
+			});
+		};
+	});
+
 // Mount API routes
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
+app.get('/api-docs.json', (req, res) => {
+	if (!bundledSwaggerDocument) {
+		return res.status(503).json({
+			success: false,
+			message: 'Swagger documentation is loading. Please refresh in a moment.',
+		});
+	}
+	res.json(bundledSwaggerDocument);
+});
 
 app.use('/api', authRoutes); 
 app.use('/api', adminRoutes);

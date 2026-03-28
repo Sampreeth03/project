@@ -1,0 +1,157 @@
+paths:
+  /doubt:
+    get:
+      tags: [Doubt]
+      summary: Doubt board shell endpoint
+      operationId: getDoubtBoard
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Doubt board shell rendered successfully.
+        '500':
+          description: Failed to load doubts shell.
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getDoubtBoard
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+        - client/src/components/User/DoubtPage.jsx
+
+  /clear:
+    get:
+      tags: [Doubt]
+      summary: Clear doubts shell endpoint
+      operationId: getClearDoubts
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Clear doubts shell rendered successfully.
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getClearDoubts
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+        - client/src/components/User/ClearDoubts.jsx
+
+  /doubts:
+    get:
+      tags: [Doubt]
+      summary: Fetch doubts as JSON
+      operationId: getDoubtsJSON
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Doubts list fetched.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/DoubtsListResponse
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getDoubtsJSON
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/components/User/DoubtPage.jsx
+        - client/src/components/User/ClearDoubts.jsx
+
+  /not:
+    get:
+      tags: [Doubt]
+      summary: Project notifications shell endpoint
+      description: Server-rendered project notifications view for authenticated users.
+      operationId: getProjectNotifications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications shell rendered.
+        '500':
+          description: Server error.
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getProjectNotifications
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/App.jsx
+        - client/src/components/User/NavBar.jsx
+
+  /notifications:
+    get:
+      tags: [Doubt]
+      summary: Fetch project notifications as JSON
+      operationId: getProjectNotificationsJSON
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications fetched.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ProjectNotificationsResponse
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ErrorResponse
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getProjectNotificationsJSON
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/components/User/ProjectNotifications.jsx
+
+  /ask:
+    post:
+      tags: [Doubt]
+      summary: Post a new doubt
+      operationId: postDoubt
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: ../components/member4-schemas.yaml#/components/schemas/AskDoubtRequest
+      responses:
+        '200':
+          description: Doubt post attempted.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/AskDoubtResponse
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#postDoubt
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/components/User/DoubtPage.jsx
+        - client/src/components/User/ClearDoubts.jsx
+
+  /reply:
+    post:
+      tags: [Doubt]
+      summary: Reply to a doubt
+      operationId: postReply
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../components/member4-schemas.yaml#/components/schemas/ReplyRequest
+      responses:
+        '200':
+          description: Reply post attempted.
+          content:
+            application/json:
+              schema:
+                $ref: ../components/member4-schemas.yaml#/components/schemas/ReplyResponse
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#postReply
+        route: source/routes/doubtRoutes.js
+      x-frontend-consumers:
+        - client/src/components/User/DoubtPage.jsx
+        - client/src/components/User/ClearDoubts.jsx

@@ -1,0 +1,489 @@
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: Server Error
+        message:
+          type: string
+          example: Failed to fetch data
+
+    ApiOperationalResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: API operational
+
+    SuccessMessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    OtpVerifyRequest:
+      type: object
+      required: [email, otp]
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+          pattern: '^\\d{4}$'
+
+    ForgotPasswordRequestOtpRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ForgotPasswordResetRequest:
+      type: object
+      required: [email, otp, newPassword]
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+          pattern: '^\\d{4}$'
+        newPassword:
+          type: string
+
+    SignupInitRequest:
+      type: object
+      required: [name, email, password, confirmPassword]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        confirmPassword:
+          type: string
+        about:
+          type: string
+        skills:
+          type: string
+          description: Comma-separated values.
+        interests:
+          type: string
+          description: Comma-separated values.
+        picture:
+          type: string
+          format: binary
+        resume:
+          type: string
+          format: binary
+
+    RecruiterSignupInitRequest:
+      type: object
+      required: [name, email, password, confirmPassword]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        confirmPassword:
+          type: string
+        companyName:
+          type: string
+
+    RecruiterSignupCompleteRequest:
+      type: object
+      required: [email, companyDocument]
+      properties:
+        email:
+          type: string
+          format: email
+        companyDocument:
+          type: string
+          format: binary
+
+    LoginSuccessUser:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, recruiter, user]
+
+    LoginSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login successful
+        user:
+          $ref: '#/components/schemas/LoginSuccessUser'
+        redirectPath:
+          type: string
+          example: /home
+        skipOtp:
+          type: boolean
+          example: false
+
+    DashboardCard:
+      type: object
+      properties:
+        title:
+          type: string
+        icon:
+          type: string
+        stat:
+          type: integer
+        colorClass:
+          type: string
+        change:
+          type: integer
+
+    AdminDashboardData:
+      type: object
+      properties:
+        adminName:
+          type: string
+        adminRole:
+          type: string
+        period:
+          type: string
+        dashboardCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardCard'
+
+    AdminDashboardResponse:
+      type: object
+      properties:
+        dashboardData:
+          $ref: '#/components/schemas/AdminDashboardData'
+
+    AdminStudent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        hostedProjects:
+          type: integer
+        tasksCompleted:
+          type: integer
+
+    AdminRecruiter:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        company:
+          type: string
+        role:
+          type: string
+        joinedDate:
+          type: string
+        recruitmentCount:
+          type: integer
+        hiredJobs:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              title:
+                type: string
+              company:
+                type: string
+              date:
+                type: string
+              personName:
+                type: string
+                nullable: true
+
+    AdminRecruitersResponse:
+      type: object
+      properties:
+        recruiters:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminRecruiter'
+
+    AdminDoubtMetrics:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        doubtsAsked:
+          type: integer
+        doubtsCleared:
+          type: integer
+
+    AdminMessagesResponse:
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            type: object
+        stats:
+          type: object
+          properties:
+            totalConversations:
+              type: integer
+            flaggedConversations:
+              type: integer
+            messagesToday:
+              type: integer
+            responseRate:
+              type: integer
+
+    AdminProfileResponse:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        joined:
+          type: string
+        lastLogin:
+          type: string
+
+    PlatformAdministrator:
+      type: object
+      properties:
+        _id:
+          type: string
+        email:
+          type: string
+          format: email
+        adminId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PlatformAdministratorsResponse:
+      type: object
+      properties:
+        administrators:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformAdministrator'
+
+    CreatePlatformAdminRequest:
+      type: object
+      required: [email, passkey, adminId]
+      properties:
+        email:
+          type: string
+          format: email
+        passkey:
+          type: string
+        adminId:
+          type: string
+
+    CreatePlatformAdminResponse:
+      type: object
+      properties:
+        administrator:
+          $ref: '#/components/schemas/PlatformAdministrator'
+
+    DoubtReply:
+      type: object
+      properties:
+        _id:
+          type: string
+        author:
+          type: string
+        text:
+          type: string
+        timestamp:
+          type: string
+        isPrivate:
+          type: boolean
+
+    DoubtItem:
+      type: object
+      properties:
+        _id:
+          type: string
+        author:
+          type: string
+        text:
+          type: string
+        file_path:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoubtReply'
+
+    DoubtsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        doubts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoubtItem'
+
+    AskDoubtResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        doubt:
+          type: object
+          properties:
+            _id:
+              type: string
+            author:
+              type: string
+            text:
+              type: string
+
+    AskDoubtRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        file-input:
+          type: string
+          format: binary
+
+    ReplyRequest:
+      type: object
+      required: [doubtId, text]
+      properties:
+        doubtId:
+          type: string
+        text:
+          type: string
+        isPrivate:
+          type: boolean
+          default: false
+
+    ReplyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        reply:
+          type: object
+          properties:
+            _id:
+              type: string
+            author:
+              type: string
+            text:
+              type: string
+
+    ProjectNotificationItem:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        task_title:
+          type: string
+          nullable: true
+        task_id:
+          type: string
+          nullable: true
+        is_read:
+          type: boolean
+
+    ProjectNotificationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        taskNotifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectNotificationItem'
+        projectCreationNotifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectNotificationItem'
+        myApplications:
+          type: array
+          items:
+            type: object
+        joinRequests:
+          type: array
+          items:
+            type: object
+        projectInvites:
+          type: array
+          items:
+            type: object
