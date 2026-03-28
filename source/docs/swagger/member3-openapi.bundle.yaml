@@ -1,0 +1,408 @@
+openapi: 3.0.3
+info:
+  title: RELABTeams Member 3 Job and Recruiter APIs
+  version: 1.0.0
+  description: Bundled OpenAPI file for Member 3 recruiter and job endpoints.
+servers:
+  - url: http://localhost:5000
+tags:
+  - name: Member3-Recruiter
+    description: Recruiter dashboard and job management APIs
+  - name: Member3-Job
+    description: Student job application and notification APIs
+paths:
+  /api/recruiter-home:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Get recruiter home payload
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiter home data
+        '403':
+          description: Recruiter access required
+
+  /api/rec-job:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Get recruiter job management data
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiter jobs and metrics
+
+  /api/recruiter-dashboard:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Get recruiter dashboard metrics
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruiterDashboardResponse'
+
+  /api/recruiter-dashboard-trends:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Get recruiter trend and hiring pipeline analytics
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Trend payload
+
+  /api/rec-app:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Get recruiter applications feed
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Applications list
+
+  /api/rec-not:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Get recruiter notifications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notification list
+
+  /api/create-recruiter-job:
+    post:
+      tags: [Member3-Recruiter]
+      summary: Create recruiter job posting
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecruiterJobCreateRequest'
+      responses:
+        '200':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        '403':
+          description: Forbidden or recruiter not verified
+
+  /api/delete-recruiter-job/{id}:
+    delete:
+      tags: [Member3-Recruiter]
+      summary: Delete recruiter job posting
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job deleted
+        '404':
+          description: Not found
+
+  /api/toggle-job-active/{id}:
+    patch:
+      tags: [Member3-Recruiter]
+      summary: Activate/deactivate recruiter job posting
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  oneOf:
+                    - type: boolean
+                    - type: integer
+                      enum: [0, 1]
+      responses:
+        '200':
+          description: Updated
+
+  /api/view-resume/{id}:
+    get:
+      tags: [Member3-Recruiter]
+      summary: View applicant resume
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resume stream
+        '404':
+          description: Resume not found
+
+  /api/update-application-status/{id}:
+    patch:
+      tags: [Member3-Recruiter]
+      summary: Update application status by path id
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationStatusRequest'
+      responses:
+        '200':
+          description: Updated
+
+  /api/update-application-status:
+    post:
+      tags: [Member3-Recruiter]
+      summary: Update application status using body applicationId
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationStatusRequest'
+      responses:
+        '200':
+          description: Updated
+
+  /api/user-profile-for-recruiter/{userId}:
+    get:
+      tags: [Member3-Recruiter]
+      summary: Fetch applicant profile visible to recruiter
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profile response
+        '403':
+          description: Forbidden
+
+  /api/apply:
+    get:
+      tags: [Member3-Job]
+      summary: Get active jobs for student apply page
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Job listings
+
+  /api/job:
+    get:
+      tags: [Member3-Job]
+      summary: Get student job applications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Student applications
+
+  /api/job_not:
+    get:
+      tags: [Member3-Job]
+      summary: Get student job notifications
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications
+
+  /api/apply-job:
+    post:
+      tags: [Member3-Job]
+      summary: Apply for job with resume and custom answers
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [jobId, resume]
+              properties:
+                jobId:
+                  type: string
+                resume:
+                  type: string
+                  format: binary
+                customAnswers:
+                  type: string
+                  description: JSON string map of custom answers
+      responses:
+        '200':
+          description: Application submitted
+        '400':
+          description: Validation or duplicate apply error
+
+  /api/mark-notification-read:
+    post:
+      tags: [Member3-Job]
+      summary: Mark notification as read
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkNotificationRequest'
+      responses:
+        '200':
+          description: Updated
+
+  /api/delete-notification:
+    post:
+      tags: [Member3-Job]
+      summary: Delete notification
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkNotificationRequest'
+      responses:
+        '200':
+          description: Deleted
+
+  /api/revoke-application:
+    delete:
+      tags: [Member3-Job]
+      summary: Revoke student job application
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeApplicationRequest'
+      responses:
+        '200':
+          description: Revoked
+        '400':
+          description: Cannot revoke shortlisted application
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    RecruiterDashboardResponse:
+      type: object
+      properties:
+        user:
+          type: object
+        totalJobs:
+          type: integer
+        totalParticipants:
+          type: integer
+        approvedApplications:
+          type: integer
+        pendingApplications:
+          type: integer
+        rejectedApplications:
+          type: integer
+        hiringSuccessRate:
+          type: integer
+    RecruiterJobCreateRequest:
+      type: object
+      required: [jobTitle, companyName, description, salaryRange, skills]
+      properties:
+        jobTitle:
+          type: string
+        companyName:
+          type: string
+        description:
+          type: string
+        salaryRange:
+          type: string
+        skills:
+          type: string
+        customQuestions:
+          type: array
+          items:
+            type: string
+    UpdateApplicationStatusRequest:
+      type: object
+      properties:
+        applicationId:
+          type: string
+        status:
+          type: string
+          enum: [Approved, Rejected]
+        statusLc:
+          type: string
+          enum: [approved, rejected]
+    MarkNotificationRequest:
+      type: object
+      required: [notificationId]
+      properties:
+        notificationId:
+          type: string
+    RevokeApplicationRequest:
+      type: object
+      required: [applicationId]
+      properties:
+        applicationId:
+          type: string
+    GenericSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    GenericError:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string

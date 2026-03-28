@@ -1,7 +1,7 @@
 paths:
   /api/recruiter-home:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Get recruiter home payload
       security:
         - cookieAuth: []
@@ -13,7 +13,7 @@ paths:
 
   /api/rec-job:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Get recruiter job management data
       security:
         - cookieAuth: []
@@ -23,7 +23,7 @@ paths:
 
   /api/recruiter-dashboard:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Get recruiter dashboard metrics
       security:
         - cookieAuth: []
@@ -37,7 +37,7 @@ paths:
 
   /api/recruiter-dashboard-trends:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Get recruiter trend and hiring pipeline analytics
       security:
         - cookieAuth: []
@@ -47,7 +47,7 @@ paths:
 
   /api/rec-app:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Get recruiter applications feed
       security:
         - cookieAuth: []
@@ -57,7 +57,7 @@ paths:
 
   /api/rec-not:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Get recruiter notifications
       security:
         - cookieAuth: []
@@ -67,7 +67,7 @@ paths:
 
   /api/create-recruiter-job:
     post:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Create recruiter job posting
       security:
         - cookieAuth: []
@@ -89,7 +89,7 @@ paths:
 
   /api/delete-recruiter-job/{id}:
     delete:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Delete recruiter job posting
       security:
         - cookieAuth: []
@@ -107,7 +107,7 @@ paths:
 
   /api/toggle-job-active/{id}:
     patch:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Activate/deactivate recruiter job posting
       security:
         - cookieAuth: []
@@ -135,7 +135,7 @@ paths:
 
   /api/view-resume/{id}:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: View applicant resume
       security:
         - cookieAuth: []
@@ -153,7 +153,7 @@ paths:
 
   /api/update-application-status/{id}:
     patch:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Update application status by path id
       security:
         - cookieAuth: []
@@ -175,7 +175,7 @@ paths:
 
   /api/update-application-status:
     post:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Update application status using body applicationId
       security:
         - cookieAuth: []
@@ -191,7 +191,7 @@ paths:
 
   /api/user-profile-for-recruiter/{userId}:
     get:
-      tags: [Recruiter]
+      tags: [Member3-Recruiter]
       summary: Fetch applicant profile visible to recruiter
       security:
         - cookieAuth: []
@@ -209,7 +209,7 @@ paths:
 
   /api/apply:
     get:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Get active jobs for student apply page
       security:
         - cookieAuth: []
@@ -219,7 +219,7 @@ paths:
 
   /api/job:
     get:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Get student job applications
       security:
         - cookieAuth: []
@@ -229,7 +229,7 @@ paths:
 
   /api/job_not:
     get:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Get student job notifications
       security:
         - cookieAuth: []
@@ -239,7 +239,7 @@ paths:
 
   /api/apply-job:
     post:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Apply for job with resume and custom answers
       security:
         - cookieAuth: []
@@ -267,7 +267,7 @@ paths:
 
   /api/mark-notification-read:
     post:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Mark notification as read
       security:
         - cookieAuth: []
@@ -283,7 +283,7 @@ paths:
 
   /api/delete-notification:
     post:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Delete notification
       security:
         - cookieAuth: []
@@ -299,7 +299,7 @@ paths:
 
   /api/revoke-application:
     delete:
-      tags: [Job]
+      tags: [Member3-Job]
       summary: Revoke student job application
       security:
         - cookieAuth: []

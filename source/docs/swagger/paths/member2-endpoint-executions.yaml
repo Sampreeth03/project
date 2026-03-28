@@ -1,0 +1,138 @@
+x-member2-endpoint-executions:
+  execution_date: 2026-04-01
+  execution_mode:
+    unauthenticated_smoke:
+      tool: curl
+      base_url: http://localhost:5000
+      expected: 401 for auth-protected endpoints
+      actual_summary: All project endpoints returned 401, confirming route registration and auth protection.
+
+  smoke_results:
+    - method: GET
+      path: /api/project
+      status: 401
+    - method: GET
+      path: /api/joined-projects
+      status: 401
+    - method: GET
+      path: /api/project/{id}
+      status: 401
+    - method: GET
+      path: /api/e
+      status: 401
+    - method: POST
+      path: /api/create-project
+      status: 401
+    - method: POST
+      path: /api/delete-project
+      status: 401
+    - method: POST
+      path: /api/join-project
+      status: 401
+    - method: POST
+      path: /api/approve-join-request
+      status: 401
+    - method: POST
+      path: /api/reject-join-request
+      status: 401
+    - method: POST
+      path: /api/delete-join-request
+      status: 401
+    - method: GET
+      path: /api/join-request-messages/{requestId}
+      status: 401
+    - method: POST
+      path: /api/send-join-request-message
+      status: 401
+    - method: POST
+      path: /api/upload-join-request-file
+      status: 401
+    - method: POST
+      path: /api/project/invite-friend
+      status: 401
+    - method: GET
+      path: /api/project/invites
+      status: 401
+    - method: POST
+      path: /api/project/invite/respond
+      status: 401
+    - method: POST
+      path: /api/project/{id}/finish
+      status: 401
+    - method: GET
+      path: /api/project/{id}/pending-tasks
+      status: 401
+    - method: POST
+      path: /api/project/remove-member
+      status: 401
+    - method: POST
+      path: /api/task/create
+      status: 401
+    - method: POST
+      path: /api/task/extend-deadline
+      status: 401
+    - method: POST
+      path: /api/task/submit-github-link
+      status: 401
+    - method: POST
+      path: /api/task/review-submission
+      status: 401
+    - method: POST
+      path: /api/task/{id}/feedback
+      status: 401
+    - method: GET
+      path: /api/get-task-project/{taskId}
+      status: 401
+    - method: GET
+      path: /api/blockchain
+      status: 401
+    - method: GET
+      path: /api/cyb
+      status: 401
+    - method: GET
+      path: /api/ds
+      status: 401
+    - method: GET
+      path: /api/dl
+      status: 401
+    - method: GET
+      path: /api/web-dev
+      status: 401
+    - method: GET
+      path: /api/robo
+      status: 401
+
+  postman_swagger_ui_authenticated_plan:
+    prerequisites:
+      - Start backend at source folder using node server.js
+      - Start frontend at client folder using npm run dev
+      - Login as seeded user account to obtain auth cookie
+    test_sequence:
+      - name: Create project
+        endpoint: POST /api/create-project
+        expected: success true with projectId or requirePayment true
+      - name: List projects
+        endpoint: GET /api/project
+        expected: createdProjects and availableProjects arrays
+      - name: Join flow
+        endpoint: POST /api/join-project
+        expected: success true or informative duplicate/full/own-project message
+      - name: Approve or reject join request
+        endpoint: POST /api/approve-join-request or /api/reject-join-request
+        expected: success true and notification side effects
+      - name: Invite and respond
+        endpoint: POST /api/project/invite-friend then POST /api/project/invite/respond
+        expected: success true and membership update on accept
+      - name: Task workflow
+        endpoint: POST /api/task/create, /api/task/submit-github-link, /api/task/review-submission
+        expected: task status transitions In Progress -> Review -> Completed or back to In Progress
+      - name: Finish project
+        endpoint: GET /api/project/{id}/pending-tasks then POST /api/project/{id}/finish
+        expected: finish blocked until eligibility true, then success
+      - name: Remove member
+        endpoint: POST /api/project/remove-member
+        expected: success true for creator, forbidden for non-creator
+
+  notes:
+    - Topic routes are dynamic and sourced from constants map.
+    - All endpoints in projectRoutes.js are currently stateless JSON APIs behind cookie-based authentication middleware.

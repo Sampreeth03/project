@@ -1,0 +1,1401 @@
+openapi: 3.0.3
+info:
+  title: RELABTeams Member 2 Project APIs
+  version: 1.0.0
+  description: Aggregated OpenAPI file for Member 2 project-related REST endpoints.
+servers:
+- url: http://localhost:5000
+paths:
+  /api/project:
+    get:
+      tags:
+      - Member2-Projects
+      summary: List created and available projects
+      description: Returns projects created by the authenticated user and projects
+        available to join.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Project lists fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/joined-projects:
+    get:
+      tags:
+      - Member2-Projects
+      summary: List joined projects with task grouping
+      description: Returns approved and pending joined projects for the current user
+        with tasks grouped by project.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Joined project data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJoinedProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/project/{id}:
+    get:
+      tags:
+      - Member2-Projects
+      summary: Get project details
+      description: Returns project details, members, tasks, and related user projects.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdPath'
+      responses:
+        '200':
+          description: Detailed project data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProjectDetailsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/e:
+    get:
+      tags:
+      - Member2-Projects
+      summary: Get create-project dashboard data
+      description: Returns projects created by the current user for use in the create
+        project view.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Create view project list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCreateProjectViewResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/create-project:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Create a project
+      description: Creates a new project, adds creator as member, creates default
+        channels, and emits a project creation notification.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '200':
+          description: Project created or payment required gate
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/CreateProjectResponse'
+                - $ref: '#/components/schemas/RequirePaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/delete-project:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Delete a project
+      description: Deletes a project and related members, tasks, and join requests.
+        Creator only.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteProjectRequest'
+      responses:
+        '200':
+          description: Project deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/join-project:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Request to join a project
+      description: Creates a pending join request for the project and notifies the
+        project creator.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinProjectRequest'
+      responses:
+        '200':
+          description: Join request state result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/approve-join-request:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Approve a join request
+      description: Approves a pending request and adds requester as project member.
+        Creator only.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRequestActionRequest'
+      responses:
+        '200':
+          description: Approval result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/reject-join-request:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Reject a join request
+      description: Rejects a pending request. Creator only.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRequestActionRequest'
+      responses:
+        '200':
+          description: Rejection result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/delete-join-request:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Delete a join request
+      description: Deletes a join request by requester or project creator.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRequestActionRequest'
+      responses:
+        '200':
+          description: Request deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/project/invite-friend:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Invite a friend to a project
+      description: Sends a project invite from creator to another user.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteFriendRequest'
+      responses:
+        '200':
+          description: Invite sent or duplicate pending info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/project/invites:
+    get:
+      tags:
+      - Member2-Projects
+      summary: List invites for current user
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Invite list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProjectInvitesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/project/invite/respond:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Accept or reject a project invite
+      description: Updates invite status and adds member on accept.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespondInviteRequest'
+      responses:
+        '200':
+          description: Invite response result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanSuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/project/{id}/finish:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Finish a project
+      description: Marks a project completed if all finish-eligibility rules are satisfied.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdPath'
+      responses:
+        '200':
+          description: Project completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/project/{id}/pending-tasks:
+    get:
+      tags:
+      - Member2-Projects
+      summary: Get pending tasks and finish eligibility
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectIdPath'
+      responses:
+        '200':
+          description: Pending task count with completion rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPendingTasksResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/project/remove-member:
+    post:
+      tags:
+      - Member2-Projects
+      summary: Remove a project member
+      description: Creator-only endpoint for removing a member from a project.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveProjectMemberRequest'
+      responses:
+        '200':
+          description: Member removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/task/create:
+    post:
+      tags:
+      - Member2-ProjectTasks
+      summary: Create a task in a project
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '200':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /api/task/extend-deadline:
+    post:
+      tags:
+      - Member2-ProjectTasks
+      summary: Extend a task deadline
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendDeadlineRequest'
+      responses:
+        '200':
+          description: Deadline extension result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageOrSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/task/submit-github-link:
+    post:
+      tags:
+      - Member2-ProjectTasks
+      summary: Submit github link for review
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitGithubLinkRequest'
+      responses:
+        '200':
+          description: Submission accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/task/review-submission:
+    post:
+      tags:
+      - Member2-ProjectTasks
+      summary: Review submitted task
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmissionRequest'
+      responses:
+        '200':
+          description: Review result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewSubmissionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /api/task/{id}/feedback:
+    post:
+      tags:
+      - Member2-ProjectTasks
+      summary: Review submitted task using task path parameter
+      description: Alias endpoint to review submission using path task id with projectId
+        in request body.
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/TaskIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmissionPathRequest'
+      responses:
+        '200':
+          description: Review result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewSubmissionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /api/get-task-project/{taskId}:
+    get:
+      tags:
+      - Member2-ProjectTasks
+      summary: Resolve task to project id
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/TaskIdPathNamed'
+      responses:
+        '200':
+          description: Task project lookup
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTaskProjectResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/join-request-messages/{requestId}:
+    get:
+      tags:
+      - Member2-ProjectJoinChat
+      summary: Get join-request chat messages
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/RequestIdPath'
+      responses:
+        '200':
+          description: Message thread
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJoinRequestMessagesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/send-join-request-message:
+    post:
+      tags:
+      - Member2-ProjectJoinChat
+      summary: Send join-request chat message
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendJoinRequestMessageRequest'
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendJoinRequestMessageResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/upload-join-request-file:
+    post:
+      tags:
+      - Member2-ProjectJoinChat
+      summary: Upload file in join-request chat
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadJoinRequestFileRequest'
+      responses:
+        '200':
+          description: File uploaded and posted to message thread
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendJoinRequestMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/blockchain:
+    get:
+      tags:
+      - Member2-TopicProjects
+      summary: Get Blockchain topic projects
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TopicProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/cyb:
+    get:
+      tags:
+      - Member2-TopicProjects
+      summary: Get Cyber Security topic projects
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TopicProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/ds:
+    get:
+      tags:
+      - Member2-TopicProjects
+      summary: Get Data Science topic projects
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TopicProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/dl:
+    get:
+      tags:
+      - Member2-TopicProjects
+      summary: Get Deep Learning topic projects
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TopicProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/web-dev:
+    get:
+      tags:
+      - Member2-TopicProjects
+      summary: Get Web Development topic projects
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TopicProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /api/robo:
+    get:
+      tags:
+      - Member2-TopicProjects
+      summary: Get Robotics topic projects
+      security:
+      - cookieAuth: []
+      - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TopicProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProjectIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      description: Project id
+    TaskIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      description: Task id
+    TaskIdPathNamed:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      description: Task id
+    RequestIdPath:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      description: Join request id
+  responses:
+    UnauthorizedError:
+      description: Unauthorized request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Unauthorized
+    ForbiddenError:
+      description: Forbidden request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Unauthorized
+    NotFoundError:
+      description: Entity not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Project not found
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Invalid request
+    TopicProjectsResponse:
+      description: Topic projects fetched
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopicProjectsResponse'
+  schemas:
+    ObjectId:
+      type: string
+      pattern: ^[a-fA-F0-9]{24}$
+      example: 507f1f77bcf86cd799439011
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+      additionalProperties: true
+    MessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+      required:
+      - success
+    BooleanSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+      required:
+      - success
+    MessageOrSuccessResponse:
+      oneOf:
+      - $ref: '#/components/schemas/BooleanSuccessResponse'
+      - $ref: '#/components/schemas/MessageResponse'
+    RequirePaymentResponse:
+      type: object
+      properties:
+        requirePayment:
+          type: boolean
+          example: true
+      required:
+      - requirePayment
+    UserCompact:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        role:
+          type: string
+          example: user
+    ProjectSummary:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        title:
+          type: string
+        description:
+          type: string
+        topic:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        member_count:
+          type: integer
+        memberCount:
+          type: integer
+        status:
+          type: string
+        createdBy:
+          type: string
+        hasJoined:
+          type: boolean
+        hasPendingRequest:
+          type: boolean
+        has_pending_request:
+          type: boolean
+        request_status:
+          type: string
+          nullable: true
+        deadline:
+          type: string
+      additionalProperties: true
+    ProjectMember:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        project_id:
+          $ref: '#/components/schemas/ObjectId'
+        user_id:
+          oneOf:
+          - $ref: '#/components/schemas/ObjectId'
+          - type: object
+            properties:
+              _id:
+                $ref: '#/components/schemas/ObjectId'
+              name:
+                type: string
+              email:
+                type: string
+      additionalProperties: true
+    Task:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        project_id:
+          $ref: '#/components/schemas/ObjectId'
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        assigned_to:
+          oneOf:
+          - $ref: '#/components/schemas/ObjectId'
+          - type: object
+            properties:
+              _id:
+                $ref: '#/components/schemas/ObjectId'
+              name:
+                type: string
+        github_link:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+      additionalProperties: true
+    Notification:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        user_id:
+          $ref: '#/components/schemas/ObjectId'
+        message:
+          type: string
+        type:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    JoinRequest:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        project_id:
+          oneOf:
+          - $ref: '#/components/schemas/ObjectId'
+          - $ref: '#/components/schemas/ProjectSummary'
+        user_id:
+          oneOf:
+          - $ref: '#/components/schemas/ObjectId'
+          - type: object
+            properties:
+              _id:
+                $ref: '#/components/schemas/ObjectId'
+              name:
+                type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - rejected
+      additionalProperties: true
+    JoinRequestMessage:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        join_request_id:
+          $ref: '#/components/schemas/ObjectId'
+        sender_id:
+          oneOf:
+          - $ref: '#/components/schemas/ObjectId'
+          - type: object
+            properties:
+              _id:
+                $ref: '#/components/schemas/ObjectId'
+              name:
+                type: string
+        receiver_id:
+          $ref: '#/components/schemas/ObjectId'
+        message:
+          type: string
+        file_url:
+          type: string
+          nullable: true
+        file_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: true
+    FinishEligibilityRules:
+      type: object
+      properties:
+        minTasksRequired:
+          type: integer
+        minAssigneesRequired:
+          type: integer
+        totalTasks:
+          type: integer
+        completedTasks:
+          type: integer
+        nonCompletedTasks:
+          type: integer
+        assignedMemberCount:
+          type: integer
+        isHalfwayReached:
+          type: boolean
+        halfwayDate:
+          type: string
+          format: date-time
+          nullable: true
+        deadline:
+          type: string
+          nullable: true
+    FinishEligibility:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+        rules:
+          $ref: '#/components/schemas/FinishEligibilityRules'
+        reasons:
+          type: array
+          items:
+            type: string
+    GetAllProjectsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/UserCompact'
+        createdProjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+        availableProjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+      required:
+      - success
+      - createdProjects
+      - availableProjects
+    GetJoinedProjectsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/UserCompact'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+        tasksByProject:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/Task'
+    GetProjectDetailsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        project:
+          $ref: '#/components/schemas/ProjectSummary'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        projectMembers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectMember'
+        userProjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+    GetCreateProjectViewResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+    CreateProjectRequest:
+      type: object
+      required:
+      - title
+      - description
+      - capacity
+      - topic
+      - deadline
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        topic:
+          type: string
+        deadline:
+          type: string
+          format: date
+    CreateProjectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+    DeleteProjectRequest:
+      type: object
+      required:
+      - projectId
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+    JoinProjectRequest:
+      type: object
+      required:
+      - projectId
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+    JoinRequestActionRequest:
+      type: object
+      required:
+      - requestId
+      properties:
+        requestId:
+          $ref: '#/components/schemas/ObjectId'
+    InviteFriendRequest:
+      type: object
+      required:
+      - projectId
+      - toUserId
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+        toUserId:
+          $ref: '#/components/schemas/ObjectId'
+    RespondInviteRequest:
+      type: object
+      required:
+      - inviteId
+      - action
+      properties:
+        inviteId:
+          $ref: '#/components/schemas/ObjectId'
+        action:
+          type: string
+          enum:
+          - accept
+          - reject
+    GetProjectInvitesResponse:
+      type: object
+      properties:
+        invites:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    GetPendingTasksResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        pendingTasks:
+          type: integer
+        finishEligibility:
+          $ref: '#/components/schemas/FinishEligibility'
+    RemoveProjectMemberRequest:
+      type: object
+      required:
+      - projectId
+      - userId
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+        userId:
+          $ref: '#/components/schemas/ObjectId'
+    CreateTaskRequest:
+      type: object
+      required:
+      - projectId
+      - title
+      - dueDate
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+        title:
+          type: string
+        description:
+          type: string
+        assignedTo:
+          $ref: '#/components/schemas/ObjectId'
+        dueDate:
+          type: string
+          format: date
+    CreateTaskResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        task:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/ObjectId'
+            title:
+              type: string
+            status:
+              type: string
+    ExtendDeadlineRequest:
+      type: object
+      required:
+      - taskTitle
+      - projectId
+      - newDueDate
+      properties:
+        taskTitle:
+          type: string
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+        newDueDate:
+          type: string
+          format: date
+    SubmitGithubLinkRequest:
+      type: object
+      required:
+      - taskId
+      - githubLink
+      - projectId
+      properties:
+        taskId:
+          $ref: '#/components/schemas/ObjectId'
+        githubLink:
+          type: string
+          format: uri
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+    ReviewSubmissionRequest:
+      type: object
+      required:
+      - taskId
+      - projectId
+      - action
+      - feedback
+      properties:
+        taskId:
+          $ref: '#/components/schemas/ObjectId'
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+        action:
+          type: string
+          enum:
+          - accept
+          - reject
+        feedback:
+          type: string
+    ReviewSubmissionPathRequest:
+      type: object
+      required:
+      - projectId
+      - action
+      - feedback
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+        action:
+          type: string
+          enum:
+          - accept
+          - reject
+        feedback:
+          type: string
+    ReviewSubmissionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        task:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/ObjectId'
+            status:
+              type: string
+            feedback:
+              type: string
+    GetTaskProjectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        projectId:
+          $ref: '#/components/schemas/ObjectId'
+    SendJoinRequestMessageRequest:
+      type: object
+      required:
+      - requestId
+      - message
+      properties:
+        requestId:
+          $ref: '#/components/schemas/ObjectId'
+        message:
+          type: string
+    SendJoinRequestMessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          $ref: '#/components/schemas/JoinRequestMessage'
+    UploadJoinRequestFileRequest:
+      type: object
+      required:
+      - requestId
+      - file
+      properties:
+        requestId:
+          $ref: '#/components/schemas/ObjectId'
+        file:
+          type: string
+          format: binary
+    GetJoinRequestMessagesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/JoinRequestMessage'
+        joinRequest:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/ObjectId'
+            applicantName:
+              type: string
+            projectName:
+              type: string
+            status:
+              type: string
+    TopicProjectsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        topic:
+          type: string
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+security:
+- cookieAuth: []
+- bearerAuth: []

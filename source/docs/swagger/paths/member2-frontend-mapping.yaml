@@ -1,0 +1,145 @@
+x-member2-frontend-mapping:
+  scope:
+    backend_files:
+      - source/routes/projectRoutes.js
+      - source/controllers/projectController.js
+    frontend_scan_scope:
+      - client/src/components/Projects
+      - client/src/components/User
+      - client/src/hooks
+      - client/src/store
+
+  endpoint_consumers:
+    /api/project:
+      - file: client/src/components/Projects/ProjectsList.jsx
+        line: 36
+        method: GET
+      - file: client/src/components/Projects/ProjectsList.jsx
+        line: 56
+        method: GET
+
+    /api/joined-projects:
+      - file: client/src/components/Projects/ProjectsList.jsx
+        line: 68
+        method: GET
+      - file: client/src/components/Projects/JoinedProjects.jsx
+        line: 19
+        method: GET
+
+    /api/project/{id}:
+      - file: client/src/components/Projects/ProjectDetails.jsx
+        line: 145
+        method: GET
+
+    /api/create-project:
+      - file: client/src/components/Projects/CreateProject.jsx
+        line: 133
+        method: POST
+
+    /api/delete-project:
+      - file: client/src/components/Projects/CreateProject.jsx
+        line: 27
+        method: POST
+
+    /api/join-project:
+      - file: client/src/components/Projects/ProjectsList.jsx
+        line: 32
+        method: POST
+      - file: client/src/components/Projects/ProjectDetails.jsx
+        line: 175
+        method: POST
+      - file: client/src/components/User/TopicProjects.jsx
+        line: 84
+        method: POST
+
+    /api/approve-join-request:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 90
+        method: POST
+
+    /api/reject-join-request:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 129
+        method: POST
+
+    /api/delete-join-request:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 172
+        method: POST
+
+    /api/project/invite-friend:
+      - file: client/src/components/Projects/ProjectDetails.jsx
+        line: 460
+        method: POST
+
+    /api/project/invite/respond:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 60
+        method: POST
+
+    /api/project/{id}/finish:
+      - file: client/src/hooks/useProjectActions.js
+        line: 61
+        method: POST
+
+    /api/project/{id}/pending-tasks:
+      - file: client/src/components/Projects/ProjectDetails.jsx
+        line: 149
+        method: GET
+
+    /api/project/remove-member:
+      - file: client/src/hooks/useProjectActions.js
+        line: 121
+        method: POST
+      - status: fixed
+        note: Backend route now exists and maps to removeProjectMember.
+
+    /api/task/create:
+      - file: client/src/hooks/useProjectActions.js
+        line: 43
+        method: POST
+
+    /api/task/extend-deadline:
+      - file: client/src/hooks/useProjectActions.js
+        line: 87
+        method: POST
+
+    /api/task/submit-github-link:
+      - file: client/src/components/Projects/ProjectDetails.jsx
+        line: 42
+        method: POST
+
+    /api/task/review-submission:
+      - file: client/src/hooks/useProjectActions.js
+        line: 102
+        method: POST
+
+    /api/get-task-project/{taskId}:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 217
+        method: GET
+
+    /api/join-request-messages/{requestId}:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 330
+        method: GET
+
+    /api/send-join-request-message:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 345
+        method: POST
+
+    /api/upload-join-request-file:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 371
+        method: POST
+
+    /api/blockchain|/api/cyb|/api/ds|/api/dl|/api/web-dev|/api/robo:
+      - file: client/src/components/User/TopicProjects.jsx
+        line: 84
+        note: Topic endpoint is selected from constants mapping and fetched dynamically.
+
+  out_of_scope_but_related:
+    - endpoint: /api/notifications
+      frontend_file: client/src/components/User/ProjectNotifications.jsx
+      note: Notification inbox endpoint is implemented in doubtController routes, not in projectRoutes/projectController.

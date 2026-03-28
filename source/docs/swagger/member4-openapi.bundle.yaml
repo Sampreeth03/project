@@ -1,0 +1,127 @@
+openapi: 3.0.3
+info:
+  title: WBD Project API - Member 4
+  version: 1.0.0
+  description: Admin, Auth, and Doubt API documentation for Member 4 deliverables.
+servers:
+  - url: http://localhost:5000/api
+    description: Local backend API
+
+paths:
+  /:
+    $ref: ./paths/member4-auth.yaml#/paths/~1
+  /admin:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin
+  /admin/dashboard-data:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin~1dashboard-data
+  /stud:
+    $ref: ./paths/member4-admin.yaml#/paths/~1stud
+  /students:
+    $ref: ./paths/member4-admin.yaml#/paths/~1students
+  /admin-doubts:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-doubts
+  /admin-doubts/data:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-doubts~1data
+  /admin-rec:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-rec
+  /admin-rec/data:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-rec~1data
+  /admin-proj:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-proj
+  /projects:
+    $ref: ./paths/member4-admin.yaml#/paths/~1projects
+  /admin-prof:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-prof
+  /admin-prof/data:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-prof~1data
+  /admin-mess:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-mess
+  /admin-mess/data:
+    $ref: ./paths/member4-admin.yaml#/paths/~1admin-mess~1data
+  /platform-admins:
+    $ref: ./paths/member4-admin.yaml#/paths/~1platform-admins
+
+  /login:
+    $ref: ./paths/member4-auth.yaml#/paths/~1login
+  /login/request-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1login~1request-otp
+  /login/verify-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1login~1verify-otp
+  /forgot-password/request-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1forgot-password~1request-otp
+  /forgot-password/reset:
+    $ref: ./paths/member4-auth.yaml#/paths/~1forgot-password~1reset
+  /signup:
+    $ref: ./paths/member4-auth.yaml#/paths/~1signup
+  /signup/init:
+    $ref: ./paths/member4-auth.yaml#/paths/~1signup~1init
+  /signup/verify-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1signup~1verify-otp
+  /signup/resend-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1signup~1resend-otp
+  /signupforrec:
+    $ref: ./paths/member4-auth.yaml#/paths/~1signupforrec
+  /recruiter-signup:
+    $ref: ./paths/member4-auth.yaml#/paths/~1recruiter-signup
+  /recruiter/signup/init:
+    $ref: ./paths/member4-auth.yaml#/paths/~1recruiter~1signup~1init
+  /recruiter/signup/verify-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1recruiter~1signup~1verify-otp
+  /recruiter/signup/resend-otp:
+    $ref: ./paths/member4-auth.yaml#/paths/~1recruiter~1signup~1resend-otp
+  /recruiter/signup/complete:
+    $ref: ./paths/member4-auth.yaml#/paths/~1recruiter~1signup~1complete
+  /logout:
+    $ref: ./paths/member4-auth.yaml#/paths/~1logout
+
+  /doubt:
+    $ref: ./paths/member4-doubt.yaml#/paths/~1doubt
+  /clear:
+    $ref: ./paths/member4-doubt.yaml#/paths/~1clear
+  /doubts:
+    $ref: ./paths/member4-doubt.yaml#/paths/~1doubts
+  /not:
+    $ref: ./paths/member4-doubt.yaml#/paths/~1not
+  /notifications:
+    $ref: ./paths/member4-doubt.yaml#/paths/~1notifications
+  /reply:
+    $ref: ./paths/member4-doubt.yaml#/paths/~1reply
+
+  /ask:
+    get:
+      tags: [Auth]
+      summary: Legacy ask route redirect hint
+      operationId: redirectAsk
+      responses:
+        '200':
+          description: Redirect hint response.
+          content:
+            application/json:
+              schema:
+                $ref: ./components/member4-schemas.yaml#/components/schemas/SuccessMessageResponse
+    post:
+      tags: [Doubt]
+      summary: Post a new doubt
+      operationId: postDoubt
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: ./components/member4-schemas.yaml#/components/schemas/AskDoubtRequest
+      responses:
+        '200':
+          description: Doubt post attempted.
+          content:
+            application/json:
+              schema:
+                $ref: ./components/member4-schemas.yaml#/components/schemas/AskDoubtResponse
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token

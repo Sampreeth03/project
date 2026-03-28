@@ -7,6 +7,10 @@ servers:
   - url: /
     description: Relative to deployment origin
 
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
 tags:
   - name: Member5
 
@@ -16,6 +20,7 @@ paths:
       tags: [Member5]
       summary: Platform admin login
       operationId: loginPlatformAdmin
+      security: []
       requestBody:
         required: true
         content:
@@ -33,6 +38,9 @@ paths:
       tags: [Member5]
       summary: Get current platform admin session
       operationId: getPlatformAdminSession
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -44,6 +52,9 @@ paths:
       tags: [Member5]
       summary: Logout current platform admin session
       operationId: logoutPlatformAdmin
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -55,6 +66,9 @@ paths:
       tags: [Member5]
       summary: Platform admin summary
       operationId: getPlatformAdminSummary
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -66,6 +80,9 @@ paths:
       tags: [Member5]
       summary: Recruiters pending verification
       operationId: getRecruitersForVerification
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -77,6 +94,9 @@ paths:
       tags: [Member5]
       summary: Get recruiter verification detail
       operationId: getRecruiterVerificationDetail
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/idPath'
       responses:
@@ -92,6 +112,9 @@ paths:
       tags: [Member5]
       summary: Verify recruiter
       operationId: updateRecruiterVerification
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/idPath'
       responses:
@@ -109,6 +132,9 @@ paths:
       tags: [Member5]
       summary: Bulk verify or request re-upload for recruiters
       operationId: bulkUpdateRecruiterVerification
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -118,6 +144,16 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: platform_admin_token
+
   parameters:
     idPath:
       name: id

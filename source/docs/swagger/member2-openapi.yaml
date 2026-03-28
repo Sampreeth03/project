@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: RELABTeams Member 2 Project APIs
+  version: 1.0.0
+  description: Aggregated OpenAPI file for Member 2 project-related REST endpoints.
+servers:
+  - url: http://localhost:5000
+paths:
+  $ref: ./paths/member2-project-paths.yaml#/paths
+components:
+  $ref: ./paths/member2-project-schemas.yaml#/components
