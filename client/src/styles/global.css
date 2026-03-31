@@ -1,14 +1,137 @@
-html, body, #root {
+:root,
+html[data-theme='dark'] {
+    --surface-0: #06080f;
+    --surface-1: #0d111a;
+    --surface-2: #141b2a;
+    --surface-3: #1a2335;
+    --text-primary: #f2f6ff;
+    --text-secondary: #b9c5e0;
+    --text-muted: #8d9ab8;
+    --border-subtle: rgba(166, 183, 217, 0.2);
+    --border-strong: rgba(166, 183, 217, 0.36);
+    --overlay-soft: rgba(4, 8, 18, 0.72);
+    --overlay-strong: rgba(2, 4, 10, 0.9);
+    --focus-ring: rgba(0, 104, 255, 0.35);
+    --accent-primary: #0068ff;
+    --accent-primary-soft: rgba(0, 104, 255, 0.2);
+    --accent-success: #00d97a;
+    --accent-danger: #ff5568;
+    --text-on-accent: #f7fbff;
+    --panel-bg: var(--surface-2);
+    --page-gradient-end: #081122;
+    --shadow-soft: 0 10px 30px var(--overlay-soft);
+    --shadow-elevated: 0 20px 44px rgba(0, 0, 0, 0.52);
+}
+
+html[data-theme='light'] {
+    --surface-0: #edf2ff;
+    --surface-1: #f6f9ff;
+    --surface-2: #e8efff;
+    --surface-3: #dbe6ff;
+    --text-primary: #121a2d;
+    --text-secondary: #37486f;
+    --text-muted: #61729a;
+    --border-subtle: rgba(26, 43, 85, 0.14);
+    --border-strong: rgba(26, 43, 85, 0.24);
+    --overlay-soft: rgba(245, 250, 255, 0.88);
+    --overlay-strong: rgba(232, 241, 255, 0.95);
+    --focus-ring: rgba(0, 104, 255, 0.24);
+    --accent-primary: #005ee6;
+    --accent-primary-soft: rgba(0, 94, 230, 0.12);
+    --accent-success: #128f52;
+    --accent-danger: #cc2f47;
+    --text-on-accent: #f7fbff;
+    --panel-bg: #e6eeff;
+    --page-gradient-end: #d2dfff;
+    --shadow-soft: 0 8px 22px rgba(35, 55, 100, 0.12);
+    --shadow-elevated: 0 18px 32px rgba(35, 55, 100, 0.16);
+}
+
+html,
+body,
+#root {
     height: 100%;
     margin: 0;
     padding: 0;
 }
 
 body {
-    background-color: black;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1) 50%, var(--page-gradient-end) 100%);
+    background-attachment: fixed;
+    transition: background-color 0.35s ease, background 0.35s ease, color 0.35s ease;
 }
 
-/* Remove this if you don't want all text white globally */
-/* * {
-    color: white;
-} */
+*,
+*::before,
+*::after {
+    transition: background-color 0.28s ease, border-color 0.28s ease, color 0.28s ease, box-shadow 0.28s ease;
+}
+
+input,
+textarea,
+select {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.global-theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 2200;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--overlay-soft);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-soft);
+}
+
+.global-theme-toggle:hover {
+    transform: translateY(-1px);
+    border-color: var(--accent-primary);
+    background: var(--overlay-strong);
+    box-shadow: var(--shadow-elevated);
+}
+
+.global-theme-toggle__icon {
+    width: 18px;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.global-theme-toggle__label {
+    font-size: 13px;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .global-theme-toggle {
+        top: 10px;
+        right: 10px;
+        padding: 8px 11px;
+        gap: 6px;
+    }
+
+    .global-theme-toggle__label {
+        font-size: 12px;
+    }
+}

@@ -1,11 +1,11 @@
 .projects-list-page {
     --pl-primary: #3a86ff;
     --pl-secondary: #b5c9f7;
-    --pl-dark-bg: #181a1b;
-    --pl-card-bg: #232526;
-    --pl-border: #292929;
-    --pl-light-text: #f3f3f3;
-    --pl-medium-text: #b0b0b0;
+    --pl-dark-bg: var(--surface-0);
+    --pl-card-bg: var(--surface-2);
+    --pl-border: var(--border-subtle);
+    --pl-light-text: var(--text-primary);
+    --pl-medium-text: var(--text-secondary);
     --pl-shadow: rgba(0, 0, 0, 0.2);
 }
 
@@ -116,11 +116,11 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 8px;
-    color: #a0a0a0;
+    color: var(--text-secondary);
     font-size: 13px;
     margin-top: 6px;
     margin-bottom: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--border-subtle);
     padding-top: 10px;
 }
 
@@ -144,7 +144,7 @@
     border-radius: 6px;
     border: 1px solid var(--pl-primary);
     background: var(--pl-primary);
-    color: #ffffff;
+    color: var(--text-on-accent);
     cursor: pointer;
     text-decoration: none;
     font-size: 14px;
@@ -177,21 +177,21 @@
 .projects-list-page .pl-btn-ghost {
     background: transparent;
     color: var(--pl-medium-text);
-    border-color: #444444;
+    border-color: var(--border-strong);
 }
 
 .projects-list-page .pl-btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--pl-light-text);
-    border-color: #5a5a5a;
+    background: var(--border-subtle);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
 }
 
 .projects-list-page .pl-empty {
     color: var(--pl-medium-text);
-    border: 1px dashed #3f3f3f;
+    border: 1px dashed var(--border-strong);
     border-radius: 10px;
     padding: 14px;
-    background: rgba(255, 255, 255, 0.02);
+    background: color-mix(in srgb, var(--surface-2) 85%, transparent);
 }
 
 @media (max-width: 768px) {

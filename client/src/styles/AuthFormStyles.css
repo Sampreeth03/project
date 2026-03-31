@@ -2,7 +2,7 @@
 
 /* --- GLOBAL & BODY STYLES --- */
 body {
-    background-color: #121212;
+    background-color: var(--surface-0);
     color: #ffffff;
     font-family: Arial, sans-serif;
     margin: 0;
@@ -24,10 +24,10 @@ body {
 
 /* --- CONTAINER & FORM STYLES (CRITICAL CENTERING FIX) --- */
 .login-container, .signup-container2 { /* Targeting the renamed class */
-    background-color: #1e1e1e;
+    background-color: var(--surface-2);
     padding: 28px 32px;
     border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 20px var(--overlay-soft);
     width: 400px;
     transition: 0.3s;
     /* FIX: This centers the form block horizontally */
@@ -151,7 +151,7 @@ input.input-error::placeholder {
 /* --- EMAIL SUGGESTION (Login) --- */
 .email-suggestion {
     position: absolute;
-    background: #2a2a2a;
+    background: var(--surface-3);
     border: 1px solid #0068ff;
     border-radius: 4px;
     padding: 8px 12px;
@@ -210,25 +210,25 @@ input.input-error::placeholder {
 }
 .progress-text {
     font-size: 13px;
-    color: #888;
+    color: var(--text-secondary);
     margin-bottom: 6px;
 }
 .password-strength-container {
     margin-top: 8px;
 }
-.password-strength-bar { height: 4px; background-color: #333; border-radius: 2px; margin-bottom: 4px; }
+.password-strength-bar { height: 4px; background-color: var(--surface-3); border-radius: 2px; margin-bottom: 4px; }
 .password-strength-fill { height: 100%; transition: width 0.3s ease; border-radius: 2px; }
 .password-strength-fill.weak { background-color: #ff4444; }
 .password-strength-fill.medium { background-color: #ffa500; }
 .password-strength-fill.strong { background-color: #00ff00; }
-.password-strength-text { font-size: 12px; color: #888; }
+.password-strength-text { font-size: 12px; color: var(--text-secondary); }
 .password-strength-text.weak { color: #ff4444; }
 .password-strength-text.medium { color: #ffa500; }
 .password-strength-text.strong { color: #00ff00; }
 .password-match-indicator { font-size: 0.8rem; margin-top: 6px; display: none; }
 .password-match-indicator.match { color: #00ff00; display: block; }
 .password-match-indicator.no-match { color: #ff4444; display: block; }
-.progress-bar-container { height: 5px; background-color: #333; border-radius: 3px; overflow: hidden; }
+.progress-bar-container { height: 5px; background-color: var(--surface-3); border-radius: 3px; overflow: hidden; }
 .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #0068ff, #00d4ff); transition: width 0.3s ease; }
 .file-group { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; flex-direction: column; }
 .file-group label { color: #ffffff; margin-bottom: 6px; align-self: flex-start; font-size: 14px; font-weight: 500; }
@@ -240,7 +240,7 @@ input.input-error::placeholder {
     text-align: center;
     margin-top: 16px;
     font-size: 14px;
-    color: #888;
+    color: var(--text-secondary);
 }
 .signup-text a, .signin-text a {
     color: #0068ff;
@@ -274,7 +274,7 @@ input.input-error::placeholder {
 .back-link {
     background: none;
     border: none;
-    color: #888;
+    color: var(--text-secondary);
     font-size: 13px;
     cursor: pointer;
     padding: 0;
@@ -289,7 +289,7 @@ input.input-error::placeholder {
 }
 .resend-cooldown {
     font-size: 13px;
-    color: #888;
+    color: var(--text-secondary);
 }
 .resend-btn {
     background: none;

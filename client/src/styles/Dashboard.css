@@ -7,16 +7,16 @@
 :root {
     --primary-blue:       #0066ee;
     --primary-blue-light: #3380ee;
-    --bg-darker:          #050505;
-    --bg-dark:            #0a0a0b;
+    --bg-darker:          var(--surface-0);
+    --bg-dark:            var(--surface-0);
     --bg-card:            #141416;
     --bg-card-hover:      #1a1a1d;
     --text-primary:       #ffffff;
-    --text-secondary:     #b8b8b8;
+    --text-secondary:     var(--text-secondary);
     --text-muted:         #6b7280;
     --border-subtle:      rgba(255, 255, 255, 0.07);
     --border-medium:      rgba(255, 255, 255, 0.13);
-    --shadow-card:        0 4px 28px rgba(0, 0, 0, 0.5);
+    --shadow-card:        0 4px 28px var(--overlay-soft);
     --transition:         all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* metric accent palette */
@@ -52,7 +52,7 @@
     font-family: 'Inter', 'Segoe UI', sans-serif;
     background:
         radial-gradient(ellipse 70% 40% at 50% 0%, rgba(0,102,238,0.08) 0%, transparent 70%),
-        linear-gradient(160deg, #050505 0%, #0a0a0b 55%, #080d18 100%);
+        linear-gradient(160deg, var(--surface-0) 0%, var(--surface-0) 55%, #080d18 100%);
     background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
@@ -592,7 +592,7 @@
 .loading-spinner {
     width: 38px;
     height: 38px;
-    border: 3px solid rgba(255,255,255,0.08);
+    border: 3px solid var(--border-subtle);
     border-top-color: var(--primary-blue);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;

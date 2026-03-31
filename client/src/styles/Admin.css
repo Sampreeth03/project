@@ -2,11 +2,11 @@
 :root {
     --primary: #0068FF;
     --secondary: #0056d6;
-    --dark: #121212;
-    --darker: #0a0a0a;
+    --dark: var(--surface-0);
+    --darker: var(--surface-0);
     --light-text: #ffffff;
-    --gray-text: #a0a0a0;
-    --gray-dark: #2a2a2a;
+    --gray-text: var(--text-secondary);
+    --gray-dark: var(--surface-3);
     --success: #4ade80;
     --danger: #ef4444;
     --warning: #f59e0b;
@@ -36,7 +36,7 @@
 
 .sidebar-header {
     padding: 0 25px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-strong);
     margin-bottom: 20px;
 }
 
@@ -85,7 +85,7 @@
 
 .menu-item:hover {
     color: var(--light-text);
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--border-subtle);
 }
 
 .menu-item.active {
@@ -930,7 +930,7 @@
 }
 
 .btn-outline:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--border-subtle);
 }
 
 /* Profile */
@@ -1164,11 +1164,11 @@
     left: 0;
     min-width: 210px;
     background: #1e2130;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     padding: 10px 12px;
     z-index: 200;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px var(--overlay-soft);
     animation: popoverIn 0.15s ease;
 }
 
@@ -1184,7 +1184,7 @@
     padding: 5px 0;
     font-size: 13px;
     color: #c9d1d9;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .member-item:last-child {
@@ -1222,7 +1222,7 @@
 .popover-section-label.popover-section-members {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid var(--border-subtle);
 }
 
 /* ── Recruiter Row Expand (AdminRecruiters) ──────────────────── */

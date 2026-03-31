@@ -21,9 +21,9 @@
     border-radius: 16px;
     padding: 0;
     box-shadow: 
-        0 10px 40px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        0 10px 40px var(--overlay-soft),
+        0 0 0 1px var(--border-subtle),
+        inset 0 1px 0 var(--border-subtle);
     overflow: hidden;
     transform-origin: bottom right;
     animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -55,7 +55,7 @@
     align-items: center;
     gap: 12px;
     padding: 16px 16px 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .onboarding-toast-icon {
@@ -74,7 +74,7 @@
 }
 
 .onboarding-toast-close {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-subtle);
     border: none;
     color: rgba(255, 255, 255, 0.6);
     font-size: 20px;
@@ -159,9 +159,9 @@
 
 .onboarding-toast-skip-btn {
     padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-subtle);
     color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     font-size: 14px;
     font-weight: 500;
@@ -178,7 +178,7 @@
 /* Progress bar */
 .onboarding-toast-progress {
     height: 3px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-subtle);
     overflow: hidden;
 }
 
@@ -202,9 +202,9 @@
 .onboarding-toast-clickable:hover {
     transform: translateY(-3px) scale(1.01);
     box-shadow: 
-        0 14px 50px rgba(0, 0, 0, 0.5),
+        0 14px 50px var(--overlay-soft),
         0 0 0 1px rgba(255, 255, 255, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 1px 0 var(--border-subtle),
         0 0 20px rgba(0, 104, 255, 0.15);
     background: linear-gradient(145deg, #252535 0%, #2a2a3e 100%);
 }
@@ -237,9 +237,9 @@
 
 .onboarding-toast-success.onboarding-toast-clickable:hover {
     box-shadow: 
-        0 14px 50px rgba(0, 0, 0, 0.5),
+        0 14px 50px var(--overlay-soft),
         0 0 0 1px rgba(16, 185, 129, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 1px 0 var(--border-subtle),
         0 0 20px rgba(16, 185, 129, 0.2);
 }
 

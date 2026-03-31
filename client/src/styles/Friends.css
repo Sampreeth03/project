@@ -5,10 +5,10 @@
 /* ---- Page Wrapper ---- */
 .friends-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #050505 0%, #0a0a0b 50%, #0a0e1a 100%);
+    background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1) 55%, var(--page-gradient-end) 100%);
     background-attachment: fixed;
     padding: 90px 5% 60px;
-    color: #ffffff;
+    color: var(--text-primary);
     font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
@@ -22,7 +22,7 @@
 .friends-page-title {
     font-size: 1.9rem;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--text-primary);
     margin-bottom: 8px;
     letter-spacing: -0.3px;
 }
@@ -68,9 +68,9 @@
     width: 100%;
     padding: 12px 16px 12px 40px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.05);
-    color: #ffffff;
+    border: 1px solid var(--border-subtle);
+    background: var(--border-subtle);
+    color: var(--text-primary);
     font-size: 0.92rem;
     font-family: 'Inter', 'Segoe UI', sans-serif;
     outline: none;
@@ -115,7 +115,7 @@
 /* ---- Section Divider ---- */
 .friends-divider {
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-top: 1px solid var(--border-subtle);
     margin: 28px 0;
 }
 
@@ -130,7 +130,7 @@
 .friends-section-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #b8b8b8;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.6px;
 }
@@ -166,8 +166,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+    border: 1px solid var(--border-subtle);
     border-radius: 10px;
     margin-bottom: 8px;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -177,7 +177,7 @@
     background: rgba(0, 102, 238, 0.06);
     border-color: rgba(0, 102, 238, 0.25);
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-soft);
 }
 
 /* ---- Avatar ---- */
@@ -191,7 +191,7 @@
     justify-content: center;
     font-size: 0.95rem;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--text-on-accent);
     flex-shrink: 0;
     text-transform: uppercase;
 }
@@ -212,7 +212,7 @@
 .friends-user-name {
     font-size: 0.92rem;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -255,13 +255,13 @@
 /* Ghost / Outline button */
 .friends-btn-outline {
     background: transparent;
-    color: #b8b8b8;
+    color: var(--text-secondary);
     border-color: rgba(255, 255, 255, 0.12);
 }
 
 .friends-btn-outline:hover {
     background: rgba(255, 255, 255, 0.07);
-    color: #ffffff;
+    color: var(--text-primary);
     border-color: rgba(255, 255, 255, 0.22);
     transform: translateY(-1px);
 }
@@ -275,7 +275,7 @@
 
 .friends-btn-primary:hover {
     background: rgba(0, 102, 238, 0.25);
-    color: #5599f5;
+    color: var(--text-on-accent);
     border-color: rgba(0, 102, 238, 0.5);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 102, 238, 0.2);

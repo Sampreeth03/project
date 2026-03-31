@@ -105,11 +105,11 @@ const Navbar = ({ onSearchChange }) => {
                 className="navbar"
                 style={{
                     background: isScrolled 
-                        ? 'rgba(10, 10, 11, 0.98)' 
-                        : 'rgba(10, 10, 11, 0.95)',
+                        ? 'var(--overlay-strong)' 
+                        : 'var(--overlay-soft)',
                     boxShadow: isScrolled 
-                        ? '0 8px 32px rgba(0, 0, 0, 0.6)' 
-                        : '0 4px 24px rgba(0, 0, 0, 0.4)',
+                        ? 'var(--shadow-elevated)' 
+                        : 'var(--shadow-soft)',
                     transition: 'all 0.3s ease'
                 }}
             >
@@ -134,7 +134,7 @@ const Navbar = ({ onSearchChange }) => {
                                     onClick={handleLogout} 
                                     style={{ 
                                         cursor: 'pointer',
-                                        color: '#ff6b6b'
+                                        color: 'var(--accent-danger)'
                                     }}
                                 >
                                     {link.name}

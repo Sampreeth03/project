@@ -39,7 +39,7 @@ const JoinedProjects = () => {
 
     if (loading) {
         return (
-            <div className="joined-projects-state joined-projects-state-loading">
+            <div style={{ color: 'var(--text-primary)', textAlign: 'center', marginTop: '100px' }}>
                 <Navbar />
                 Loading Joined Projects...
             </div>
@@ -48,7 +48,7 @@ const JoinedProjects = () => {
 
     if (error) {
         return (
-            <div className="joined-projects-state joined-projects-state-error">
+            <div style={{ color: 'red', textAlign: 'center', marginTop: '100px' }}>
                 <Navbar />
                 Error: {error}
             </div>
@@ -72,7 +72,7 @@ const JoinedProjects = () => {
     return (
         <>
             <Navbar />
-            <div className="container joined-projects-page">
+            <div className="container joined-projects-page" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto', color: 'var(--text-primary)' }}>
                 <h1 className="projects-title">My Joined Projects & Requests</h1>
 
                 <div className="projects-controls">
@@ -100,67 +100,45 @@ const JoinedProjects = () => {
                 ) : (
                     <div className="joined-projects-list">
                         {filteredProjects.map(project => (
-                            <article key={project.id} className="project-card joined-project-card">
-                                <div className="joined-project-card-shell">
-                                    <div className="joined-project-card-top">
-                                        <div className="joined-project-title-row">
-                                            <h2 className="joined-project-title">{project.title}</h2>
-                                            <span className={`joined-project-status ${project.status === 'approved' ? 'is-approved' : 'is-pending'}`}>
-                                                {project.status}
-                                            </span>
-                                        </div>
-
-                                        {project.topic && (
-                                            <p className="joined-project-topic">{project.topic}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="joined-project-card-body">
-                                        {project.status === 'approved' && (
-                                            <>
-                                                <p className="joined-project-description">{project.description}</p>
-                                                <div className="joined-project-task-section">
-                                                    <p className="joined-project-section-label">Tasks Assigned to Me</p>
-                                                    <ul className="joined-project-task-list">
-                                                        {joinedData.tasksByProject[project.id]?.length ? (
-                                                            joinedData.tasksByProject[project.id].map(task => (
-                                                                <li key={task.id}>
-                                                                    <Link to={`/project/${project.id}`} className="joined-project-task-link">
-                                                                        {task.title}
-                                                                    </Link>
-                                                                    <span className={`joined-task-status status-${String(task.status || '').toLowerCase().replace(/\s+/g, '-')}`}>
-                                                                        {task.status}
-                                                                    </span>
-                                                                </li>
-                                                            ))
-                                                        ) : (
-                                                            <li className="joined-project-task-empty">No tasks assigned to you yet.</li>
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {project.status === 'pending' && (
-                                            <p className="joined-project-pending-copy">Your request to join this project is pending approval. You can still open the project and track its status.</p>
-                                        )}
-                                    </div>
-
-                                    <div className="project-actions joined-project-actions">
-                                        <Link to={`/project/${project.id}`} className="btn-secondary">View Project Status</Link>
-
-                                        {project.status === 'pending' && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary"
-                                                onClick={() => alert(`Logic to cancel request ${project.requestId}`)}
-                                            >
-                                                Cancel Request
-                                            </button>
-                                        )}
-                                    </div>
+                            <div key={project.id} className="project-card">
+                                <h2>
+                                    {project.title} 
+                                    <span style={{ fontSize: '0.8em', marginLeft: '10px', color: project.status === 'approved' ? 'var(--accent-success)' : '#FFC107' }}>
+                                        ({project.status.toUpperCase()})
+                                    </span>
+                                </h2>
+                                
+                                {project.status === 'approved' && (
+                                    <>
+                                        <p>{project.description}</p>
+                                        <p>Tasks Assigned to Me:</p>
+                                        <ul style={{ listStyleType: 'disc', marginLeft: '20px', color: 'var(--text-secondary)' }}>
+                                            {joinedData.tasksByProject[project.id]?.map(task => (
+                                                <li key={task.id}>
+                                                    <Link to={`/project/${project.id}`} style={{ color: '#0068FF' }}>
+                                                        {task.title}
+                                                    </Link> - Status: {task.status}
+                                                </li>
+                                            )) || <li>No tasks assigned to you.</li>}
+                                        </ul>
+                                    </>
+                                )}
+                                
+                                {project.status === 'pending' && (
+                                    <p style={{ color: '#FFC107' }}>Your request to join this project is pending approval.</p>
+                                )}
+                                
+                                <div className="project-actions">
+                                    {/* Link to project details or simply view the pending request */}
+                                    <Link to={`/project/${project.id}`} className="btn-secondary">View Project Status</Link>
+                                    
+                                    {project.status === 'pending' && (
+                                        <button className="btn btn-secondary" onClick={() => alert(`Logic to cancel request ${project.requestId}`)}>
+                                            Cancel Request
+                                        </button>
+                                    )}
                                 </div>
-                            </article>
+                            </div>
                         ))}
                     </div>
                 )}

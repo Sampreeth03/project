@@ -140,7 +140,7 @@ const ProjectsList = () => {
 
     if (loading) {
         return (
-            <div style={{ color: 'white', textAlign: 'center', marginTop: '100px' }}>
+            <div style={{ color: 'var(--text-primary)', textAlign: 'center', marginTop: '100px' }}>
                 <Navbar />
                 Loading Project Lists...
             </div>
@@ -159,7 +159,7 @@ const ProjectsList = () => {
     return (
         <>
             <Navbar onSearchChange={setSearchQuery} />
-            <div className="container projects-list-page" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto', color: 'white' }}>
+            <div className="container projects-list-page" style={{ paddingTop: '70px', maxWidth: '1200px', margin: '30px auto', color: 'var(--text-primary)' }}>
 
                 <div className="pl-controls">
                     <label className="pl-topic-filter">

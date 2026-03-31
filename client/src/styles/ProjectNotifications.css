@@ -2,9 +2,9 @@
   --primary-color: #0068FF;
   --secondary-color: #4d9fff;
   --danger-color: #FF5252;
-  --dark-bg: #121212;
-  --darker-bg: #1e1e1e;
-  --card-bg: #2a2a2a;
+  --dark-bg: var(--surface-0);
+  --darker-bg: var(--surface-2);
+  --card-bg: var(--surface-3);
   --light-text: #fff;
   --medium-text: #b0b0b0;
   --dark-text: #8a8a8a;
@@ -18,7 +18,7 @@
 .project-notifications-container {
   font-family: 'Segoe UI', sans-serif;
   color: var(--light-text);
-  background: linear-gradient(135deg, var(--dark-bg), #1a1a1a);
+  background: linear-gradient(135deg, var(--dark-bg), var(--surface-2));
   min-height: 100vh;
   padding-top: 80px;
 }
@@ -357,7 +357,7 @@
   top: 10px;
   right: 10px;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   color: var(--light-text);
   width: 36px;
   height: 36px;

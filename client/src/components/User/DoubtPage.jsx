@@ -171,13 +171,13 @@ const DoubtPage = () => {
               </label>
               <input id="file-input" type="file" name="file-input" style={{display:'none'}} onChange={e=>setFile(e.target.files[0]||null)} />
               {file && (
-                <span style={{ color: '#4CAF50', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--accent-success)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <i className="fas fa-check-circle"></i>
                   {file.name}
                   <button 
                     type="button" 
                     onClick={() => setFile(null)} 
-                    style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer', padding: '0 4px' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', padding: '0 4px' }}
                     title="Remove file"
                   >
                     <i className="fas fa-times-circle"></i>

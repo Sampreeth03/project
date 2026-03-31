@@ -6,14 +6,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --bg-page:       #0a0a0f;
-  --bg-dark:       #111118;
-  --bg-darker:     #0d0d12;
-  --bg-card:       #18181f;
-  --bg-card-hover: #1f1f28;
-  --bg-input:      #13131a;
-  --bg-header:     #16161e;
-  --bg-overlay:    rgba(20, 20, 28, 0.98);
+  --bg-page:       var(--surface-0);
+  --bg-dark:       var(--surface-1);
+  --bg-darker:     var(--surface-1);
+  --bg-card:       var(--surface-2);
+  --bg-card-hover: var(--surface-3);
+  --bg-input:      var(--surface-1);
+  --bg-header:     var(--surface-2);
+  --bg-overlay:    var(--overlay-strong);
 
   --blue:          #0068ff;
   --blue-light:    #4d9fff;
@@ -32,12 +32,12 @@
   --red-dim:       rgba(255, 68, 85, 0.12);
   --amber:         #ffab00;
 
-  --text-primary:  #f0f0f8;
-  --text-secondary:#9090b0;
-  --text-muted:    #505068;
+  --aj-text-primary: var(--text-primary);
+  --aj-text-secondary: var(--text-secondary);
+  --aj-text-muted: var(--text-muted);
 
-  --border:        rgba(255, 255, 255, 0.09);
-  --border-hover:  rgba(255, 255, 255, 0.18);
+  --border:        var(--border-subtle);
+  --border-hover:  var(--border-strong);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -65,7 +65,7 @@ html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
   background: var(--bg-darker);
-  color: var(--text-primary);
+  color: var(--aj-text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -81,11 +81,11 @@ body {
    SCROLLBAR
    ============================================ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0b0f14; }
+::-webkit-scrollbar-track { background: var(--surface-1); }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: color-mix(in srgb, var(--text-muted) 70%, transparent);
   border-radius: 10px;
-  border: 2px solid #0b0f14;
+  border: 2px solid var(--surface-1);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
 
@@ -112,7 +112,7 @@ body {
   width: 420px;
   min-width: 420px;
   background: var(--bg-darker);
-  border-right: 1px solid rgba(255,255,255,0.1);
+  border-right: 1px solid var(--border-strong);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -148,7 +148,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 20;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px var(--overlay-soft);
 }
 
 .jobs-list-header-top { margin-bottom: 16px; }
@@ -156,7 +156,7 @@ body {
 .jobs-list-title {
   font-size: 22px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--aj-text-primary);
   letter-spacing: -0.4px;
 }
 
@@ -222,7 +222,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
   font-size: 17px;
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   pointer-events: none;
   z-index: 1;
 }
@@ -245,7 +245,7 @@ body {
   flex: 1;
   padding: 7px 8px;
   background: var(--bg-card);
-  color: var(--text-secondary);
+  color: var(--aj-text-secondary);
   border: 1px solid var(--border);
   border-radius: 20px;
   font-size: 12px;
@@ -259,7 +259,7 @@ body {
 
 .filter-btn:hover {
   border-color: var(--blue-border);
-  color: var(--text-primary);
+  color: var(--aj-text-primary);
   background: var(--blue-dim);
 }
 
@@ -273,7 +273,7 @@ body {
 .jobs-count {
   display: block;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   font-weight: 500;
   margin-top: 10px;
   letter-spacing: 0.3px;
@@ -292,7 +292,7 @@ body {
 
 .job-list-item {
   background: var(--bg-card);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 15px 16px;
   cursor: pointer;
@@ -361,7 +361,7 @@ body {
 .job-list-title {
   font-size: 14px;
   font-weight: 700;
-  color: #f0f0f8;
+  color: var(--aj-text-primary);
   line-height: 1.35;
   flex: 1;
 }
@@ -391,7 +391,7 @@ body {
 
 .job-list-company {
   font-size: 11px;
-  color: #b0b8d8;
+  color: var(--aj-text-secondary);
   font-weight: 600;
   margin-bottom: 6px;
   letter-spacing: 0.1px;
@@ -427,7 +427,7 @@ body {
 }
 
 .no-jobs-message p {
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   font-size: 13px;
 }
 
@@ -453,7 +453,7 @@ body {
 /* ── Header ── */
 .job-details-header {
   padding: 30px 34px 24px;
-  background: #1a1a2e;
+  background: var(--surface-2);
   border-bottom: 3px solid #0068ff;
   border-left: 4px solid #0068ff;
   position: relative;
@@ -502,7 +502,7 @@ body {
 .job-details-title {
   font-size: 28px;
   font-weight: 900;
-  color: #ffffff !important;
+  color: var(--aj-text-primary) !important;
   line-height: 1.2;
   letter-spacing: -0.5px;
   flex: 1;
@@ -522,7 +522,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #d8deff !important;
+  color: var(--aj-text-secondary) !important;
   font-weight: 700;
   font-size: 15px;
   text-shadow: 0 1px 4px rgba(0,0,0,0.7);
@@ -537,7 +537,7 @@ body {
 .job-details-salary {
   font-weight: 700;
   font-size: 13px;
-  color: #7bbfff !important;
+  color: var(--accent-primary) !important;
   padding: 5px 14px;
   border-radius: 20px;
   background: rgba(0, 104, 255, 0.22);
@@ -573,7 +573,7 @@ body {
 .job-details-section-block {
   padding: 22px 24px;
   background: var(--bg-dark);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   transition: border-color var(--t-fast) var(--ease),
               box-shadow var(--t-norm) var(--ease),
@@ -606,7 +606,7 @@ body {
 
 .job-description-text {
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--aj-text-secondary);
   line-height: 1.85;
   white-space: pre-wrap;
 }
@@ -646,7 +646,7 @@ body {
    ============================================ */
 .job-application-section {
   padding: 26px 24px;
-  background: #141420;
+  background: var(--surface-2);
   border: 1px solid rgba(0, 104, 255, 0.4);
   border-radius: var(--radius-md);
   position: relative;
@@ -670,7 +670,7 @@ body {
 
 .application-note {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   text-align: center;
   margin-top: 2px;
   font-style: italic;
@@ -700,7 +700,7 @@ body {
    CUSTOM QUESTIONS FORM
    ============================================ */
 .custom-questions-form {
-  background: #161625;
+  background: var(--surface-2);
   border: 2px solid rgba(0, 104, 255, 0.45);
   border-radius: var(--radius-md);
   padding: 22px;
@@ -742,7 +742,7 @@ body {
 .question-answer-item {
   margin-bottom: 12px;
   padding: 16px 18px;
-  background: #1e1e30;
+  background: var(--surface-3);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-sm);
   color: #f0f0f8 !important;
@@ -812,7 +812,7 @@ body {
 .question-textarea {
   width: 100%;
   padding: 10px 14px;
-  background: #0e0e1a;
+  background: var(--surface-1);
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--radius-sm);
   color: #f0f0f8 !important;
@@ -827,7 +827,7 @@ body {
 .question-input:focus,
 .question-textarea:focus {
   border-color: #0068ff;
-  background: #13132a;
+  background: var(--surface-2);
   box-shadow: 0 0 0 3px rgba(0, 104, 255, 0.18);
 }
 
@@ -855,7 +855,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: #0e0e1a;
+  background: var(--surface-1);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -914,7 +914,7 @@ body {
 .label-text {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--aj-text-primary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -922,7 +922,7 @@ body {
 
 .label-hint {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   font-weight: 500;
 }
 
@@ -988,7 +988,7 @@ body {
 .file-text {
   flex: 1;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--aj-text-secondary);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1024,7 +1024,7 @@ body {
   position: absolute;
   top: 0; left: -100%;
   width: 100%; height: 100%;
-  background: rgba(255,255,255,0.1);
+  background: var(--border-strong);
   transform: skewX(-20deg);
   transition: left var(--t-slow) var(--ease);
 }
@@ -1044,7 +1044,7 @@ body {
 
 .apply-btn-new:disabled {
   background: var(--bg-card-hover);
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   border: 1px solid var(--border);
   box-shadow: none;
   cursor: not-allowed;
@@ -1091,13 +1091,13 @@ body {
 .already-applied h4 {
   font-size: 19px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--aj-text-primary);
   margin-bottom: 8px;
 }
 
 .already-applied p {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--aj-text-secondary);
 }
 
 /* ============================================
@@ -1130,14 +1130,14 @@ body {
 .no-job-selected h3 {
   font-size: 20px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--aj-text-primary);
   margin-bottom: 10px;
   letter-spacing: -0.3px;
 }
 
 .no-job-selected p {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--aj-text-muted);
   max-width: 320px;
   line-height: 1.65;
 }
@@ -1161,9 +1161,9 @@ body {
   min-width: 270px;
   max-width: 420px;
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   animation: toastSlideIn 0.35s var(--ease-out) forwards;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 32px var(--overlay-soft);
 }
 
 @keyframes toastSlideIn {
@@ -1214,7 +1214,7 @@ body {
 
 .loading-spinner {
   width: 42px; height: 42px;
-  border: 3px solid rgba(255,255,255,0.06);
+  border: 3px solid var(--border-subtle);
   border-top-color: var(--blue);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -1224,8 +1224,64 @@ body {
 
 .loading-state div:last-child,
 .error-state p {
-  color: var(--text-secondary);
+  color: var(--aj-text-secondary);
   font-size: 14px;
+}
+
+html[data-theme='light'] .apply-jobs-page {
+  --bg-page: #eaf1ff;
+  --bg-dark: #edf3ff;
+  --bg-darker: #e3edff;
+  --bg-card: #f5f8ff;
+  --bg-card-hover: #eaf2ff;
+  --bg-input: #f6f9ff;
+  --bg-header: #edf3ff;
+}
+
+html[data-theme='light'] .apply-jobs-page .job-details-header {
+  border-bottom-color: rgba(0, 94, 230, 0.55);
+  border-left-color: rgba(0, 94, 230, 0.7);
+  box-shadow: 0 6px 22px rgba(35, 55, 100, 0.14), inset 0 0 44px rgba(0, 94, 230, 0.06);
+}
+
+html[data-theme='light'] .apply-jobs-page .job-details-company,
+html[data-theme='light'] .apply-jobs-page .job-description-text,
+html[data-theme='light'] .apply-jobs-page .file-text,
+html[data-theme='light'] .apply-jobs-page .application-note,
+html[data-theme='light'] .apply-jobs-page .no-jobs-message p,
+html[data-theme='light'] .apply-jobs-page .no-job-selected p {
+  color: #38507d !important;
+  text-shadow: none;
+}
+
+html[data-theme='light'] .apply-jobs-page .job-details-title,
+html[data-theme='light'] .apply-jobs-page .job-list-title,
+html[data-theme='light'] .apply-jobs-page .questions-form-title,
+html[data-theme='light'] .apply-jobs-page .question-text,
+html[data-theme='light'] .apply-jobs-page .question-label {
+  color: #162b53 !important;
+  text-shadow: none;
+}
+
+html[data-theme='light'] .apply-jobs-page .question-answer-item,
+html[data-theme='light'] .apply-jobs-page .custom-questions-form,
+html[data-theme='light'] .apply-jobs-page .job-application-section {
+  color: #223a65 !important;
+  background: #edf3ff;
+  border-color: rgba(26, 43, 85, 0.2);
+}
+
+html[data-theme='light'] .apply-jobs-page .question-input,
+html[data-theme='light'] .apply-jobs-page .question-textarea,
+html[data-theme='light'] .apply-jobs-page .radio-option {
+  color: #162b53 !important;
+  background: #f7faff;
+  border-color: rgba(26, 43, 85, 0.2);
+}
+
+html[data-theme='light'] .apply-jobs-page .radio-option span,
+html[data-theme='light'] .apply-jobs-page .questions-form-subtitle {
+  color: #38507d !important;
 }
 
 .error-state h2 {

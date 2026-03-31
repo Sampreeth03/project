@@ -16,16 +16,16 @@
     --applied-color:      #60a5fa;
     --applied-bg:         rgba(0, 102, 238, 0.12);
     --applied-border:     rgba(0, 102, 238, 0.28);
-    --bg-darker:          #050505;
-    --bg-dark:            #0a0a0b;
-    --bg-card:            #141416;
-    --bg-card-hover:      #1a1a1d;
-    --text-primary:       #ffffff;
-    --text-secondary:     #b8b8b8;
-    --text-muted:         #6b7280;
-    --border-subtle:      rgba(255, 255, 255, 0.07);
-    --border-medium:      rgba(255, 255, 255, 0.12);
-    --shadow-card:        0 4px 24px rgba(0, 0, 0, 0.45);
+    --bg-darker:          var(--surface-0);
+    --bg-dark:            var(--surface-0);
+    --bg-card:            var(--surface-2);
+    --bg-card-hover:      var(--surface-3);
+    --text-primary:       var(--text-primary);
+    --text-secondary:     var(--text-secondary);
+    --text-muted:         var(--text-muted);
+    --border-subtle:      var(--border-subtle);
+    --border-medium:      var(--border-strong);
+    --shadow-card:        0 4px 24px var(--overlay-soft);
     --shadow-glow-blue:   0 0 24px rgba(0, 102, 238, 0.12);
     --shadow-glow-green:  0 0 24px rgba(16, 185, 129, 0.1);
     --shadow-glow-red:    0 0 24px rgba(239, 68, 68, 0.1);
@@ -54,7 +54,7 @@
     font-family: 'Inter', 'Segoe UI', sans-serif;
     background:
         radial-gradient(ellipse 80% 40% at 50% 0%, rgba(0,102,238,0.07) 0%, transparent 70%),
-        linear-gradient(160deg, #050505 0%, #0a0a0b 55%, #080d18 100%);
+        linear-gradient(160deg, var(--surface-0) 0%, var(--surface-0) 55%, #080d18 100%);
     background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
@@ -114,7 +114,7 @@
 .jobs-count-number {
     background: var(--primary-blue);
     border-radius: 50%;
-    color: #fff;
+    color: var(--text-on-accent);
     width: 24px;
     height: 24px;
     display: flex;
@@ -225,7 +225,7 @@
 .job-card-date {
     font-size: 11px;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-subtle);
     padding: 3px 10px;
     border-radius: 999px;
     letter-spacing: 0.03em;
@@ -323,7 +323,7 @@
 .job-description {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-subtle);
-    border-left: 2px solid rgba(255,255,255,0.1);
+    border-left: 2px solid var(--border-strong);
     padding: 12px 16px;
     border-radius: 8px;
     margin: 4px 0 12px;
@@ -437,7 +437,7 @@
 .btn-secondary {
     background: transparent;
     color: var(--text-muted);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid var(--border-strong);
 }
 
 .btn-secondary:hover {
@@ -515,7 +515,7 @@
     color: var(--text-primary);
     padding: 14px 22px;
     border-radius: 14px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateY(90px) scale(0.95);
     opacity: 0;

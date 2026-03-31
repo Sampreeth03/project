@@ -92,11 +92,11 @@ const ClearDoubts = () => {
           {/* <form id="ask-doubt-form" onSubmit={handleSubmit} encType="multipart/form-data">
             <div className="messageBox" style={{alignItems:'center'}}>
               <div className="fileUploadWrapper">
-                <label htmlFor="file-input"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 16v4H8v-4" stroke="#9AA1A6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="tooltip">Attach a file (optional)</span></label>
+                <label htmlFor="file-input"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 16v4H8v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="tooltip">Attach a file (optional)</span></label>
                 <input id="file-input" className="fileInput" name="file-input" type="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0]||null)} />
               </div>
               <input className="messageInput" name="message" id="ask-message" type="text" placeholder="Ask your doubt here..." value={message} onChange={e=>setMessage(e.target.value)} required />
-              <button type="submit" className="sendButton"><svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="#6c6c6c" strokeWidth="33.67" strokeLinecap="round" strokeLinejoin="round"></path></svg></button>
+              <button type="submit" className="sendButton"><svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="currentColor" strokeWidth="33.67" strokeLinecap="round" strokeLinejoin="round"></path></svg></button>
             </div>
           </form> */}
         </div>
@@ -110,7 +110,7 @@ const ReplyBox = ({ doubtId, onSend }) => {
   return (
     <div className="reply-container">
       <input className="messageInput" placeholder="Your reply..." value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{ if (e.key==='Enter') { e.preventDefault(); onSend(doubtId, text, setText); } }} />
-      <button className="sendButton" type="button" onClick={()=>onSend(doubtId, text, setText)}><svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="#6c6c6c" strokeWidth="33.67" strokeLinecap="round" strokeLinejoin="round"></path></svg></button>
+      <button className="sendButton" type="button" onClick={()=>onSend(doubtId, text, setText)}><svg viewBox="0 0 664 663" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888" stroke="currentColor" strokeWidth="33.67" strokeLinecap="round" strokeLinejoin="round"></path></svg></button>
     </div>
   );
 };

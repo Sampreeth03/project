@@ -2,7 +2,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 100px 20px 20px;
-  background-color: black;
+  background-color: var(--surface-0);
   color: white;
   min-height: 100vh;
 }
@@ -46,12 +46,12 @@
 .dropdown-content {
   display: block;
   position: absolute;
-  background-color: #121212;
+  background-color: var(--surface-0);
   min-width: 200px;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 8px 16px 0px var(--overlay-soft);
   z-index: 1000;
   border-radius: 4px;
-  border: 1px solid #333;
+  border: 1px solid var(--surface-3);
   top: 100%;
   left: 0;
   margin-top: 5px;
@@ -66,7 +66,7 @@
 }
 
 .dropdown-content a:hover {
-  background-color: #333;
+  background-color: var(--surface-3);
   color: #0088ff;
   border-radius: 4px;
 }
@@ -93,7 +93,7 @@
 
 .no-projects {
   text-align: center;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   padding: 40px 20px;
 }
@@ -106,10 +106,10 @@
 }
 
 .project-card {
-  background-color: #111;
+  background-color: var(--surface-2);
   border-radius: 8px;
   padding: 20px;
-  border: 1px solid #333;
+  border: 1px solid var(--surface-3);
   transition: transform 0.3s, box-shadow 0.3s;
   height: 250px;
   display: flex;
@@ -144,17 +144,17 @@
   justify-content: space-between;
   margin-bottom: 15px;
   font-size: 0.9rem;
-  color: #888;
+  color: var(--text-secondary);
   flex-wrap: wrap;
   gap: 10px;
 }
 
 .posted-by {
-  color: #aaa;
+  color: var(--text-secondary);
 }
 
 .capacity {
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 20px;
 }
 
@@ -185,8 +185,8 @@
 }
 
 .join-btn:disabled {
-  background-color: #555;
-  color: #888;
+  background-color: var(--text-muted);
+  color: var(--text-secondary);
   cursor: not-allowed;
 }
 
