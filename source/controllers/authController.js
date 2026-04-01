@@ -8,6 +8,19 @@ const { validatePassword } = require("../services/helperService");
 const { upload } = require("../middleware/uploadMiddleware"); 
 const { createLoginOtp, verifyLoginOtp } = require('../services/otpService');
 const { sendLoginOtpEmail, isEmailConfigured } = require('../services/emailService');
+const { generateTotpSecret, verifyTotpToken, buildOtpAuthUrl, buildQrCodeUrl } = require('../services/totpService');
+
+function sendLoginSuccess(res, user) {
+    const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+    const token = signToken(userData);
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    return res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        user: userData,
+        redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
+    });
+}
 
 // =========================================================================
 // 1-2. Landing/Login Page (GET / & /login) - REMOVED EJS RENDER
@@ -225,7 +238,7 @@ exports.postStudentSignupInit = async (req, res) => {
     }
 };
 
-// Step 2: Verify OTP and complete signup (auto-login)
+// Step 2: Verify OTP and complete signup, then return authenticator setup details
 exports.postStudentVerifyOTP = async (req, res) => {
     const { email, otp } = req.body;
 
@@ -255,6 +268,9 @@ exports.postStudentVerifyOTP = async (req, res) => {
             return res.status(404).json({ success: false, error: "Signup session expired. Please start again." });
         }
 
+        const totpSecret = generateTotpSecret();
+        const otpauthUrl = buildOtpAuthUrl({ secret: totpSecret, email: pending.email, issuer: 'RelabTeams' });
+
         // Create actual user from pending data
         const userData = {
             name: pending.name,
@@ -267,7 +283,10 @@ exports.postStudentVerifyOTP = async (req, res) => {
             interests: pending.interests,
             profileImageUrl: pending.profileImageUrl,
             resumeUrl: pending.resumeUrl,
-            onboardingCompleted: false // New user - show onboarding
+            onboardingCompleted: false, // New user - show onboarding
+            authenticator2faEnabled: true,
+            authenticator2faSecret: totpSecret,
+            authenticator2faRequired: true
         };
 
         const user = await User.create(userData);
@@ -276,23 +295,15 @@ exports.postStudentVerifyOTP = async (req, res) => {
         // Delete pending record
         await PendingStudent.deleteOne({ email: email.toLowerCase() });
 
-        // Auto-login: issue JWT cookie
-        const jwtPayload = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-        const token = signToken(jwtPayload);
-        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
         res.status(201).json({ 
             success: true, 
-            message: "Signup successful! Welcome to RelabTeams.",
-            user: { 
-                id: user._id.toString(), 
-                name: user.name, 
-                email: user.email, 
-                role: user.role,
-                onboardingCompleted: false,
-                isNewSignup: true
-            },
-            redirectPath: '/home',
-            isNewSignup: true
+            message: 'Signup successful. Scan this QR code in Google Authenticator before login.',
+            twoFactorSetup: {
+                qrCodeUrl: buildQrCodeUrl(otpauthUrl),
+                secret: totpSecret,
+                issuer: 'RelabTeams',
+                account: user.email
+            }
         });
 
     } catch (err) {
@@ -680,47 +691,20 @@ exports.postLoginRequestOtp = async (req, res) => {
             return res.status(401).json({ success: false, error: 'Invalid email or password' });
         }
 
-        // Skip OTP for default test users
-        const defaultUserEmails = ['srihesh@gm.co', 'priya@gm.co', 'shiva@gm.co', 'arjun@gm.co'];
-        if (defaultUserEmails.includes(user.email.toLowerCase())) {
-            const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-            const token = signToken(userData);
-            res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-            return res.status(200).json({
-                success: true,
-                message: 'Login successful (default user, OTP skipped)',
-                skipOtp: true,
-                user: userData,
-                redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
-            });
+        const requireAuthenticator = user.role === 'user'
+            && user.authenticator2faRequired === true
+            && user.authenticator2faEnabled === true
+            && !!user.authenticator2faSecret;
+
+        if (!requireAuthenticator) {
+            return sendLoginSuccess(res, user);
         }
 
-        // Always send OTP to the email stored on the account 
-        const recipientEmail = String(user.email || '').trim();
-
-        if (!isEmailConfigured()) {
-            return res.status(500).json({
-                success: false,
-                error: 'Email sender not configured. Fill source/config/emailConfig.js (GMAIL_USER, GMAIL_APP_PASSWORD) and restart the backend.'
-            });
-        }
-
-        const otp = createLoginOtp({ email: recipientEmail, userId: user._id.toString(), role: user.role });
-
-        try {
-            await sendLoginOtpEmail({ to: recipientEmail, otp });
-        } catch (mailErr) {
-            console.error('OTP email send failed:', mailErr?.message || mailErr);
-            if (process.env.NODE_ENV !== 'production') {
-                return res.status(500).json({
-                    success: false,
-                    error: `Failed to send verification code: ${mailErr?.message || 'unknown error'}`
-                });
-            }
-            return res.status(500).json({ success: false, error: 'Failed to send verification code.' });
-        }
-
-        return res.status(200).json({ success: true, message: 'Verification code sent to your email.' });
+        return res.status(200).json({
+            success: true,
+            requiresAuthenticator: true,
+            message: 'Enter the 6-digit code from your authenticator app.'
+        });
     } catch (err) {
         const status = err.statusCode || 500;
         return res.status(status).json({ success: false, error: err.message || 'Server error' });
@@ -738,54 +722,34 @@ exports.postLoginVerifyOtp = async (req, res) => {
     }
 
     const code = String(otp).trim();
-    if (!/^\d{4}$/.test(code)) {
-        return res.status(400).json({ success: false, error: 'Verification code must be 4 digits.' });
-    }
 
     try {
-        // Skip OTP verification for default test users
-        const defaultUserEmails = ['srihesh@gm.co', 'priya@gm.co', 'shiva@gm.co', 'arjun@gm.co'];
-        const loginEmail = String(email || '').trim().toLowerCase();
-        
-        let result;
-        if (defaultUserEmails.includes(loginEmail)) {
-            // For default users, find user directly without OTP check
-            const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i') });
-            if (user) {
-                result = { ok: true, userId: user._id.toString(), role: user.role };
-            } else {
-                result = { ok: false, reason: 'no_user' };
-            }
-        } else {
-            result = verifyLoginOtp({ email, otp: code });
-        }
-        if (!result.ok) {
-            const msg = result.reason === 'expired'
-                ? 'Verification code expired. Please request a new one.'
-                : result.reason === 'locked'
-                    ? 'Too many attempts. Please request a new code.'
-                    : result.reason === 'no_code'
-                        ? 'No verification code found. Please request a code.'
-                        : `Invalid code.${typeof result.attemptsLeft === 'number' ? ` Attempts left: ${result.attemptsLeft}.` : ''}`;
-
-            return res.status(401).json({ success: false, error: msg });
-        }
-
-        const user = await User.findById(result.userId);
+        const loginEmail = String(email || '').trim();
+        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i') });
         if (!user) {
             return res.status(401).json({ success: false, error: 'User not found' });
         }
 
-        const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-        const token = signToken(userData);
-        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-        return res.status(200).json({
-            success: true,
-            message: 'Login successful',
-            user: userData,
-            redirectPath: user.role === 'admin' ? '/admin' : (user.role === 'recruiter' ? '/recruiter-home' : '/home')
-        });
+        const requireAuthenticator = user.role === 'user'
+            && user.authenticator2faRequired === true
+            && user.authenticator2faEnabled === true
+            && !!user.authenticator2faSecret;
+
+        if (!requireAuthenticator) {
+            return sendLoginSuccess(res, user);
+        }
+
+        if (!/^\d{6}$/.test(code)) {
+            return res.status(400).json({ success: false, error: 'Authentication code must be 6 digits.' });
+        }
+
+        const valid = verifyTotpToken({ secret: user.authenticator2faSecret, token: code });
+        if (!valid) {
+            return res.status(401).json({ success: false, error: 'Invalid authenticator code. Please try again.' });
+        }
+
+        return sendLoginSuccess(res, user);
     } catch (err) {
         console.error('Error verifying OTP:', err?.message || err);
         return res.status(500).json({ success: false, error: 'Server error' });
@@ -890,6 +854,44 @@ exports.postForgotPasswordReset = async (req, res) => {
         });
     } catch (err) {
         console.error('Error resetting password:', err?.message || err);
+        return res.status(500).json({ success: false, error: 'Server error' });
+    }
+};
+
+// Step 4: Verify authenticator setup with one TOTP code
+exports.postStudentVerifyAuthenticatorSetup = async (req, res) => {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+        return res.status(400).json({ success: false, error: 'Email and authentication code are required' });
+    }
+
+    const loginEmail = String(email || '').trim();
+    const authCode = String(code || '').trim();
+
+    if (!/^\d{6}$/.test(authCode)) {
+        return res.status(400).json({ success: false, error: 'Authentication code must be 6 digits.' });
+    }
+
+    try {
+        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i'), role: 'user' });
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found.' });
+        }
+
+        if (!user.authenticator2faEnabled || !user.authenticator2faSecret) {
+            return res.status(400).json({ success: false, error: 'Authenticator setup is not available for this account.' });
+        }
+
+        const valid = verifyTotpToken({ secret: user.authenticator2faSecret, token: authCode });
+        if (!valid) {
+            return res.status(401).json({ success: false, error: 'Invalid authenticator code. Please try again.' });
+        }
+
+        return res.status(200).json({ success: true, message: 'Authenticator setup verified. You can now log in.' });
+    } catch (err) {
+        console.error('Error verifying authenticator setup:', err?.message || err);
         return res.status(500).json({ success: false, error: 'Server error' });
     }
 };

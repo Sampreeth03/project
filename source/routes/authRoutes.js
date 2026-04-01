@@ -15,7 +15,7 @@ router.get('/', authController.getLanding);
 router.get('/login', authController.getLogin);
 router.post('/login', authLimiter, validateLogin, authController.postLogin);
 router.post('/login/request-otp', otpLimiter, validateEmail, authController.postLoginRequestOtp);
-router.post('/login/verify-otp', authLimiter, validateOTP, authController.postLoginVerifyOtp);
+router.post('/login/verify-otp', authLimiter, authController.postLoginVerifyOtp);
 router.post('/forgot-password/request-otp', otpLimiter, validateEmail, authController.postForgotPasswordRequestOtp);
 router.post('/forgot-password/reset', authLimiter, validateForgotPasswordReset, authController.postForgotPasswordReset);
 router.get('/signup', authController.getSignup);
@@ -32,6 +32,7 @@ router.post('/signup/init', authLimiter, upload.fields([
 ]), authController.postStudentSignupInit);
 router.post('/signup/verify-otp', authLimiter, validateOTP, authController.postStudentVerifyOTP);
 router.post('/signup/resend-otp', otpLimiter, validateEmail, authController.postStudentResendOTP);
+router.post('/signup/verify-authenticator', authLimiter, authController.postStudentVerifyAuthenticatorSetup);
 
 // Recruiter Signup Routes - Multi-step with OTP
 router.get('/signupforrec', authController.getRecruiterSignup);

@@ -1,10 +1,8 @@
 // client/src/components/Auth/Signup.jsx
 
 import React, { useState, useEffect } from 'react';
-import { flushSync } from 'react-dom';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { 
     validateName, 
     validateEmail, 
@@ -30,7 +28,9 @@ function Signup() {
         resume: null
     });
     const [otp, setOtp] = useState('');
-    const [step, setStep] = useState('form'); // 'form' | 'otp'
+    const [step, setStep] = useState('form'); // 'form' | 'otp' | 'authenticator'
+    const [twoFactorSetup, setTwoFactorSetup] = useState(null);
+    const [authenticatorCode, setAuthenticatorCode] = useState('');
     const [clientError, setClientError] = useState('');
     const [serverError, setServerError] = useState('');
     const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -38,7 +38,6 @@ function Signup() {
     const [resendCooldown, setResendCooldown] = useState(0);
     
     const navigate = useNavigate();
-    const { loginUser } = useAuth();
     const isRecruiterSignup = window.location.pathname.includes('signupforrec');
 
     // --- Validation and State Management ---
@@ -68,9 +67,11 @@ function Signup() {
         
         if (step === 'form') {
             setIsButtonDisabled(!isFormValid);
-        } else {
+        } else if (step === 'otp') {
             // OTP step - enable button if 4 digits
             setIsButtonDisabled(!/^\d{4}$/.test(String(otp).trim()));
+        } else {
+            setIsButtonDisabled(!/^\d{6}$/.test(String(authenticatorCode).trim()));
         }
         
         return isFormValid;
@@ -78,7 +79,7 @@ function Signup() {
 
     useEffect(() => {
         updateProgressAndButton(formData);
-    }, [formData, otp, step]);
+    }, [formData, otp, step, authenticatorCode]);
 
     // Resend cooldown timer
     useEffect(() => {
@@ -102,6 +103,13 @@ function Signup() {
     const handleOtpChange = (e) => {
         const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 4);
         setOtp(digitsOnly);
+        setServerError('');
+        setClientError('');
+    };
+
+    const handleAuthenticatorCodeChange = (e) => {
+        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+        setAuthenticatorCode(digitsOnly);
         setServerError('');
         setClientError('');
     };
@@ -177,7 +185,32 @@ function Signup() {
             return;
         }
 
-        // STEP 2: OTP verification - complete signup and auto-login
+        if (step === 'authenticator') {
+            const code = String(authenticatorCode).trim();
+            if (!/^\d{6}$/.test(code)) {
+                setClientError('Authentication code must be 6 digits.');
+                shakeElement('authenticator-code-group');
+                document.getElementById('authenticator-code')?.focus();
+                return;
+            }
+
+            try {
+                const response = await axios.post('/api/signup/verify-authenticator', {
+                    email: formData.email,
+                    code
+                });
+
+                if (response.data.success) {
+                    navigate('/login');
+                }
+            } catch (err) {
+                shakeElement('authenticator-code-group');
+                setServerError(err.response?.data?.error || 'Authenticator verification failed.');
+            }
+            return;
+        }
+
+        // STEP 2: OTP verification - complete signup and return authenticator setup
         const code = String(otp).trim();
         if (!/^\d{4}$/.test(code)) {
             setClientError('Verification code must be 4 digits.');
@@ -193,15 +226,9 @@ function Signup() {
             });
 
             if (response.data.success) {
-                // Auto-login: Update auth context
-                flushSync(() => {
-                    loginUser({
-                        ...response.data.user,
-                        isNewSignup: true // Flag for showing onboarding
-                    });
-                });
-                // Navigate directly to home page
-                navigate(response.data.redirectPath || '/home');
+                setTwoFactorSetup(response.data.twoFactorSetup || null);
+                setStep('authenticator');
+                setAuthenticatorCode('');
             }
         } catch (err) {
             shakeElement('otp-group');
@@ -268,21 +295,21 @@ function Signup() {
                 {/* Name Input */}
                 <div className="input-group" id="name-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="name">Name:</label>
-                    <input id="name" type="text" name="name" placeholder="Enter your name" required value={formData.name} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
+                    <input id="name" type="text" name="name" placeholder="Enter your name" required value={formData.name} onChange={handleChange} onBlur={handleBlur} disabled={step !== 'form'} />
                     <div id="name-error" className="field-error"></div>
                 </div>
                 
                 {/* Email Input */}
                 <div className="input-group" id="email-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="email">Email:</label>
-                    <input id="email" type="email" name="email" placeholder="Enter your email" required value={formData.email} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
+                    <input id="email" type="email" name="email" placeholder="Enter your email" required value={formData.email} onChange={handleChange} onBlur={handleBlur} disabled={step !== 'form'} />
                     <div id="email-error" className="field-error"></div>
                 </div>
                 
                 {/* Password Input */}
                 <div className="password-group" id="password-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="password">Password:</label>
-                    <input type="password" id="password" name="password" placeholder="Enter password" required value={formData.password} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
+                    <input type="password" id="password" name="password" placeholder="Enter password" required value={formData.password} onChange={handleChange} onBlur={handleBlur} disabled={step !== 'form'} />
                     <span id="toggle-password-btn" className="toggle-password" onClick={() => {
                         const input = document.getElementById('password');
                         input.type = input.type === 'password' ? 'text' : 'password';
@@ -302,7 +329,7 @@ function Signup() {
                 {/* Confirm Password Input */}
                 <div className="password-group" id="confirm-group" onMouseEnter={(e) => e.currentTarget.classList.add('focused')} onMouseLeave={(e) => e.currentTarget.classList.remove('focused')}>
                     <label htmlFor="confirmPassword">Confirm Password:</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} disabled={step === 'otp'} />
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} disabled={step !== 'form'} />
                     <span id="toggle-confirm-btn" className="toggle-password" onClick={() => {
                         const input = document.getElementById('confirmPassword');
                         input.type = input.type === 'password' ? 'text' : 'password';
@@ -430,18 +457,50 @@ function Signup() {
                     </div>
                 )}
 
-                <button 
-                    type="submit" 
-                    id="signup-btn" 
-                    className="signup-btn" 
-                    aria-disabled={isButtonDisabled} 
-                    disabled={isButtonDisabled}
-                >
-                    {step === 'form' 
-                        ? (isButtonDisabled ? 'Please complete form' : 'Continue')
-                        : (isButtonDisabled ? 'Enter Code' : 'Verify & Create Account')
-                    }
-                </button>
+                {step === 'authenticator' && twoFactorSetup && (
+                    <div className="otp-section">
+                        <div className="otp-info">
+                            <p>Final step: scan this QR code in Google Authenticator (or any TOTP app).</p>
+                        </div>
+                        <div className="input-group" style={{ alignItems: 'center' }}>
+                            <img src={twoFactorSetup.qrCodeUrl} alt="Authenticator QR code" style={{ width: 220, height: 220, borderRadius: 8 }} />
+                        </div>
+                        <div className="input-group">
+                            <label>Manual setup key:</label>
+                            <input type="text" value={twoFactorSetup.secret || ''} readOnly />
+                        </div>
+                        <div className="input-group" id="authenticator-code-group">
+                            <label htmlFor="authenticator-code">Enter 6-digit authenticator code:</label>
+                            <input
+                                id="authenticator-code"
+                                type="text"
+                                placeholder="Enter code from app"
+                                value={authenticatorCode}
+                                onChange={handleAuthenticatorCodeChange}
+                                maxLength={6}
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {
+                    <button 
+                        type="submit" 
+                        id="signup-btn" 
+                        className="signup-btn" 
+                        aria-disabled={isButtonDisabled} 
+                        disabled={isButtonDisabled}
+                    >
+                        {step === 'form' 
+                            ? (isButtonDisabled ? 'Please complete form' : 'Continue')
+                            : step === 'otp'
+                                ? (isButtonDisabled ? 'Enter Code' : 'Verify & Create Account')
+                                : (isButtonDisabled ? 'Enter Authenticator Code' : 'Verify Authenticator & Continue')
+                        }
+                    </button>
+                }
                 
                 <p className="signin-text">
                     Already have an account? <Link to="/login">Sign In</Link>

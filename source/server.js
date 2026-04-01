@@ -13,7 +13,7 @@ const { corsOptions } = require('./middleware/securityMiddleware');
 const { setupChatSocket } = require('./sockets/chatSocket');
 const { verifyToken, COOKIE_NAME } = require('./config/jwt');
 
-const PORT = 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
 // Connect to the database
 connectDB();

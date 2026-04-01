@@ -34,7 +34,11 @@ const userSchema = new mongoose.Schema({
   assignedPlatformAdminId: { type: mongoose.Schema.Types.ObjectId, ref: 'PlatformAdministrator', default: null },
   // Password reset
   resetPasswordToken: { type: String, default: null },
-  resetPasswordExpires: { type: Date, default: null }
+  resetPasswordExpires: { type: Date, default: null },
+  // Authenticator-based 2FA (enabled only for newly created student accounts)
+  authenticator2faEnabled: { type: Boolean, default: false },
+  authenticator2faSecret: { type: String, default: null },
+  authenticator2faRequired: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Pending Recruiter Signup Schema (for OTP verification flow)

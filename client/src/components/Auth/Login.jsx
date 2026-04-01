@@ -13,7 +13,7 @@ const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', '
 function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [otp, setOtp] = useState('');
-    const [step, setStep] = useState('credentials'); // 'credentials' | 'otp'
+    const [step, setStep] = useState('credentials'); // 'credentials' | 'totp'
     const [clientError, setClientError] = useState('');
     const [serverError, setServerError] = useState('');
     const [capsWarning, setCapsWarning] = useState(false);
@@ -32,8 +32,8 @@ function Login() {
             return;
         }
 
-        // OTP step
-        setIsButtonDisabled(!/^\d{4}$/.test(String(otp).trim()));
+        // Authenticator step
+        setIsButtonDisabled(!/^\d{6}$/.test(String(otp).trim()));
     }, [formData, otp, step]);
 
     const handleChange = (e) => {
@@ -42,14 +42,14 @@ function Login() {
         setClientError('');
 
         // If user edits credentials after requesting OTP, reset OTP step.
-        if (step === 'otp') {
+        if (step === 'totp') {
             setStep('credentials');
             setOtp('');
         }
     };
 
     const handleOtpChange = (e) => {
-        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 4);
+        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
         setOtp(digitsOnly);
         setServerError('');
         setClientError('');
@@ -130,19 +130,20 @@ function Login() {
                 });
 
                 if (response.data.success) {
-                    // Check if OTP should be skipped (for default users)
-                    if (response.data.skipOtp) {
-                        // Returning users logging in - explicitly set isNewSignup to false
+                    if (response.data.requiresAuthenticator) {
+                        setStep('totp');
+                        setOtp('');
+                        setTimeout(() => document.getElementById('otp')?.focus(), 0);
+                        return;
+                    }
+
+                    if (response.data.user) {
                         flushSync(() => {
                             loginUser({ ...response.data.user, isNewSignup: false });
                         });
                         navigate(response.data.redirectPath || '/home');
                         return;
                     }
-                    
-                    setStep('otp');
-                    setOtp('');
-                    setTimeout(() => document.getElementById('otp')?.focus(), 0);
                 }
             } catch (err) {
                 shakeElement('login-container');
@@ -164,8 +165,8 @@ function Login() {
 
         // STEP 2: Verify OTP -> login
         const code = String(otp).trim();
-        if (!/^\d{4}$/.test(code)) {
-            setClientError('Verification code must be 4 digits.');
+        if (!/^\d{6}$/.test(code)) {
+            setClientError('Authentication code must be 6 digits.');
             shakeElement('otp-group');
             document.getElementById('otp')?.focus();
             return;
@@ -220,7 +221,7 @@ function Login() {
                         value={formData.email}
                         onBlur={handleBlur}
                         onChange={handleEmailInput}
-                        disabled={step === 'otp'}
+                        disabled={step === 'totp'}
                         className={clientError && !formData.password ? 'input-error' : ''}
                     />
                     {/* Email Suggestion Block */}
@@ -248,7 +249,7 @@ function Login() {
                         onBlur={handleBlur}
                         onChange={handleChange}
                         onKeyUp={handlePasswordKeyUp}
-                        disabled={step === 'otp'}
+                        disabled={step === 'totp'}
                         className={clientError && formData.password ? 'input-error' : ''}
                     />
                     {/* Caps Lock Warning */}
@@ -266,7 +267,7 @@ function Login() {
                     </div>
                 </div>
 
-                {step === 'otp' && (
+                {step === 'totp' && (
                     <>
                         <div className="input-group" id="otp-group"
                              onMouseEnter={() => document.getElementById('otp-group')?.classList.add('focused')}
@@ -275,10 +276,10 @@ function Login() {
                                 id="otp"
                                 type="text"
                                 name="otp"
-                                placeholder="Enter 4-digit code"
+                                placeholder="Enter 6-digit authenticator code"
                                 value={otp}
                                 onChange={handleOtpChange}
-                                maxLength={4}
+                                maxLength={6}
                                 inputMode="numeric"
                                 autoComplete="one-time-code"
                                 required
