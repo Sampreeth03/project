@@ -1,0 +1,698 @@
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UserIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      description: User id
+
+    SearchQuery:
+      name: q
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Name or email query used to search users.
+
+    ProjectIdPath:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+
+    ChannelIdPath:
+      name: channelId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+
+    OtherUserIdPath:
+      name: otherUserId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+
+    MessageIdPath:
+      name: messageId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+
+  responses:
+    UnauthorizedError:
+      description: Unauthorized request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Not authenticated
+
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ObjectId:
+      type: string
+      pattern: '^[a-fA-F0-9]{24}$'
+      example: 507f1f77bcf86cd799439011
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+          nullable: true
+      additionalProperties: true
+
+    SuccessMessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+      required: [success]
+
+    BooleanSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+      required: [success]
+
+    SimpleShellResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success, message]
+
+    ProfileFields:
+      type: object
+      properties:
+        aboutMe:
+          type: boolean
+        skills:
+          type: boolean
+        interests:
+          type: boolean
+        profilePicture:
+          type: boolean
+        resume:
+          type: boolean
+
+    HomeUser:
+      type: object
+      nullable: true
+      properties:
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+        role:
+          type: string
+        email:
+          type: string
+          format: email
+        onboardingCompleted:
+          type: boolean
+        isProfileComplete:
+          type: boolean
+        profileFields:
+          $ref: '#/components/schemas/ProfileFields'
+        missingFields:
+          type: array
+          items:
+            type: string
+
+    HomeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        user:
+          $ref: '#/components/schemas/HomeUser'
+      required: [success, message, user]
+
+    Topic:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        joinLink:
+          type: string
+
+    TopicListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/Topic'
+
+    UserMetricsResponse:
+      type: object
+      properties:
+        username:
+          type: string
+        metrics:
+          type: object
+          additionalProperties: true
+        completedProjects:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        topicProjects:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+              count:
+                type: integer
+        joinedByTopic:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+              count:
+                type: integer
+        jobStats:
+          type: object
+          properties:
+            total:
+              type: integer
+            pending:
+              type: integer
+            approved:
+              type: integer
+            rejected:
+              type: integer
+      additionalProperties: true
+
+    UserTrendsResponse:
+      type: object
+      properties:
+        memberGrowth:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        projectComparison:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        taskProgress:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        communityTrend:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        jobActivity:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        activityHeatmap:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+              level:
+                type: integer
+      additionalProperties: true
+
+    ProfileSummary:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+          nullable: true
+        profileImageUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        interests:
+          type: array
+          items:
+            type: string
+        resumeUrl:
+          type: string
+          nullable: true
+        joinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        joinedAgo:
+          type: string
+        completedProjects:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        totalCompletedTasks:
+          type: integer
+        completedAsLeader:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true
+
+    ProfileDataResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/ProfileSummary'
+      required: [success, user]
+
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        about:
+          type: string
+        skills:
+          type: string
+          description: Comma-separated values.
+        interests:
+          type: string
+          description: Comma-separated values.
+        picture:
+          type: string
+          format: binary
+        resume:
+          type: string
+          format: binary
+
+    ProfileUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          type: object
+          properties:
+            _id:
+              $ref: '#/components/schemas/ObjectId'
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            about:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+            interests:
+              type: array
+              items:
+                type: string
+            profileImageUrl:
+              type: string
+              nullable: true
+            resumeUrl:
+              type: string
+              nullable: true
+      required: [success]
+
+    FriendUser:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        profileImageUrl:
+          type: string
+          nullable: true
+        role:
+          type: string
+        requestStatus:
+          type: string
+          enum: [none, pending_sent, pending_received, friends]
+      additionalProperties: true
+
+    SearchUsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/FriendUser'
+      required: [users]
+
+    FriendRequestSendRequest:
+      type: object
+      required: [toUserId]
+      properties:
+        toUserId:
+          $ref: '#/components/schemas/ObjectId'
+
+    FriendRequestRespondRequest:
+      type: object
+      required: [requestId, action]
+      properties:
+        requestId:
+          $ref: '#/components/schemas/ObjectId'
+        action:
+          type: string
+          enum: [accept, reject]
+
+    FriendRequestsResponse:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [requests]
+
+    FriendsResponse:
+      type: object
+      properties:
+        friends:
+          type: array
+          items:
+            $ref: '#/components/schemas/FriendUser'
+      required: [friends]
+
+    CompleteOnboardingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+          nullable: true
+      required: [success]
+
+    NotificationIdRequest:
+      type: object
+      required: [notificationId]
+      properties:
+        notificationId:
+          $ref: '#/components/schemas/ObjectId'
+
+    ApplicationIdRequest:
+      type: object
+      required: [applicationId]
+      properties:
+        applicationId:
+          $ref: '#/components/schemas/ObjectId'
+
+    ProjectNotificationItem:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        message:
+          type: string
+        type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        is_read:
+          type: boolean
+        task_title:
+          type: string
+          nullable: true
+        task_id:
+          $ref: '#/components/schemas/ObjectId'
+      additionalProperties: true
+
+    ProjectNotificationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        taskNotifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectNotificationItem'
+        projectCreationNotifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectNotificationItem'
+        myApplications:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        joinRequests:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        projectInvites:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [success]
+
+    JobsListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    StudentApplicationsResponse:
+      type: object
+      properties:
+        applications:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    JobNotificationsResponse:
+      type: object
+      properties:
+        jobsNotifications:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ApplyJobRequest:
+      type: object
+      required: [jobId, resume]
+      properties:
+        jobId:
+          $ref: '#/components/schemas/ObjectId'
+        resume:
+          type: string
+          format: binary
+        customAnswers:
+          type: string
+          description: JSON string of custom answers.
+
+    MessageProjectsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                $ref: '#/components/schemas/ObjectId'
+              title:
+                type: string
+
+    ProjectChannelsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        channels:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ProjectMembersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        members:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ChannelMessagesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        isOwner:
+          type: boolean
+
+    DirectMessagesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    SendChannelMessageRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        file:
+          type: string
+          format: binary
+
+    SendDirectMessageRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+
+    CreateChannelRequest:
+      type: object
+      required: [channelName]
+      properties:
+        channelName:
+          type: string
+
+    MessageUnreadCountsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        unreadCounts:
+          type: object
+          additionalProperties:
+            type: integer
+
+    MessageSearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    PinToggleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        is_pinned:
+          type: boolean
+
+    PinnedMessagesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        isOwner:
+          type: boolean

@@ -67,11 +67,23 @@ app.use("/uploads", express.static("uploads"));
 app.use(cookieParser());
 
 const swaggerRoot = path.resolve(__dirname, "docs", "swagger");
+const member1OpenApiFile = path.join(swaggerRoot, "member1-openapi.yaml");
+const member1OpenApiBundleFile = path.join(swaggerRoot, "member1-openapi.bundle.yaml");
 const member5OpenApiFile = path.resolve(__dirname, "docs", "openapi.yaml");
 const member2OpenApiBundleFile = path.join(swaggerRoot, "member2-openapi.bundle.yaml");
 const member3OpenApiBundleFile = path.join(swaggerRoot, "member3-openapi.bundle.yaml");
 const member4OpenApiFile = path.join(swaggerRoot, "member4-openapi.yaml");
 const member4OpenApiBundleFile = path.join(swaggerRoot, "member4-openapi.bundle.yaml");
+
+app.get("/api/docs/member1-openapi.yaml", (req, res) => {
+	res.set("Cache-Control", "no-store");
+	res.sendFile(member1OpenApiFile);
+});
+
+app.get("/api/docs/member1-openapi.bundle.yaml", (req, res) => {
+	res.set("Cache-Control", "no-store");
+	res.sendFile(member1OpenApiBundleFile);
+});
 
 app.get("/api/docs/member2-openapi.yaml", (req, res) => {
 	res.set("Cache-Control", "no-store");
@@ -136,6 +148,10 @@ app.get("/api/docs-home", (req, res) => {
 		<h1>RELABTeams API Docs</h1>
 		<p>Select a member-specific API spec from below.</p>
 		<div class="cards">
+			<a class="card" href="/api/docs?urls.primaryName=Member%201%20User%20APIs">
+				<strong>Member 1 User APIs</strong>
+				<div>User home, dashboard, profile, and friends endpoints.</div>
+			</a>
 			<a class="card" href="/api/docs?urls.primaryName=Member%202%20Project%20APIs">
 				<strong>Member 2 Project APIs</strong>
 				<div>Projects, tasks, doubts, topic and join-request flows.</div>
@@ -173,12 +189,13 @@ app.use(
 			withCredentials: true,
 			persistAuthorization: true,
 			urls: [
+				{ url: "/api/docs/member1-openapi.bundle.yaml?v=20260402", name: "Member 1 User APIs" },
 				{ url: "/api/docs/member2-openapi.bundle.yaml?v=20260402", name: "Member 2 Project APIs" },
 				{ url: "/api/docs/member3-openapi.bundle.yaml?v=20260402", name: "Member 3 Job and Recruiter APIs" },
 				{ url: "/api/docs/member4-openapi.bundle.yaml?v=20260402", name: "Member 4 Admin, Auth and Doubt APIs" },
 				{ url: "/api/docs/member5-openapi.bundle.yaml?v=20260402", name: "Member 5 Platform Admin APIs" },
 			],
-			"urls.primaryName": "Member 2 Project APIs",
+			"urls.primaryName": "Member 1 User APIs",
 		},
 	})
 );

@@ -1,0 +1,176 @@
+x-member1-frontend-mapping:
+  scope:
+    backend_files:
+      - source/routes/userRoutes.js
+      - source/controllers/userController.js
+    frontend_scan_scope:
+      - client/src/components/User
+      - client/src/components/Projects
+      - client/src/components/Recruiter
+      - client/src/context
+      - client/src/hooks
+
+  endpoint_consumers:
+    /api/home:
+      - file: client/src/context/AuthContext.jsx
+        line: 31
+        method: GET
+      - file: client/src/components/User/Profile.jsx
+        line: 218
+        method: GET
+      - file: client/src/components/User/Profile.jsx
+        line: 376
+        method: GET
+      - file: client/src/components/User/OnboardingToast.jsx
+        line: 155
+        method: GET
+
+    /api/home/topics:
+      - file: client/src/hooks/useTopics.js
+        line: 15
+        method: GET
+
+    /api/dashboard-metrics:
+      - file: client/src/components/User/Dashboard.jsx
+        line: 24
+        method: GET
+      - file: client/src/components/User/MetricsBanner.jsx
+        line: 24
+        method: GET
+
+    /api/dashboard-trends:
+      - file: client/src/components/User/Dashboard.jsx
+        line: 25
+        method: GET
+
+    /api/profile-data/{id}:
+      - file: client/src/components/User/Profile.jsx
+        line: 235
+        method: GET
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 193
+        method: GET
+      - file: client/src/components/Recruiter/UserProfileModal.jsx
+        line: 37
+        method: GET
+
+    /api/profile:
+      - file: client/src/components/User/Profile.jsx
+        line: 346
+        method: POST
+      - file: client/src/components/User/Profile.jsx
+        line: 514
+        method: POST
+      - file: client/src/components/User/Profile.jsx
+        line: 711
+        method: POST
+
+    /api/users/search:
+      - file: client/src/components/User/Friends.jsx
+        line: 43
+        method: GET
+
+    /api/friends:
+      - file: client/src/components/User/Friends.jsx
+        line: 55
+        method: GET
+      - file: client/src/components/Projects/ProjectDetails.jsx
+        line: 271
+        method: GET
+
+    /api/friend-requests:
+      - file: client/src/components/User/Friends.jsx
+        line: 67
+        method: GET
+
+    /api/friend-request/send:
+      - file: client/src/components/User/Friends.jsx
+        line: 79
+        method: POST
+
+    /api/friend-request/respond:
+      - file: client/src/components/User/Friends.jsx
+        line: 94
+        method: POST
+
+    /api/notifications:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 36
+        method: GET
+
+    /api/mark-notification-read:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 234
+        method: POST
+      - file: client/src/store/recruiterSlice.js
+        line: 147
+        method: POST
+
+    /api/delete-notification:
+      - file: client/src/components/User/ProjectNotifications.jsx
+        line: 265
+        method: POST
+      - file: client/src/store/recruiterSlice.js
+        line: 166
+        method: POST
+
+    /api/messages/unread-counts:
+      - file: client/src/hooks/useUnreadMessages.js
+        line: 11
+        method: GET
+
+    /api/messages/channels/{channelId}/messages:
+      - file: client/src/components/User/GroupChat.jsx
+        line: 373
+        method: GET
+      - file: client/src/components/User/GroupChat.jsx
+        line: 373
+        method: POST
+
+    /api/apply:
+      - file: client/src/components/User/ApplyJobs.jsx
+        line: 31
+        method: GET
+        note: Frontend currently calls /apply and depends on proxy/rewrite for /api prefix.
+
+    /api/apply-job:
+      - file: client/src/components/User/ApplyJobs.jsx
+        line: 177
+        method: POST
+        note: Frontend currently calls /apply-job and depends on proxy/rewrite for /api prefix.
+
+    /api/job:
+      - file: client/src/components/User/JobApplications.jsx
+        line: 32
+        method: GET
+        note: Frontend currently calls /job and depends on proxy/rewrite for /api prefix.
+
+    /api/revoke-application:
+      - file: client/src/components/User/JobApplications.jsx
+        line: 96
+        method: DELETE
+        note: Frontend currently calls /revoke-application and depends on proxy/rewrite for /api prefix.
+
+    /api/job_not:
+      - file: client/src/components/User/JobNotifications.jsx
+        line: 25
+        method: GET
+        note: Frontend currently calls /job_not and depends on proxy/rewrite for /api prefix.
+
+    /api/delete-notification (job notifications view):
+      - file: client/src/components/User/JobNotifications.jsx
+        line: 55
+        method: POST
+        note: Frontend currently calls /delete-notification and depends on proxy/rewrite for /api prefix.
+
+  out_of_scope_or_no_direct_consumer_found:
+    - endpoint: /api/dashboard
+      note: Dashboard data is fetched via /api/dashboard-metrics and /api/dashboard-trends in current frontend.
+    - endpoint: /api/profile/{id}
+      note: Frontend uses /api/profile-data/{id} for actual data.
+    - endpoint: /api/messages
+      note: Chat frontend currently uses /api/messages/* endpoints from messageRoutes, not this shell endpoint.
+    - endpoint: /api/FAQ
+      note: No direct client API call found in current codebase.
+    - endpoint: /api/not
+      note: No direct client API call found in current React code; route is available for server-rendered view.

@@ -1,0 +1,957 @@
+paths:
+  # Home
+  /api/home:
+    get:
+      tags: [Member1-Home]
+      summary: Get user home/session payload
+      description: Returns session and onboarding/profile-completion state for the current user, or null user when not signed in.
+      security: []
+      responses:
+        '200':
+          description: Home payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getHome
+        route: source/routes/userRoutes.js
+
+  /api/home/topics:
+    get:
+      tags: [Member1-Home]
+      summary: List home topics
+      description: Returns static topic cards for the home page.
+      security: []
+      responses:
+        '200':
+          description: Topic list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getHomeTopics
+        route: source/routes/userRoutes.js
+
+  # Dashboard
+  /api/dashboard:
+    get:
+      tags: [Member1-Dashboard]
+      summary: Get dashboard shell status
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard shell payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleShellResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getDashboard
+        route: source/routes/userRoutes.js
+
+  /api/dashboard-metrics:
+    get:
+      tags: [Member1-Dashboard]
+      summary: Get user dashboard metrics
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics and chart payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMetricsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getDashboardMetrics
+        route: source/routes/userRoutes.js
+
+  /api/dashboard-trends:
+    get:
+      tags: [Member1-Dashboard]
+      summary: Get user dashboard trends
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Trend analytics payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTrendsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getDashboardTrends
+        route: source/routes/userRoutes.js
+
+  # Profile
+  /api/profile:
+    get:
+      tags: [Member1-Profile]
+      summary: Get current-user profile shell status
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile shell payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleShellResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getProfile
+        route: source/routes/userRoutes.js
+
+    post:
+      tags: [Member1-Profile]
+      summary: Update current-user profile
+      description: Updates name/email/about/skills/interests and optional profile picture and resume.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+      responses:
+        '200':
+          description: Profile updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileUpdateResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#postProfile
+        route: source/routes/userRoutes.js
+
+  /api/profile/{id}:
+    get:
+      tags: [Member1-Profile]
+      summary: Get profile shell status for user id
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserIdPath'
+      responses:
+        '200':
+          description: Profile shell payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleShellResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getProfile
+        route: source/routes/userRoutes.js
+
+  /api/profile-data/{id}:
+    get:
+      tags: [Member1-Profile]
+      summary: Get profile data by user id
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserIdPath'
+      responses:
+        '200':
+          description: Detailed profile payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileDataResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getProfileData
+        route: source/routes/userRoutes.js
+
+  # Friends
+  /api/users/search:
+    get:
+      tags: [Member1-Friends]
+      summary: Search users for friend connections
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+      responses:
+        '200':
+          description: Matching users and relationship state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchUsersResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#searchUsers
+        route: source/routes/userRoutes.js
+
+  /api/friend-request/send:
+    post:
+      tags: [Member1-Friends]
+      summary: Send friend request
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendRequestSendRequest'
+      responses:
+        '200':
+          description: Friend request result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#sendFriendRequest
+        route: source/routes/userRoutes.js
+
+  /api/friend-request/respond:
+    post:
+      tags: [Member1-Friends]
+      summary: Accept or reject friend request
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendRequestRespondRequest'
+      responses:
+        '200':
+          description: Friend request action applied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Request does not belong to current user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#respondFriendRequest
+        route: source/routes/userRoutes.js
+
+  /api/friends:
+    get:
+      tags: [Member1-Friends]
+      summary: List accepted friends
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Accepted friends list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getFriends
+        route: source/routes/userRoutes.js
+
+  /api/friend-requests:
+    get:
+      tags: [Member1-Friends]
+      summary: List incoming pending friend requests
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pending friend requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getFriendRequests
+        route: source/routes/userRoutes.js
+
+  # General Pages And Onboarding
+  /api/messages:
+    get:
+      tags: [Member1-General]
+      summary: Get messages shell status
+      description: Returns shell payload for messages page.
+      security: []
+      responses:
+        '200':
+          description: Messages shell payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleShellResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getMessages
+        route: source/routes/userRoutes.js
+
+  /api/FAQ:
+    get:
+      tags: [Member1-General]
+      summary: Get FAQ shell status
+      description: Returns shell payload for FAQ page.
+      security: []
+      responses:
+        '200':
+          description: FAQ shell payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleShellResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#getFAQ
+        route: source/routes/userRoutes.js
+
+  /api/complete-onboarding:
+    post:
+      tags: [Member1-General]
+      summary: Mark current user onboarding as completed
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Onboarding completion status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteOnboardingResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/userController.js#completeOnboarding
+        route: source/routes/userRoutes.js
+
+  # Notifications
+  /api/not:
+    get:
+      tags: [Member1-Notifications]
+      summary: Project notifications shell endpoint
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notifications shell response.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getProjectNotifications
+        route: source/routes/doubtRoutes.js
+
+  /api/notifications:
+    get:
+      tags: [Member1-Notifications]
+      summary: Fetch project notifications JSON
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Project notification inbox payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectNotificationsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getProjectNotificationsJSON
+        route: source/routes/doubtRoutes.js
+
+  # Doubts
+  /api/doubt:
+    get:
+      tags: [Member1-Doubts]
+      summary: Doubt board shell endpoint
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Doubt board shell rendered successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getDoubtBoard
+        route: source/routes/doubtRoutes.js
+
+  /api/clear:
+    get:
+      tags: [Member1-Doubts]
+      summary: Clear doubts shell endpoint
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Clear doubts shell rendered successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getClearDoubts
+        route: source/routes/doubtRoutes.js
+
+  /api/doubts:
+    get:
+      tags: [Member1-Doubts]
+      summary: Fetch doubts as JSON
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Doubts list fetched.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#getDoubtsJSON
+        route: source/routes/doubtRoutes.js
+
+  /api/ask:
+    post:
+      tags: [Member1-Doubts]
+      summary: Post a new doubt
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Doubt post attempted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#postDoubt
+        route: source/routes/doubtRoutes.js
+
+  /api/reply:
+    post:
+      tags: [Member1-Doubts]
+      summary: Reply to a doubt
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Reply post attempted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/doubtController.js#postReply
+        route: source/routes/doubtRoutes.js
+
+  # Messaging
+  /api/messages/projects:
+    get:
+      tags: [Member1-Messaging]
+      summary: List active projects visible in group chat
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Chat project list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageProjectsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getUserProjects
+        route: source/routes/messageRoutes.js
+
+  /api/messages/projects/{projectId}/channels:
+    get:
+      tags: [Member1-Messaging]
+      summary: List channels for a project
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdPath'
+      responses:
+        '200':
+          description: Channel list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectChannelsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getProjectChannels
+        route: source/routes/messageRoutes.js
+
+    post:
+      tags: [Member1-Messaging]
+      summary: Create channel in project (creator only)
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '200':
+          description: Channel create status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectChannelsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#createChannel
+        route: source/routes/messageRoutes.js
+
+  /api/messages/projects/{projectId}/members:
+    get:
+      tags: [Member1-Messaging]
+      summary: List members for a project
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdPath'
+      responses:
+        '200':
+          description: Member list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMembersResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getProjectMembers
+        route: source/routes/messageRoutes.js
+
+  /api/messages/channels/{channelId}/messages:
+    get:
+      tags: [Member1-Messaging]
+      summary: List channel messages
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelIdPath'
+      responses:
+        '200':
+          description: Channel message feed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMessagesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getChannelMessages
+        route: source/routes/messageRoutes.js
+
+    post:
+      tags: [Member1-Messaging]
+      summary: Send channel message
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelIdPath'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendChannelMessageRequest'
+      responses:
+        '200':
+          description: Message send status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMessagesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#sendChannelMessage
+        route: source/routes/messageRoutes.js
+
+  /api/messages/projects/{projectId}/direct-messages/{otherUserId}:
+    get:
+      tags: [Member1-Messaging]
+      summary: List direct messages between two project members
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/OtherUserIdPath'
+      responses:
+        '200':
+          description: Direct message feed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectMessagesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getDirectMessages
+        route: source/routes/messageRoutes.js
+
+    post:
+      tags: [Member1-Messaging]
+      summary: Send direct message
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/OtherUserIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendDirectMessageRequest'
+      responses:
+        '200':
+          description: Direct message send status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectMessagesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#sendDirectMessage
+        route: source/routes/messageRoutes.js
+
+  /api/messages/unread-counts:
+    get:
+      tags: [Member1-Messaging]
+      summary: Get unread message counts grouped by project
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Unread counts payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageUnreadCountsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getUnreadCounts
+        route: source/routes/messageRoutes.js
+
+  /api/messages/channels/{channelId}/mark-read:
+    post:
+      tags: [Member1-Messaging]
+      summary: Mark a channel as read for current user
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelIdPath'
+      responses:
+        '200':
+          description: Read state updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#markChannelAsRead
+        route: source/routes/messageRoutes.js
+
+  /api/messages/projects/{projectId}/direct-messages/{otherUserId}/mark-read:
+    post:
+      tags: [Member1-Messaging]
+      summary: Mark direct messages as read for a project member thread
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/OtherUserIdPath'
+      responses:
+        '200':
+          description: Read state updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#markDMAsRead
+        route: source/routes/messageRoutes.js
+
+  /api/messages/channels/{channelId}/search:
+    get:
+      tags: [Member1-Messaging]
+      summary: Search text messages in channel
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelIdPath'
+      responses:
+        '200':
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#searchChannelMessages
+        route: source/routes/messageRoutes.js
+
+  /api/messages/messages/{messageId}/pin:
+    post:
+      tags: [Member1-Messaging]
+      summary: Toggle pin status for a message (owner only)
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MessageIdPath'
+      responses:
+        '200':
+          description: Pin status updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PinToggleResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#togglePinMessage
+        route: source/routes/messageRoutes.js
+
+  /api/messages/channels/{channelId}/pinned:
+    get:
+      tags: [Member1-Messaging]
+      summary: List pinned messages in channel
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChannelIdPath'
+      responses:
+        '200':
+          description: Pinned message list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PinnedMessagesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      x-implemented-by:
+        controller: source/controllers/messageController.js#getPinnedMessages
+        route: source/routes/messageRoutes.js

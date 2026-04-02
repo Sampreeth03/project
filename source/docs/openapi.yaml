@@ -143,6 +143,51 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/platform-admins:
+    get:
+      tags: [Member5]
+      summary: List platform administrators
+      operationId: getPlatformAdministrators
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Platform administrators fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformAdministratorsResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+    post:
+      tags: [Member5]
+      summary: Create a new platform administrator
+      operationId: createPlatformAdministrator
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlatformAdminRequest'
+      responses:
+        '201':
+          description: Administrator created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePlatformAdminResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -214,6 +259,56 @@ components:
             user:
               type: object
               additionalProperties: true
+
+    PlatformAdministrator:
+      type: object
+      properties:
+        _id:
+          type: string
+        adminId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+      additionalProperties: true
+
+    PlatformAdministratorsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        admins:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformAdministrator'
+      required: [success]
+
+    CreatePlatformAdminRequest:
+      type: object
+      required: [name, email, adminId]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        adminId:
+          type: string
+
+    CreatePlatformAdminResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        admin:
+          $ref: '#/components/schemas/PlatformAdministrator'
+      required: [success]
 
   responses:
     SuccessResponse:

@@ -65,6 +65,44 @@ paths:
         '200':
           description: Notification list
 
+  /api/admin-rec:
+    get:
+      tags: [Member3-RecruiterAdmin]
+      summary: Recruiters management shell endpoint
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiters shell rendered successfully
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getRecruitersPage
+        route: source/routes/adminRoutes.js
+
+  /api/admin-rec/data:
+    get:
+      tags: [Member3-RecruiterAdmin]
+      summary: Fetch recruiters analytics data
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Recruiters data fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+      x-implemented-by:
+        controller: source/controllers/adminController.js#getRecruitersData
+        route: source/routes/adminRoutes.js
+
   /api/create-recruiter-job:
     post:
       tags: [Member3-Recruiter]
@@ -206,6 +244,153 @@ paths:
           description: Profile response
         '403':
           description: Forbidden
+
+  /api/signupforrec:
+    get:
+      tags: [Member3-RecAuth]
+      summary: Recruiter signup API health endpoint
+      responses:
+        '200':
+          description: Recruiter signup API operational status
+
+  /api/recruiter-signup:
+    post:
+      tags: [Member3-RecAuth]
+      summary: Legacy recruiter signup
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [name, email, password, confirmPassword]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                confirmPassword:
+                  type: string
+                objectFile:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Recruiter account created
+        '400':
+          description: Validation failure
+        '409':
+          description: Email already used
+
+  /api/recruiter/signup/init:
+    post:
+      tags: [Member3-RecAuth]
+      summary: Initialize recruiter OTP signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, confirmPassword]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                confirmPassword:
+                  type: string
+      responses:
+        '200':
+          description: OTP sent
+        '400':
+          description: Validation failure
+        '409':
+          description: Email already used
+        '429':
+          description: OTP rate-limited
+
+  /api/recruiter/signup/verify-otp:
+    post:
+      tags: [Member3-RecAuth]
+      summary: Verify recruiter signup OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp]
+              properties:
+                email:
+                  type: string
+                  format: email
+                otp:
+                  type: string
+      responses:
+        '200':
+          description: OTP verified
+        '400':
+          description: OTP invalid or malformed
+        '404':
+          description: Pending signup not found
+
+  /api/recruiter/signup/resend-otp:
+    post:
+      tags: [Member3-RecAuth]
+      summary: Resend recruiter signup OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP resent
+        '400':
+          description: Missing email
+        '404':
+          description: Pending signup not found
+        '429':
+          description: OTP rate-limited
+
+  /api/recruiter/signup/complete:
+    post:
+      tags: [Member3-RecAuth]
+      summary: Complete recruiter signup after OTP verification
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [email, objectFile]
+              properties:
+                email:
+                  type: string
+                  format: email
+                objectFile:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Recruiter account created and logged in
+        '400':
+          description: Missing email or document
+        '404':
+          description: Signup session invalid or OTP not verified
 
   /api/apply:
     get:
