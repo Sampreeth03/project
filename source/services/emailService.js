@@ -1,24 +1,27 @@
 // source/services/emailService.js
 
 const nodemailer = require('nodemailer');
-const emailConfig = require('../config/emailConfig');
 
 let transporter = null;
 
+function getEmailCredentials() {
+  const user = (process.env.EMAIL_USER || process.env.GMAIL_USER || '').trim();
+  const pass = (process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD || '').trim();
+  return { user, pass };
+}
+
 function isEmailConfigured() {
-  const user = process.env.EMAIL_USER || process.env.GMAIL_USER || emailConfig.GMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD || emailConfig.GMAIL_APP_PASSWORD;
+  const { user, pass } = getEmailCredentials();
   return Boolean(user && pass);
 }
 
 function getTransporter() {
   if (transporter) return transporter;
 
-  const user = process.env.EMAIL_USER || process.env.GMAIL_USER || emailConfig.GMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD || emailConfig.GMAIL_APP_PASSWORD;
+  const { user, pass } = getEmailCredentials();
 
   if (!user || !pass) {
-    const err = new Error('Email service not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
+    const err = new Error('Email service not configured. Set EMAIL_USER and EMAIL_PASSWORD in .env.');
     err.code = 'EMAIL_NOT_CONFIGURED';
     throw err;
   }
@@ -75,8 +78,8 @@ async function sendLoginOtpEmail({ to, otp, purpose = 'login' }) {
   if (purpose === 'signup') message = 'email verification';
   const text = `RELABTeams\n\nyour otp for ${message} is ${otp}\n\nThis code expires in 10 minutes.`;
 
-  const fromName = emailConfig.FROM_NAME || 'RELABTeams';
-  const fromEmail = process.env.EMAIL_USER || process.env.GMAIL_USER || emailConfig.GMAIL_USER;
+  const fromName = process.env.EMAIL_FROM_NAME || 'RELABTeams';
+  const { user: fromEmail } = getEmailCredentials();
 
   const transporter = getTransporter();
   const info = await transporter.sendMail({

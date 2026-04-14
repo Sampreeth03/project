@@ -13,7 +13,8 @@ const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', '
 function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [otp, setOtp] = useState('');
-    const [step, setStep] = useState('credentials'); // 'credentials' | 'totp'
+    const [step, setStep] = useState('credentials'); // 'credentials' | 'verification'
+    const [verificationType, setVerificationType] = useState(null); // 'email' | 'authenticator'
     const [clientError, setClientError] = useState('');
     const [serverError, setServerError] = useState('');
     const [capsWarning, setCapsWarning] = useState(false);
@@ -32,9 +33,14 @@ function Login() {
             return;
         }
 
+        if (verificationType === 'email') {
+            setIsButtonDisabled(!/^\d{4}$/.test(String(otp).trim()));
+            return;
+        }
+
         // Authenticator step
         setIsButtonDisabled(!/^\d{6}$/.test(String(otp).trim()));
-    }, [formData, otp, step]);
+    }, [formData, otp, step, verificationType]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,14 +48,16 @@ function Login() {
         setClientError('');
 
         // If user edits credentials after requesting OTP, reset OTP step.
-        if (step === 'totp') {
+        if (step === 'verification') {
             setStep('credentials');
+            setVerificationType(null);
             setOtp('');
         }
     };
 
     const handleOtpChange = (e) => {
-        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+        const maxLen = verificationType === 'email' ? 4 : 6;
+        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, maxLen);
         setOtp(digitsOnly);
         setServerError('');
         setClientError('');
@@ -131,17 +139,18 @@ function Login() {
 
                 if (response.data.success) {
                     if (response.data.requiresAuthenticator) {
-                        setStep('totp');
+                        setStep('verification');
+                        setVerificationType('authenticator');
                         setOtp('');
                         setTimeout(() => document.getElementById('otp')?.focus(), 0);
                         return;
                     }
 
-                    if (response.data.user) {
-                        flushSync(() => {
-                            loginUser({ ...response.data.user, isNewSignup: false });
-                        });
-                        navigate(response.data.redirectPath || '/home');
+                    if (response.data.requiresOtp) {
+                        setStep('verification');
+                        setVerificationType('email');
+                        setOtp('');
+                        setTimeout(() => document.getElementById('otp')?.focus(), 0);
                         return;
                     }
                 }
@@ -165,7 +174,14 @@ function Login() {
 
         // STEP 2: Verify OTP -> login
         const code = String(otp).trim();
-        if (!/^\d{6}$/.test(code)) {
+        if (verificationType === 'email' && !/^\d{4}$/.test(code)) {
+            setClientError('Verification code must be 4 digits.');
+            shakeElement('otp-group');
+            document.getElementById('otp')?.focus();
+            return;
+        }
+
+        if (verificationType !== 'email' && !/^\d{6}$/.test(code)) {
             setClientError('Authentication code must be 6 digits.');
             shakeElement('otp-group');
             document.getElementById('otp')?.focus();
@@ -221,7 +237,7 @@ function Login() {
                         value={formData.email}
                         onBlur={handleBlur}
                         onChange={handleEmailInput}
-                        disabled={step === 'totp'}
+                        disabled={step === 'verification'}
                         className={clientError && !formData.password ? 'input-error' : ''}
                     />
                     {/* Email Suggestion Block */}
@@ -249,7 +265,7 @@ function Login() {
                         onBlur={handleBlur}
                         onChange={handleChange}
                         onKeyUp={handlePasswordKeyUp}
-                        disabled={step === 'totp'}
+                        disabled={step === 'verification'}
                         className={clientError && formData.password ? 'input-error' : ''}
                     />
                     {/* Caps Lock Warning */}
@@ -267,7 +283,7 @@ function Login() {
                     </div>
                 </div>
 
-                {step === 'totp' && (
+                {step === 'verification' && (
                     <>
                         <div className="input-group" id="otp-group"
                              onMouseEnter={() => document.getElementById('otp-group')?.classList.add('focused')}
@@ -276,10 +292,10 @@ function Login() {
                                 id="otp"
                                 type="text"
                                 name="otp"
-                                placeholder="Enter 6-digit authenticator code"
+                                placeholder={verificationType === 'email' ? 'Enter 4-digit email code' : 'Enter 6-digit authenticator code'}
                                 value={otp}
                                 onChange={handleOtpChange}
-                                maxLength={6}
+                                maxLength={verificationType === 'email' ? 4 : 6}
                                 inputMode="numeric"
                                 autoComplete="one-time-code"
                                 required

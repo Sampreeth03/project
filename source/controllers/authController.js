@@ -49,35 +49,10 @@ exports.postLogin = async (req, res, next) => {
             error: "Password validation failed." 
         });
     }
-
-    try {
-        const normalizedEmail = String(email || '').trim().toLowerCase();
-        const user = await User.findOne({ email: normalizedEmail });
-        if (!user) {
-            return res.status(401).json({ success: false, error: "Invalid email or password" });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, error: "Invalid email or password" });
-        }
-
-        const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-        const token = signToken(userData);
-        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-        res.status(200).json({ 
-            success: true, 
-            message: "Login successful",
-            user: userData,
-            redirectPath: user.role === "admin" ? "/admin" : (user.role === "recruiter" ? "/recruiter-home" : "/home")
-        });
-
-    } catch (err) {
-        console.error('Error in login:', err.message);
-        err.statusCode = 500;
-        err.publicMessage = "Server error";
-        return next(err);
-    }
+    
+        // Keep backward compatibility for clients still posting to /login,
+        // but route them through the 2-step challenge flow.
+        return exports.postLoginRequestOtp(req, res, next);
 };
 
 // =========================================================================
@@ -704,14 +679,42 @@ exports.postLoginRequestOtp = async (req, res) => {
             && user.authenticator2faEnabled === true
             && !!user.authenticator2faSecret;
 
-        if (!requireAuthenticator) {
-            return sendLoginSuccess(res, user);
+            if (requireAuthenticator) {
+                return res.status(200).json({
+                    success: true,
+                    requiresAuthenticator: true,
+                    verificationType: 'authenticator',
+                    message: 'Enter the 6-digit code from your authenticator app.'
+                });
         }
+
+            if (!isEmailConfigured()) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Email sender not configured. Fill project .env (EMAIL_USER and EMAIL_PASSWORD, or GMAIL_USER and GMAIL_APP_PASSWORD) and restart the backend.'
+                });
+            }
+
+            const otp = createLoginOtp({ email: loginEmail, userId: user._id.toString(), role: user.role });
+
+            try {
+                await sendLoginOtpEmail({ to: user.email, otp, purpose: 'login' });
+            } catch (mailErr) {
+                console.error('Login OTP email send failed:', mailErr?.message || mailErr);
+                if (process.env.NODE_ENV !== 'production') {
+                    return res.status(500).json({
+                        success: false,
+                        error: `Failed to send verification code: ${mailErr?.message || 'unknown error'}`
+                    });
+                }
+                return res.status(500).json({ success: false, error: 'Failed to send verification code.' });
+            }
 
         return res.status(200).json({
             success: true,
-            requiresAuthenticator: true,
-            message: 'Enter the 6-digit code from your authenticator app.'
+                requiresOtp: true,
+                verificationType: 'email',
+                message: 'Verification code sent to your email.'
         });
     } catch (err) {
         const status = err.statusCode || 500;
@@ -743,17 +746,35 @@ exports.postLoginVerifyOtp = async (req, res) => {
             && user.authenticator2faEnabled === true
             && !!user.authenticator2faSecret;
 
-        if (!requireAuthenticator) {
+        if (requireAuthenticator) {
+            if (!/^\d{6}$/.test(code)) {
+                return res.status(400).json({ success: false, error: 'Authentication code must be 6 digits.' });
+            }
+
+            const valid = verifyTotpToken({ secret: user.authenticator2faSecret, token: code });
+            if (!valid) {
+                return res.status(401).json({ success: false, error: 'Invalid authenticator code. Please try again.' });
+            }
+
             return sendLoginSuccess(res, user);
         }
 
-        if (!/^\d{6}$/.test(code)) {
-            return res.status(400).json({ success: false, error: 'Authentication code must be 6 digits.' });
+        if (!/^\d{4}$/.test(code)) {
+            return res.status(400).json({ success: false, error: 'Verification code must be 4 digits.' });
         }
 
-        const valid = verifyTotpToken({ secret: user.authenticator2faSecret, token: code });
-        if (!valid) {
-            return res.status(401).json({ success: false, error: 'Invalid authenticator code. Please try again.' });
+        const otpResult = verifyLoginOtp({ email: loginEmail, otp: code });
+        if (!otpResult.ok) {
+            let errorMsg = 'Invalid verification code.';
+            if (otpResult.reason === 'expired') errorMsg = 'Verification code has expired. Please request a new one.';
+            if (otpResult.reason === 'locked') errorMsg = 'Too many attempts. Please request a new code.';
+            if (otpResult.reason === 'no_code') errorMsg = 'No verification code found. Please request a code first.';
+            if (otpResult.attemptsLeft !== undefined) errorMsg = `Invalid code. ${otpResult.attemptsLeft} attempts remaining.`;
+            return res.status(401).json({ success: false, error: errorMsg });
+        }
+
+        if (String(otpResult.userId) !== user._id.toString()) {
+            return res.status(401).json({ success: false, error: 'Verification session mismatch. Please request a new code.' });
         }
 
         return sendLoginSuccess(res, user);
@@ -786,7 +807,7 @@ exports.postForgotPasswordRequestOtp = async (req, res) => {
         if (!isEmailConfigured()) {
             return res.status(500).json({
                 success: false,
-                error: 'Email sender not configured. Fill source/config/emailConfig.js (GMAIL_USER, GMAIL_APP_PASSWORD) and restart the backend.'
+                error: 'Email sender not configured. Fill project .env (EMAIL_USER and EMAIL_PASSWORD, or GMAIL_USER and GMAIL_APP_PASSWORD) and restart the backend.'
             });
         }
 

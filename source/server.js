@@ -1,5 +1,6 @@
-// Load environment variables from .env file
-require('dotenv').config();
+// Load environment variables from project root .env (fallback to default behavior)
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const http = require('http');
 const { Server } = require('socket.io');
