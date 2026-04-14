@@ -170,22 +170,22 @@ exports.getPlatformAdminSummary = async (req, res) => {
       );
     }
 
-    const totalAssigned = await User.countDocuments({
-      role: 'recruiter',
-      assignedPlatformAdminId: admin.id,
-    });
-
-    const completedTasks = await User.countDocuments({
-      role: 'recruiter',
-      assignedPlatformAdminId: admin.id,
-      recruiterVerified: true,
-    });
-
-    const newTasks = await User.countDocuments({
-      role: 'recruiter',
-      assignedPlatformAdminId: admin.id,
-      recruiterVerified: false,
-    });
+    const [totalAssigned, completedTasks, newTasks] = await Promise.all([
+      User.countDocuments({
+        role: 'recruiter',
+        assignedPlatformAdminId: admin.id,
+      }),
+      User.countDocuments({
+        role: 'recruiter',
+        assignedPlatformAdminId: admin.id,
+        recruiterVerified: true,
+      }),
+      User.countDocuments({
+        role: 'recruiter',
+        assignedPlatformAdminId: admin.id,
+        recruiterVerified: false,
+      })
+    ]);
 
     return res.status(200).json({
       success: true,

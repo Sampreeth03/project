@@ -8,7 +8,7 @@ const MONGODB_URI = 'mongodb://localhost:27017/page-check';
 // Define Schemas
 const userSchema = new mongoose.Schema({
   name: { type: String, trim: true },
-  email: { type: String, unique: true, trim: true },
+  email: { type: String, unique: true, trim: true, lowercase: true },
   password: String,
   role: { type: String, default: 'user' },
   verified: { type: Boolean, default: false },
@@ -125,11 +125,7 @@ const jobApplicationSchema = new mongoose.Schema({
   date_applied: { type: Date, default: null },
   active: { type: Boolean, default: true }
 }, { 
-  timestamps: true,
-  indexes: [
-      { key: { posted_by: 1 } },
-      { key: { user_id: 1 } }
-  ]
+  timestamps: true
 });
 
 const projectSchema = new mongoose.Schema({
@@ -189,6 +185,42 @@ const platformAdministratorSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Indexes tuned to current query patterns (filters + sort order)
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ assignedPlatformAdminId: 1 });
+
+pendingRecruiterSchema.index({ email: 1 });
+pendingStudentSchema.index({ email: 1 });
+
+userMetricsSchema.index({ user_id: 1 }, { unique: true });
+
+doubtSchema.index({ visible_to_all: 1, timestamp: -1 });
+doubtSchema.index({ user_id: 1, timestamp: -1 });
+
+replySchema.index({ doubt_id: 1, timestamp: 1 });
+replySchema.index({ user_id: 1 });
+
+jobApplicationSchema.index({ posted_by: 1, user_id: 1, status: 1, createdAt: -1 });
+jobApplicationSchema.index({ user_id: 1, status: 1, date_applied: -1 });
+jobApplicationSchema.index({ active: 1, status: 1 });
+
+projectSchema.index({ user_id: 1, status: 1, deadline: 1 });
+projectSchema.index({ topic: 1, status: 1 });
+
+joinRequestSchema.index({ project_id: 1, status: 1, requested_at: -1 });
+joinRequestSchema.index({ user_id: 1, status: 1, requested_at: -1 });
+
+projectMemberSchema.index({ project_id: 1, user_id: 1 });
+projectMemberSchema.index({ user_id: 1, project_id: 1 });
+
+taskSchema.index({ project_id: 1, status: 1, due_date: 1 });
+taskSchema.index({ assigned_to: 1, status: 1, due_date: 1 });
+
+notificationSchema.index({ user_id: 1, is_read: 1, createdAt: -1 });
+notificationSchema.index({ user_id: 1, type: 1, createdAt: -1 });
+
+platformAdministratorSchema.index({ createdAt: -1 });
+
 // Create Models
 const User = mongoose.model('User', userSchema);
 const UserMetrics = mongoose.model('UserMetrics', userMetricsSchema);
@@ -210,6 +242,9 @@ const friendRequestSchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now }
 });
 
+friendRequestSchema.index({ to_user: 1, status: 1, created_at: -1 });
+friendRequestSchema.index({ from_user: 1, to_user: 1, status: 1 });
+
 const FriendRequest = mongoose.model('FriendRequest', friendRequestSchema);
 
 // Project Invite Schema - owner invites a friend to join their project
@@ -220,6 +255,9 @@ const projectInviteSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending','accepted','rejected'], default: 'pending' },
   created_at: { type: Date, default: Date.now }
 });
+
+projectInviteSchema.index({ to_user: 1, status: 1, created_at: -1 });
+projectInviteSchema.index({ project_id: 1, to_user: 1, status: 1 });
 
 const ProjectInvite = mongoose.model('ProjectInvite', projectInviteSchema);
 
@@ -236,6 +274,9 @@ const joinRequestMessageSchema = new mongoose.Schema({
   file_name: { type: String },
   created_at: { type: Date, default: Date.now }
 });
+
+joinRequestMessageSchema.index({ join_request_id: 1, created_at: 1 });
+joinRequestMessageSchema.index({ receiver_id: 1, created_at: -1 });
 
 const JoinRequestMessage = mongoose.model('JoinRequestMessage', joinRequestMessageSchema);
 
@@ -283,6 +324,19 @@ const userReadStatusSchema = new mongoose.Schema({
   last_seen_at: { type: Date, default: Date.now },
   is_dm: { type: Boolean, default: false }
 });
+
+channelSchema.index({ project_id: 1, name: 1 });
+channelSchema.index({ project_id: 1, created_at: 1 });
+
+messageSchema.index({ channel_id: 1, created_at: 1 });
+messageSchema.index({ project_id: 1, created_at: -1 });
+messageSchema.index({ sender_id: 1, created_at: -1 });
+
+directMessageSchema.index({ project_id: 1, sender_id: 1, receiver_id: 1, created_at: 1 });
+directMessageSchema.index({ project_id: 1, receiver_id: 1, sender_id: 1, created_at: 1 });
+
+userReadStatusSchema.index({ user_id: 1, is_dm: 1, channel_id: 1 });
+userReadStatusSchema.index({ user_id: 1, project_id: 1, is_dm: 1, other_user_id: 1 });
 
 const Channel = mongoose.model('Channel', channelSchema);
 const Message = mongoose.model('Message', messageSchema);

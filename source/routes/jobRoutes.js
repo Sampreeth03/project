@@ -7,6 +7,7 @@ const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW A
 const { upload } = require("../middleware/uploadMiddleware");
 const { jobApplicationLimiter } = require('../middleware/securityMiddleware');
 const { validateJobApplication } = require('../middleware/validationMiddleware');
+const { cacheRoute } = require('../middleware/cacheMiddleware');
 
 const jsonParser = express.json();
 
@@ -24,7 +25,7 @@ const jsonParser = express.json();
  */
 
 // --- Student Job Views ---
-router.get('/apply', isAuthenticatedAPI, jobController.getJobApplyPage);
+router.get('/apply', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), jobController.getJobApplyPage);
 
 /**
  * @swagger
@@ -38,7 +39,7 @@ router.get('/apply', isAuthenticatedAPI, jobController.getJobApplyPage);
  *       200:
  *         description: Student applications list
  */
-router.get('/job', isAuthenticatedAPI, jobController.getStudentApplications);
+router.get('/job', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), jobController.getStudentApplications);
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ router.get('/job', isAuthenticatedAPI, jobController.getStudentApplications);
  *       200:
  *         description: Job notifications feed
  */
-router.get('/job_not', isAuthenticatedAPI, jobController.getJobNotifications);
+router.get('/job_not', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), jobController.getJobNotifications);
 
 // --- Student Job Actions ---
 

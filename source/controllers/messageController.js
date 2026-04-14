@@ -1,5 +1,6 @@
 // controllers/messageController.js
 
+const mongoose = require('mongoose');
 const { Project, ProjectMember, Channel, Message, DirectMessage, User, UserReadStatus } = require('../database');
 const { upload } = require('../middleware/uploadMiddleware');
 const path = require('path');
@@ -51,12 +52,12 @@ const getProjectChannels = async (req, res) => {
         const { projectId } = req.params;
 
         // Verify user is a member or creator of the project
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(projectId).select('user_id').lean();
         if (!project) {
             return res.status(404).json({ success: false, error: 'Project not found' });
         }
 
-        const isMember = await ProjectMember.findOne({ project_id: projectId, user_id: userId });
+        const isMember = await ProjectMember.exists({ project_id: projectId, user_id: userId });
         const isCreator = project.user_id.toString() === userId.toString();
 
         if (!isMember && !isCreator) {
@@ -84,12 +85,12 @@ const getProjectMembers = async (req, res) => {
         const { projectId } = req.params;
 
         // Verify user is a member or creator
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(projectId).select('user_id').lean();
         if (!project) {
             return res.status(404).json({ success: false, error: 'Project not found' });
         }
 
-        const isMember = await ProjectMember.findOne({ project_id: projectId, user_id: userId });
+        const isMember = await ProjectMember.exists({ project_id: projectId, user_id: userId });
         const isCreator = project.user_id.toString() === userId.toString();
 
         if (!isMember && !isCreator) {
@@ -137,16 +138,15 @@ const getChannelMessages = async (req, res) => {
         const { channelId } = req.params;
 
         // Verify channel exists and user has access
-        const channel = await Channel.findById(channelId);
+        const channel = await Channel.findById(channelId).select('project_id').lean();
         if (!channel) {
             return res.status(404).json({ success: false, error: 'Channel not found' });
         }
 
-        const isMember = await ProjectMember.findOne({ 
-            project_id: channel.project_id, 
-            user_id: userId 
-        });
-        const project = await Project.findById(channel.project_id);
+        const [isMember, project] = await Promise.all([
+            ProjectMember.exists({ project_id: channel.project_id, user_id: userId }),
+            Project.findById(channel.project_id).select('user_id').lean()
+        ]);
         const isCreator = project && project.user_id.toString() === userId.toString();
 
         if (!isMember && !isCreator) {
@@ -196,16 +196,15 @@ const sendChannelMessage = async (req, res) => {
         }
 
         // Verify channel exists and user has access
-        const channel = await Channel.findById(channelId);
+        const channel = await Channel.findById(channelId).select('project_id').lean();
         if (!channel) {
             return res.status(404).json({ success: false, error: 'Channel not found' });
         }
 
-        const isMember = await ProjectMember.findOne({ 
-            project_id: channel.project_id, 
-            user_id: userId 
-        });
-        const project = await Project.findById(channel.project_id);
+        const [isMember, project] = await Promise.all([
+            ProjectMember.exists({ project_id: channel.project_id, user_id: userId }),
+            Project.findById(channel.project_id).select('user_id').lean()
+        ]);
         const isCreator = project && project.user_id.toString() === userId.toString();
 
         if (!isMember && !isCreator) {
@@ -279,19 +278,15 @@ const getDirectMessages = async (req, res) => {
         const { projectId, otherUserId } = req.params;
 
         // Verify both users are in the same project
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(projectId).select('user_id').lean();
         if (!project) {
             return res.status(404).json({ success: false, error: 'Project not found' });
         }
 
-        const currentUserMember = await ProjectMember.findOne({ 
-            project_id: projectId, 
-            user_id: userId 
-        });
-        const otherUserMember = await ProjectMember.findOne({ 
-            project_id: projectId, 
-            user_id: otherUserId 
-        });
+        const [currentUserMember, otherUserMember] = await Promise.all([
+            ProjectMember.exists({ project_id: projectId, user_id: userId }),
+            ProjectMember.exists({ project_id: projectId, user_id: otherUserId })
+        ]);
 
         const isCurrentCreator = project.user_id.toString() === userId.toString();
         const isOtherCreator = project.user_id.toString() === otherUserId.toString();
@@ -345,19 +340,15 @@ const sendDirectMessage = async (req, res) => {
         }
 
         // Verify both users are in the same project
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(projectId).select('user_id').lean();
         if (!project) {
             return res.status(404).json({ success: false, error: 'Project not found' });
         }
 
-        const currentUserMember = await ProjectMember.findOne({ 
-            project_id: projectId, 
-            user_id: userId 
-        });
-        const otherUserMember = await ProjectMember.findOne({ 
-            project_id: projectId, 
-            user_id: otherUserId 
-        });
+        const [currentUserMember, otherUserMember] = await Promise.all([
+            ProjectMember.exists({ project_id: projectId, user_id: userId }),
+            ProjectMember.exists({ project_id: projectId, user_id: otherUserId })
+        ]);
 
         const isCurrentCreator = project.user_id.toString() === userId.toString();
         const isOtherCreator = project.user_id.toString() === otherUserId.toString();
@@ -427,7 +418,7 @@ const createChannel = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Channel name is required' });
         }
 
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(projectId).select('user_id').lean();
         if (!project) {
             return res.status(404).json({ success: false, error: 'Project not found' });
         }
@@ -441,7 +432,7 @@ const createChannel = async (req, res) => {
         const existingChannel = await Channel.findOne({ 
             project_id: projectId, 
             name: channelName.toLowerCase().trim() 
-        });
+        }).select('_id').lean();
 
         if (existingChannel) {
             return res.status(400).json({ success: false, error: 'Channel already exists' });
@@ -474,72 +465,99 @@ const getUnreadCounts = async (req, res) => {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
         const userId = req.user.id;
+        const userIdStr = userId.toString();
 
         // Get all user's projects
         const createdProjects = await Project.find({ user_id: userId, status: 'active' }).select('_id').lean();
         const memberProjects = await ProjectMember.find({ user_id: userId }).populate('project_id', '_id status').lean();
-        
-        const projectIds = [
+
+        const uniqueProjectIds = Array.from(new Set([
             ...createdProjects.map(p => p._id),
             ...memberProjects.filter(pm => pm.project_id && pm.project_id.status === 'active').map(pm => pm.project_id._id)
-        ];
+        ].map((id) => id.toString())));
 
-        const unreadCounts = {};
-        
-        for (const projectId of projectIds) {
-            let totalUnread = 0;
-
-            // Get all channels for this project
-            const channels = await Channel.find({ project_id: projectId }).select('_id').lean();
-            
-            for (const channel of channels) {
-                // Get last seen time for this channel
-                const readStatus = await UserReadStatus.findOne({
-                    user_id: userId,
-                    channel_id: channel._id,
-                    is_dm: false
-                });
-
-                const lastSeenAt = readStatus ? readStatus.last_seen_at : new Date(0);
-                
-                // Count messages after last seen
-                const unreadCount = await Message.countDocuments({
-                    channel_id: channel._id,
-                    created_at: { $gt: lastSeenAt },
-                    sender_id: { $ne: userId } // Don't count own messages
-                });
-                
-                totalUnread += unreadCount;
-            }
-
-            // Get unread DMs for this project
-            const projectMembers = await ProjectMember.find({ project_id: projectId }).select('user_id').lean();
-            const memberIds = projectMembers.map(pm => pm.user_id.toString());
-            
-            for (const memberId of memberIds) {
-                if (memberId === userId.toString()) continue;
-                
-                const readStatus = await UserReadStatus.findOne({
-                    user_id: userId,
-                    project_id: projectId,
-                    other_user_id: memberId,
-                    is_dm: true
-                });
-
-                const lastSeenAt = readStatus ? readStatus.last_seen_at : new Date(0);
-                
-                const unreadCount = await DirectMessage.countDocuments({
-                    project_id: projectId,
-                    receiver_id: userId,
-                    sender_id: memberId,
-                    created_at: { $gt: lastSeenAt }
-                });
-                
-                totalUnread += unreadCount;
-            }
-
-            unreadCounts[projectId.toString()] = totalUnread;
+        if (uniqueProjectIds.length === 0) {
+            return res.json({ success: true, unreadCounts: {} });
         }
+
+        const projectIds = uniqueProjectIds.map((id) => new mongoose.Types.ObjectId(id));
+
+        const [channels, allProjectMembers] = await Promise.all([
+            Channel.find({ project_id: { $in: projectIds } }).select('_id project_id').lean(),
+            ProjectMember.find({ project_id: { $in: projectIds } }).select('project_id user_id').lean()
+        ]);
+
+        const channelIds = channels.map((channel) => channel._id);
+
+        const [channelStatuses, dmStatuses] = await Promise.all([
+            channelIds.length > 0
+                ? UserReadStatus.find({
+                    user_id: userId,
+                    is_dm: false,
+                    channel_id: { $in: channelIds }
+                }).select('channel_id last_seen_at').lean()
+                : [],
+            UserReadStatus.find({
+                user_id: userId,
+                project_id: { $in: projectIds },
+                is_dm: true
+            }).select('project_id other_user_id last_seen_at').lean()
+        ]);
+
+        const channelLastSeenMap = new Map(
+            channelStatuses
+                .filter((status) => status.channel_id)
+                .map((status) => [status.channel_id.toString(), status.last_seen_at || new Date(0)])
+        );
+
+        const dmLastSeenMap = new Map(
+            dmStatuses
+                .filter((status) => status.project_id && status.other_user_id)
+                .map((status) => [`${status.project_id.toString()}::${status.other_user_id.toString()}`, status.last_seen_at || new Date(0)])
+        );
+
+        const membersByProject = new Map();
+        for (const member of allProjectMembers) {
+            const projectId = member.project_id?.toString();
+            const memberId = member.user_id?.toString();
+            if (!projectId || !memberId || memberId === userIdStr) continue;
+            if (!membersByProject.has(projectId)) membersByProject.set(projectId, new Set());
+            membersByProject.get(projectId).add(memberId);
+        }
+
+        const unreadCounts = Object.fromEntries(uniqueProjectIds.map((id) => [id, 0]));
+
+        const channelCountPromises = channels.map(async (channel) => {
+            const channelId = channel._id.toString();
+            const projectId = channel.project_id.toString();
+            const lastSeenAt = channelLastSeenMap.get(channelId) || new Date(0);
+            const unreadCount = await Message.countDocuments({
+                channel_id: channel._id,
+                created_at: { $gt: lastSeenAt },
+                sender_id: { $ne: userId }
+            });
+            unreadCounts[projectId] += unreadCount;
+        });
+
+        const dmCountPromises = [];
+        for (const projectId of uniqueProjectIds) {
+            const memberIds = Array.from(membersByProject.get(projectId) || []);
+            for (const memberId of memberIds) {
+                const lastSeenAt = dmLastSeenMap.get(`${projectId}::${memberId}`) || new Date(0);
+                dmCountPromises.push(
+                    DirectMessage.countDocuments({
+                        project_id: projectId,
+                        receiver_id: userId,
+                        sender_id: memberId,
+                        created_at: { $gt: lastSeenAt }
+                    }).then((count) => {
+                        unreadCounts[projectId] += count;
+                    })
+                );
+            }
+        }
+
+        await Promise.all([...channelCountPromises, ...dmCountPromises]);
 
         res.json({ success: true, unreadCounts });
     } catch (error) {

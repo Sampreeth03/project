@@ -50,7 +50,8 @@ exports.postLogin = async (req, res, next) => {
     }
 
     try {
-        const user = await User.findOne({ email });
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({ success: false, error: "Invalid email or password" });
         }
@@ -103,7 +104,8 @@ exports.postSignup = async (req, res, next) => {
     }
 
     try {
-        const existingUser = await User.findOne({ email });
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return res.status(409).json({ success: false, error: 'Email already in use' });
         }
@@ -113,7 +115,7 @@ exports.postSignup = async (req, res, next) => {
         // Build user object with profile fields
         const userData = { 
             name, 
-            email, 
+            email: normalizedEmail,
             password: hashedPassword, 
             role: 'user', 
             verified: false 
@@ -550,7 +552,7 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
         // Assign this recruiter to a platform administrator in round-robin fashion (if any exist)
         try {
             const { PlatformAdministrator } = require('../database');
-            const admins = await PlatformAdministrator.find({}).sort({ createdAt: 1 }).lean();
+            const admins = await PlatformAdministrator.find({}).select('_id').sort({ createdAt: 1 }).lean();
             if (admins && admins.length > 0) {
                 const recruiterCount = await User.countDocuments({ role: 'recruiter' });
                 const index = (recruiterCount - 1) % admins.length; // -1 because we just created this recruiter
@@ -586,6 +588,7 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
 exports.postRecruiterSignup = async (req, res) => {
     const { name, email, password, confirmPassword } = req.body;
     const verificationFile = req.file?.path;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
     if (password !== confirmPassword) {
         return res.status(400).json({ success: false, error: "Passwords do not match" });
@@ -599,7 +602,7 @@ exports.postRecruiterSignup = async (req, res) => {
     }
 
     try {
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return res.status(409).json({ success: false, error: "Email already registered" });
         }
@@ -607,7 +610,7 @@ exports.postRecruiterSignup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
             name,
-            email,
+            email: normalizedEmail,
             password: hashedPassword,
             role: "recruiter",
             verified: false,
@@ -619,7 +622,7 @@ exports.postRecruiterSignup = async (req, res) => {
         // Assign this legacy-signup recruiter to a platform administrator (round-robin) if any exist
         try {
             const { PlatformAdministrator } = require('../database');
-            const admins = await PlatformAdministrator.find({}).sort({ createdAt: 1 }).lean();
+            const admins = await PlatformAdministrator.find({}).select('_id').sort({ createdAt: 1 }).lean();
             if (admins && admins.length > 0) {
                 const recruiterCount = await User.countDocuments({ role: 'recruiter' });
                 const index = (recruiterCount - 1) % admins.length;
@@ -678,10 +681,8 @@ exports.postLoginRequestOtp = async (req, res) => {
     }
 
     try {
-        const loginEmail = String(email || '').trim();
-        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Case-insensitive match so user can type Gmail with different casing
-        const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i') });
+        const loginEmail = String(email || '').trim().toLowerCase();
+        const user = await User.findOne({ email: loginEmail });
         if (!user) {
             return res.status(401).json({ success: false, error: 'Invalid email or password' });
         }
@@ -724,9 +725,8 @@ exports.postLoginVerifyOtp = async (req, res) => {
     const code = String(otp).trim();
 
     try {
-        const loginEmail = String(email || '').trim();
-        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i') });
+        const loginEmail = String(email || '').trim().toLowerCase();
+        const user = await User.findOne({ email: loginEmail });
         if (!user) {
             return res.status(401).json({ success: false, error: 'User not found' });
         }
@@ -767,9 +767,8 @@ exports.postForgotPasswordRequestOtp = async (req, res) => {
     }
 
     try {
-        const loginEmail = String(email || '').trim();
-        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i') });
+        const loginEmail = String(email || '').trim().toLowerCase();
+        const user = await User.findOne({ email: loginEmail });
         
         if (!user) {
             return res.status(404).json({ success: false, error: 'No account found with this email address' });
@@ -874,8 +873,7 @@ exports.postStudentVerifyAuthenticatorSetup = async (req, res) => {
     }
 
     try {
-        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const user = await User.findOne({ email: new RegExp(`^${escapeRegExp(loginEmail)}$`, 'i'), role: 'user' });
+        const user = await User.findOne({ email: loginEmail.toLowerCase(), role: 'user' });
         if (!user) {
             return res.status(404).json({ success: false, error: 'User not found.' });
         }

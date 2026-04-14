@@ -159,11 +159,15 @@ exports.getProjectNotifications = async (req, res) => {
         const projectCreationNotifications = await Notification.find({ user_id: userId, type: { $in: ['project_creation', 'project_completion'] } })
             .sort({ createdAt: -1 });
 
-        // Fetch join requests SENT TO THIS USER'S projects (for approval/rejection)
-        const joinRequests = await JoinRequest.find({})
-            .populate('user_id', 'name')
-            .populate({ path: 'project_id', match: { user_id: userId }, select: 'title' }) // Filter by projects created by THIS user
-            .then(results => results.filter(jr => jr.project_id && jr.status === 'pending')); // Filter for pending status
+        // Fetch only pending join requests for projects owned by this user
+        const ownedProjects = await Project.find({ user_id: userId }).select('_id').lean();
+        const ownedProjectIds = ownedProjects.map((project) => project._id);
+        const joinRequests = ownedProjectIds.length > 0
+            ? await JoinRequest.find({ project_id: { $in: ownedProjectIds }, status: 'pending' })
+                .populate('user_id', 'name')
+                .populate('project_id', 'title')
+                .lean()
+            : [];
 
         res.render('proj_notif', {
             user: req.user,
@@ -247,15 +251,18 @@ exports.getProjectNotificationsJSON = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        // Fetch join requests SENT TO THIS USER'S projects (Team Leader - for approval/rejection)
-        const joinRequestsRaw = await JoinRequest.find({})
-            .populate('user_id', 'name')
-            .populate({ path: 'project_id', match: { user_id: userId }, select: 'title user_id' })
-            .lean();
+        // Fetch only pending join requests for projects owned by this user
+        const ownedProjects = await Project.find({ user_id: userId }).select('_id').lean();
+        const ownedProjectIds = ownedProjects.map((project) => project._id);
 
-        const joinRequests = joinRequestsRaw
-            .filter(jr => jr.project_id && jr.status === 'pending')
-            .map(jr => ({
+        const joinRequestsRaw = ownedProjectIds.length > 0
+            ? await JoinRequest.find({ project_id: { $in: ownedProjectIds }, status: 'pending' })
+                .populate('user_id', 'name')
+                .populate({ path: 'project_id', select: 'title user_id' })
+                .lean()
+            : [];
+
+        const joinRequests = joinRequestsRaw.map(jr => ({
                 id: jr._id,
                 user_id: jr.user_id._id,
                 user_name: jr.user_id.name,

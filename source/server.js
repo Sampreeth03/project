@@ -12,11 +12,13 @@ const { connectDB } = require("./config/database");
 const { corsOptions } = require('./middleware/securityMiddleware');
 const { setupChatSocket } = require('./sockets/chatSocket');
 const { verifyToken, COOKIE_NAME } = require('./config/jwt');
+const { initRedisCache } = require('./services/redisCacheService');
 
 const PORT = Number(process.env.PORT) || 5000;
 
 // Connect to the database
 connectDB();
+initRedisCache();
 
 const httpServer = http.createServer(app);
 

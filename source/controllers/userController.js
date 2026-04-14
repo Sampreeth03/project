@@ -24,7 +24,9 @@ exports.getHome = async (req, res) => {
     
     try {
         // Fetch user from database to get onboardingCompleted status and profile fields
-        const dbUser = await User.findById(req.user.id).select('onboardingCompleted about skills interests resumeUrl profileImageUrl');
+        const dbUser = await User.findById(req.user.id)
+            .select('onboardingCompleted about skills interests resumeUrl profileImageUrl')
+            .lean();
         
         // Debug: Log the actual database values
         console.log('[Profile Check] User ID:', req.user.id);
@@ -140,28 +142,31 @@ exports.getDashboardMetrics = async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).lean();
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        let metrics = await UserMetrics.findOne({ user_id: new mongoose.Types.ObjectId(userId) });
+        let metrics = await UserMetrics.findOne({ user_id: new mongoose.Types.ObjectId(userId) }).lean();
         if (!metrics) {
             metrics = await UserMetrics.create({ user_id: new mongoose.Types.ObjectId(userId) });
         }
 
-        const completedProjects = await Project.find({ user_id: userId, status: 'completed' });
+        const completedProjects = await Project.find({ user_id: userId, status: 'completed' }).lean();
 
         // --- Chart data ---
         const topicNames = ['Web Development', 'Cyber Security', 'Robotics', 'Data Science', 'Deep Learning', 'Blockchain'];
 
         // 1) Projects I created, grouped by topic
-        const myProjects = await Project.find({ user_id: userId }).lean();
+        const [myProjects, memberDocs, myApps] = await Promise.all([
+            Project.find({ user_id: userId }).lean(),
+            ProjectMember.find({ user_id: userId }).lean(),
+            JobApplication.find({ user_id: userId }).lean()
+        ]);
         const topicProjects = topicNames.map(t => ({
             topic: t,
             count: myProjects.filter(p => p.topic === t).length
         }));
 
         // 2) Projects I joined (as member) that I did NOT create, grouped by topic
-        const memberDocs = await ProjectMember.find({ user_id: userId }).lean();
         const joinedProjectIds = memberDocs.map(m => m.project_id);
         const joinedProjects = await Project.find({
             _id: { $in: joinedProjectIds },
@@ -173,7 +178,6 @@ exports.getDashboardMetrics = async (req, res) => {
         }));
 
         // 3) Job application stats (applied by me)
-        const myApps = await JobApplication.find({ user_id: userId }).lean();
         const jobStats = {
             total: myApps.length,
             pending: myApps.filter(a => a.status === 'Pending' || a.status === 'Waiting').length,
@@ -544,7 +548,7 @@ exports.sendFriendRequest = async (req, res) => {
     try {
         const FriendRequest = require('../database').FriendRequest;
 
-        const exists = await FriendRequest.findOne({
+        const exists = await FriendRequest.exists({
             $or: [
                 { from_user: fromUserId, to_user: toUserId },
                 { from_user: toUserId, to_user: fromUserId }

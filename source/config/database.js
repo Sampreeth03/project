@@ -172,7 +172,13 @@ async function migrateJobApplications() {
 // --- Main Connection Function ---
 
 function connectDB() {
-    mongoose.connect(MONGODB_URI)
+    mongoose.connect(MONGODB_URI, {
+        maxPoolSize: 20,
+        minPoolSize: 5,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        autoIndex: process.env.NODE_ENV !== 'production'
+    })
         .then(async () => {
             console.log('Connected to MongoDB');
             

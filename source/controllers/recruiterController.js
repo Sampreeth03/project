@@ -47,12 +47,14 @@ exports.getRecruiterJobs = async (req, res) => {
     const navData = getRecruiterNav(); 
 
     try {
-        const totalJobs = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: null });
-        const totalParticipants = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } });
-        const activeJobs = await JobApplication.countDocuments({ posted_by: recruiterId, active: 1, user_id: null });
-        const postedJobs = await JobApplication.find({ posted_by: recruiterId, user_id: null })
-            .select('_id job_title company_name salary_range description skills custom_questions active')
-            .lean();
+        const [totalJobs, totalParticipants, activeJobs, postedJobs] = await Promise.all([
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: null }),
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } }),
+            JobApplication.countDocuments({ posted_by: recruiterId, active: 1, user_id: null }),
+            JobApplication.find({ posted_by: recruiterId, user_id: null })
+                .select('_id job_title company_name salary_range description skills custom_questions active')
+                .lean()
+        ]);
 
         res.json({
             user: req.user,
@@ -77,35 +79,21 @@ exports.getRecruiterDashboard = async (req, res) => {
     const recruiterNav = getRecruiterNav();
 
     try {
-        const jobCount = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: null });
-        const participantCount = await JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } });
-        
-        // Total Applications Received (all applications regardless of status)
-        const totalApplications = await JobApplication.countDocuments({ 
-            posted_by: recruiterId, 
-            user_id: { $ne: null } 
-        });
-        
-        // Pending Applications (status = 'Waiting' or 'Pending')
-        const pendingApplications = await JobApplication.countDocuments({ 
-            posted_by: recruiterId, 
-            user_id: { $ne: null },
-            status: { $in: ['Waiting', 'Pending'] }
-        });
-        
-        // Rejected Applications (status = 'Rejected')
-        const rejectedApplications = await JobApplication.countDocuments({ 
-            posted_by: recruiterId, 
-            user_id: { $ne: null },
-            status: 'Rejected'
-        });
-        
-        // Approved Applications (status = 'Approved')
-        const approvedApplications = await JobApplication.countDocuments({ 
-            posted_by: recruiterId, 
-            user_id: { $ne: null },
-            status: 'Approved'
-        });
+        const [
+            jobCount,
+            participantCount,
+            totalApplications,
+            pendingApplications,
+            rejectedApplications,
+            approvedApplications
+        ] = await Promise.all([
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: null }),
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } }),
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null } }),
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null }, status: { $in: ['Waiting', 'Pending'] } }),
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null }, status: 'Rejected' }),
+            JobApplication.countDocuments({ posted_by: recruiterId, user_id: { $ne: null }, status: 'Approved' })
+        ]);
         
         // Debug logging
         console.log('Dashboard Metrics for Recruiter:', recruiterId);
@@ -194,11 +182,13 @@ exports.getRecruiterDashboardTrends = async (req, res) => {
         const inWeek = (date, w) => date >= w.start && date < w.end;
 
         // All applications for this recruiter
-        const allApps = await JobApplication.find({ posted_by: recruiterId, user_id: { $ne: null } }).lean();
+        const [allApps, allJobs] = await Promise.all([
+            JobApplication.find({ posted_by: recruiterId, user_id: { $ne: null } }).lean(),
+            JobApplication.find({ posted_by: recruiterId, user_id: null }).lean()
+        ]);
         const recentApps = allApps.filter(a => a.createdAt >= twelveWeeksAgo);
 
         // All job postings (template docs with user_id = null)
-        const allJobs = await JobApplication.find({ posted_by: recruiterId, user_id: null }).lean();
         const recentJobs = allJobs.filter(j => j.createdAt >= twelveWeeksAgo);
 
         // 1. Application Inflow Trend (line chart)
@@ -590,7 +580,7 @@ exports.getUserProfileForRecruiter = async (req, res) => {
 
     try {
         // Verify the recruiter has access to this user (they applied to one of their jobs)
-        const application = await JobApplication.findOne({ 
+        const application = await JobApplication.exists({ 
             posted_by: recruiterId, 
             user_id: userId 
         });
@@ -600,14 +590,21 @@ exports.getUserProfileForRecruiter = async (req, res) => {
         }
 
         // Fetch user data
-        const user = await User.findById(userId).select('-password').lean();
+        const { UserMetrics, Task, ProjectMember } = require("../database");
+        const [user, metricsDoc, completedTasks, projectMembers] = await Promise.all([
+            User.findById(userId).select('-password').lean(),
+            UserMetrics.findOne({ user_id: userId }).lean(),
+            Task.find({ assigned_to: userId, status: 'Completed' }).populate('project_id', 'title').lean(),
+            ProjectMember.find({ user_id: userId })
+                .populate('project_id', 'title description user_id status')
+                .lean()
+        ]);
+
         if (!user) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        // Fetch user metrics
-        const { UserMetrics, Task, Project, ProjectMember } = require("../database");
-        const metrics = await UserMetrics.findOne({ user_id: userId }).lean() || {
+        const metrics = metricsDoc || {
             total_collaborations: 0,
             active_projects: 0,
             completed_tasks: 0,
@@ -617,12 +614,6 @@ exports.getUserProfileForRecruiter = async (req, res) => {
             projects_as_member: 0,
             solutions_provided: 0
         };
-
-        // Fetch completed tasks grouped by project
-        const completedTasks = await Task.find({ 
-            assigned_to: userId, 
-            status: 'Completed' 
-        }).populate('project_id', 'title').lean();
 
         const tasksByProject = {};
         completedTasks.forEach(task => {
@@ -646,11 +637,6 @@ exports.getUserProfileForRecruiter = async (req, res) => {
             });
         });
 
-        // Get projects where user is a member (both active and completed)
-        const projectMembers = await ProjectMember.find({ user_id: userId })
-            .populate('project_id', 'title description user_id status')
-            .lean();
-        
         const projects = projectMembers
             .filter(pm => pm.project_id) // Filter out null project_id
             .map(pm => ({

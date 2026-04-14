@@ -5,6 +5,7 @@ const router = express.Router();
 const doubtController = require('../controllers/doubtController');
 const { isAuthenticatedAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 const { upload } = require("../middleware/uploadMiddleware");
+const { cacheRoute } = require('../middleware/cacheMiddleware');
 
 const jsonParser = express.json();
 
@@ -13,14 +14,14 @@ const jsonParser = express.json();
 router.get("/doubt", doubtController.getDoubtBoard);
 router.get("/clear", doubtController.getClearDoubts);
 // JSON endpoint for React frontend
-router.get('/doubts', doubtController.getDoubtsJSON);
+router.get('/doubts', cacheRoute({ ttlSeconds: 20, scope: 'public' }), doubtController.getDoubtsJSON);
 
 // --- Notification/Join Request Management View ---
 // Auth-required: notifications are user-specific
 router.get('/not', isAuthenticatedAPI, doubtController.getProjectNotifications); 
 
 // --- API endpoint for React frontend ---
-router.get('/notifications', isAuthenticatedAPI, doubtController.getProjectNotificationsJSON);
+router.get('/notifications', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 20, scope: 'user' }), doubtController.getProjectNotificationsJSON);
 
 // --- Q&A Actions ---
 // Auth-required for posting/ replying

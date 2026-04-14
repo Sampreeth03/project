@@ -97,19 +97,30 @@ exports.getStudentsData = async (req, res) => {
             .select('name email')
             .lean();
 
-        const studentsData = await Promise.all(students.map(async (student) => {
-            const metrics = await UserMetrics.findOne({ user_id: student._id })
-                .select('completed_tasks')
-                .lean();
-            const hostedProjects = await Project.countDocuments({ user_id: student._id });
+        const studentIds = students.map((student) => student._id);
+        const [metricsDocs, hostedCounts] = await Promise.all([
+            UserMetrics.find({ user_id: { $in: studentIds } })
+                .select('user_id completed_tasks')
+                .lean(),
+            Project.aggregate([
+                { $match: { user_id: { $in: studentIds } } },
+                { $group: { _id: '$user_id', count: { $sum: 1 } } }
+            ])
+        ]);
 
-            return {
-                id: student._id.toString(),
-                name: student.name,
-                email: student.email,
-                hostedProjects: hostedProjects || 0,
-                tasksCompleted: metrics ? metrics.completed_tasks || 0 : 0
-            };
+        const tasksByUserId = new Map(
+            metricsDocs.map((doc) => [doc.user_id.toString(), doc.completed_tasks || 0])
+        );
+        const hostedByUserId = new Map(
+            hostedCounts.map((doc) => [doc._id.toString(), doc.count || 0])
+        );
+
+        const studentsData = students.map((student) => ({
+            id: student._id.toString(),
+            name: student.name,
+            email: student.email,
+            hostedProjects: hostedByUserId.get(student._id.toString()) || 0,
+            tasksCompleted: tasksByUserId.get(student._id.toString()) || 0
         }));
 
         res.json(studentsData);
@@ -127,19 +138,31 @@ exports.getDoubtsPage = async (req, res) => {
         const users = await User.find({ role: 'user' })
             .select('name email')
             .lean();
-    
-        const doubtsData = await Promise.all(users.map(async (user) => {
-            const metrics = await UserMetrics.findOne({ user_id: user._id })
-                .select('inquiriesInitiated solutions_provided')
-                .lean();
-            const totalDoubts = await Doubt.countDocuments({ user_id: user._id });
-            return {
-                id: user._id.toString(),
-                name: user.name,
-                email: user.email,
-                doubtsAsked: totalDoubts || 0,
-                doubtsCleared: metrics ? metrics.solutions_provided || 0 : 0
-            };
+
+        const userIds = users.map((user) => user._id);
+        const [metricsDocs, doubtsCounts] = await Promise.all([
+            UserMetrics.find({ user_id: { $in: userIds } })
+                .select('user_id solutions_provided')
+                .lean(),
+            Doubt.aggregate([
+                { $match: { user_id: { $in: userIds } } },
+                { $group: { _id: '$user_id', count: { $sum: 1 } } }
+            ])
+        ]);
+
+        const clearedByUserId = new Map(
+            metricsDocs.map((doc) => [doc.user_id.toString(), doc.solutions_provided || 0])
+        );
+        const askedByUserId = new Map(
+            doubtsCounts.map((doc) => [doc._id.toString(), doc.count || 0])
+        );
+
+        const doubtsData = users.map((user) => ({
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            doubtsAsked: askedByUserId.get(user._id.toString()) || 0,
+            doubtsCleared: clearedByUserId.get(user._id.toString()) || 0
         }));
     
         res.render('admin-doubts', {
@@ -161,19 +184,31 @@ exports.getDoubtsData = async (req, res) => {
         const users = await User.find({ role: 'user' })
             .select('name email')
             .lean();
-    
-        const doubtsData = await Promise.all(users.map(async (user) => {
-            const metrics = await UserMetrics.findOne({ user_id: user._id })
-                .select('inquiriesInitiated solutions_provided')
-                .lean();
-            const totalDoubts = await Doubt.countDocuments({ user_id: user._id });
-            return {
-                id: user._id.toString(),
-                name: user.name,
-                email: user.email,
-                doubtsAsked: totalDoubts || 0,
-                doubtsCleared: metrics ? metrics.solutions_provided || 0 : 0
-            };
+
+        const userIds = users.map((user) => user._id);
+        const [metricsDocs, doubtsCounts] = await Promise.all([
+            UserMetrics.find({ user_id: { $in: userIds } })
+                .select('user_id solutions_provided')
+                .lean(),
+            Doubt.aggregate([
+                { $match: { user_id: { $in: userIds } } },
+                { $group: { _id: '$user_id', count: { $sum: 1 } } }
+            ])
+        ]);
+
+        const clearedByUserId = new Map(
+            metricsDocs.map((doc) => [doc.user_id.toString(), doc.solutions_provided || 0])
+        );
+        const askedByUserId = new Map(
+            doubtsCounts.map((doc) => [doc._id.toString(), doc.count || 0])
+        );
+
+        const doubtsData = users.map((user) => ({
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            doubtsAsked: askedByUserId.get(user._id.toString()) || 0,
+            doubtsCleared: clearedByUserId.get(user._id.toString()) || 0
         }));
     
         res.json(doubtsData);
@@ -202,51 +237,55 @@ exports.getRecruitersData = async (req, res) => {
             .select('name email createdAt companyName')
             .lean();
 
-        const recruitersData = await Promise.all(
-            recruiters.map(async (recruiter) => {
-                // Job postings: records created by recruiter with no applicant yet
-                const postedJobs = await JobApplication.find({
-                    posted_by: recruiter._id,
-                    user_id: null
-                }).select('job_title company_name createdAt').lean();
+        const recruiterIds = recruiters.map((recruiter) => recruiter._id);
+        const recruiterJobs = await JobApplication.find({ posted_by: { $in: recruiterIds } })
+            .select('posted_by user_id status job_title company_name createdAt')
+            .populate('user_id', 'name email')
+            .lean();
 
-                // Hired students: applications with Approved status
-                const hiredApplicants = await JobApplication.find({
-                    posted_by: recruiter._id,
-                    user_id: { $ne: null },
-                    status: 'Approved'
-                }).populate('user_id', 'name email').select('job_title company_name createdAt user_id').lean();
+        const jobsByRecruiterId = new Map();
+        for (const job of recruiterJobs) {
+            const key = job.posted_by?.toString();
+            if (!key) continue;
+            if (!jobsByRecruiterId.has(key)) jobsByRecruiterId.set(key, []);
+            jobsByRecruiterId.get(key).push(job);
+        }
 
-                const fallbackName = recruiter.email ? recruiter.email.split('@')[0] : 'Unnamed Recruiter';
-                return {
-                    id: recruiter._id.toString(),
-                    name: recruiter.name || fallbackName,
-                    email: recruiter.email || 'N/A',
-                    company: recruiter.companyName || fallbackName,
-                    role: 'Recruiter',
-                    joinedDate: recruiter.createdAt
-                        ? new Date(recruiter.createdAt).toISOString().split('T')[0]
-                        : 'N/A',
-                    recruitmentCount: hiredApplicants.length,
-                    hiredJobs: [
-                        ...postedJobs.map(j => ({
-                            type: 'posting',
-                            title: j.job_title,
-                            company: j.company_name,
-                            date: j.createdAt ? new Date(j.createdAt).toISOString().split('T')[0] : 'N/A',
-                            personName: null
-                        })),
-                        ...hiredApplicants.map(j => ({
-                            type: 'hired',
-                            title: j.job_title,
-                            company: j.company_name,
-                            date: j.createdAt ? new Date(j.createdAt).toISOString().split('T')[0] : 'N/A',
-                            personName: j.user_id?.name || null
-                        }))
-                    ]
-                };
-            })
-        );
+        const recruitersData = recruiters.map((recruiter) => {
+            const recruiterKey = recruiter._id.toString();
+            const recruiterJobDocs = jobsByRecruiterId.get(recruiterKey) || [];
+            const postedJobs = recruiterJobDocs.filter((job) => !job.user_id);
+            const hiredApplicants = recruiterJobDocs.filter((job) => job.user_id && job.status === 'Approved');
+
+            const fallbackName = recruiter.email ? recruiter.email.split('@')[0] : 'Unnamed Recruiter';
+            return {
+                id: recruiter._id.toString(),
+                name: recruiter.name || fallbackName,
+                email: recruiter.email || 'N/A',
+                company: recruiter.companyName || fallbackName,
+                role: 'Recruiter',
+                joinedDate: recruiter.createdAt
+                    ? new Date(recruiter.createdAt).toISOString().split('T')[0]
+                    : 'N/A',
+                recruitmentCount: hiredApplicants.length,
+                hiredJobs: [
+                    ...postedJobs.map(j => ({
+                        type: 'posting',
+                        title: j.job_title,
+                        company: j.company_name,
+                        date: j.createdAt ? new Date(j.createdAt).toISOString().split('T')[0] : 'N/A',
+                        personName: null
+                    })),
+                    ...hiredApplicants.map(j => ({
+                        type: 'hired',
+                        title: j.job_title,
+                        company: j.company_name,
+                        date: j.createdAt ? new Date(j.createdAt).toISOString().split('T')[0] : 'N/A',
+                        personName: j.user_id?.name || null
+                    }))
+                ]
+            };
+        });
 
         res.json({ recruiters: recruitersData });
     } catch (err) {
@@ -275,31 +314,51 @@ exports.getProjectsData = async (req, res) => {
         const projects = await Project.find().lean();
         const now = new Date();
 
-        const projectData = await Promise.all(projects.map(async (project) => {
-            // Fetch lead (project creator)
-            const lead = await User.findById(project.user_id).select('name email').lean();
+        const projectIds = projects.map((project) => project._id);
+        const leadIds = Array.from(new Set(projects.map((project) => project.user_id?.toString()).filter(Boolean)));
 
-            // Fetch participants — members EXCLUDING the creator
-            const memberDocs = await ProjectMember.find({
-                project_id: project._id,
-                user_id: { $ne: project.user_id }
-            }).lean();
-            const participantIds = memberDocs.map(m => m.user_id);
-            const participants = participantIds.length > 0
-                ? await User.find({ _id: { $in: participantIds } }).select('name email').lean()
-                : [];
+        const [leadUsers, memberDocs] = await Promise.all([
+            User.find({ _id: { $in: leadIds } }).select('name email').lean(),
+            ProjectMember.find({ project_id: { $in: projectIds } }).select('project_id user_id').lean()
+        ]);
 
-            const memberCount = participants.length + 1; // +1 for lead
+        const memberUserIds = Array.from(new Set(memberDocs.map((member) => member.user_id?.toString()).filter(Boolean)));
+        const missingMemberUserIds = memberUserIds.filter((id) => !leadIds.includes(id));
+        const memberUsers = missingMemberUserIds.length > 0
+            ? await User.find({ _id: { $in: missingMemberUserIds } }).select('name email').lean()
+            : [];
+
+        const usersById = new Map();
+        for (const user of [...leadUsers, ...memberUsers]) {
+            usersById.set(user._id.toString(), user);
+        }
+
+        const memberIdsByProject = new Map();
+        for (const member of memberDocs) {
+            const key = member.project_id?.toString();
+            const userId = member.user_id?.toString();
+            if (!key || !userId) continue;
+            if (!memberIdsByProject.has(key)) memberIdsByProject.set(key, []);
+            memberIdsByProject.get(key).push(userId);
+        }
+
+        const projectData = projects.map((project) => {
+            const lead = usersById.get(project.user_id?.toString());
+            const projectMemberIds = memberIdsByProject.get(project._id.toString()) || [];
+            const participantIds = projectMemberIds.filter((id) => id !== project.user_id?.toString());
+            const participants = participantIds
+                .map((id) => usersById.get(id))
+                .filter(Boolean);
+
+            const memberCount = participants.length + 1;
             let derivedStatus = project.status || 'active';
 
             if (typeof derivedStatus === 'string' && derivedStatus.toLowerCase() === 'completed') {
                 derivedStatus = 'completed';
+            } else if (project.deadline && new Date(project.deadline).getTime() < now.getTime()) {
+                derivedStatus = 'expired';
             } else {
-                if (project.deadline && new Date(project.deadline).getTime() < now.getTime()) {
-                    derivedStatus = 'expired';
-                } else {
-                    derivedStatus = 'active';
-                }
+                derivedStatus = 'active';
             }
 
             return {
@@ -311,9 +370,13 @@ exports.getProjectsData = async (req, res) => {
                 deadline: project.deadline,
                 members: memberCount,
                 lead: lead ? { id: lead._id.toString(), name: lead.name, email: lead.email } : null,
-                participants: participants.map(p => ({ id: p._id.toString(), name: p.name, email: p.email }))
+                participants: participants.map((participant) => ({
+                    id: participant._id.toString(),
+                    name: participant.name,
+                    email: participant.email
+                }))
             };
-        }));
+        });
 
         res.json(projectData);
     } catch (err) {

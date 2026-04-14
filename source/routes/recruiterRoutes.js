@@ -6,6 +6,7 @@ const recruiterController = require('../controllers/recruiterController');
 const { isRecruiterAPI } = require('../middleware/authMiddleware'); // NEW API IMPORT
 const { jobPostingLimiter } = require('../middleware/securityMiddleware');
 const { validateJobCreation } = require('../middleware/validationMiddleware');
+const { cacheRoute } = require('../middleware/cacheMiddleware');
 
 const jsonParser = express.json(); 
 
@@ -39,7 +40,7 @@ router.get("/recruiter-home", isRecruiterAPI, recruiterController.getRecruiterHo
  *       200:
  *         description: Recruiter jobs and metrics
  */
-router.get("/rec-job", isRecruiterAPI, recruiterController.getRecruiterJobs);
+router.get("/rec-job", isRecruiterAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), recruiterController.getRecruiterJobs);
 
 /**
  * @swagger
@@ -53,7 +54,7 @@ router.get("/rec-job", isRecruiterAPI, recruiterController.getRecruiterJobs);
  *       200:
  *         description: Dashboard counts and success rate
  */
-router.get("/recruiter-dashboard", isRecruiterAPI, recruiterController.getRecruiterDashboard);
+router.get("/recruiter-dashboard", isRecruiterAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), recruiterController.getRecruiterDashboard);
 
 /**
  * @swagger
@@ -67,7 +68,7 @@ router.get("/recruiter-dashboard", isRecruiterAPI, recruiterController.getRecrui
  *       200:
  *         description: Weekly trends and hiring pipeline data
  */
-router.get("/recruiter-dashboard-trends", isRecruiterAPI, recruiterController.getRecruiterDashboardTrends);
+router.get("/recruiter-dashboard-trends", isRecruiterAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), recruiterController.getRecruiterDashboardTrends);
 
 /**
  * @swagger
@@ -81,7 +82,7 @@ router.get("/recruiter-dashboard-trends", isRecruiterAPI, recruiterController.ge
  *       200:
  *         description: Applications for recruiter jobs
  */
-router.get('/rec-app', isRecruiterAPI, recruiterController.getRecruiterApplications);
+router.get('/rec-app', isRecruiterAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), recruiterController.getRecruiterApplications);
 
 /**
  * @swagger
@@ -95,7 +96,7 @@ router.get('/rec-app', isRecruiterAPI, recruiterController.getRecruiterApplicati
  *       200:
  *         description: Recruiter notifications list
  */
-router.get('/rec-not', isRecruiterAPI, recruiterController.getRecruiterNotifications);
+router.get('/rec-not', isRecruiterAPI, cacheRoute({ ttlSeconds: 20, scope: 'user' }), recruiterController.getRecruiterNotifications);
 
 // --- Job Management APIs (Paths are correct) ---
 
