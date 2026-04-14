@@ -13,10 +13,10 @@ const { cacheRoute } = require('../middleware/cacheMiddleware');
 const jsonParser = express.json();
 
 // --- Core Project Views ---
-router.get('/project', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), projectController.getAllProjects);
-router.get('/joined-projects', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), projectController.getJoinedProjects);
-router.get('/project/:id', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), projectController.getProjectDetails);
-router.get('/e', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), projectController.getCreateProjectView); 
+router.get('/project', isAuthenticatedAPI, cacheRoute({ scope: 'project' }), projectController.getAllProjects);
+router.get('/joined-projects', isAuthenticatedAPI, cacheRoute({ scope: 'project' }), projectController.getJoinedProjects);
+router.get('/project/:id', isAuthenticatedAPI, cacheRoute({ scope: 'project' }), projectController.getProjectDetails);
+router.get('/e', isAuthenticatedAPI, cacheRoute({ scope: 'project' }), projectController.getCreateProjectView); 
 
 // --- Project CRUD & Membership APIs (Paths are correct) ---
 router.post('/create-project', isAuthenticatedAPI, projectCreationLimiter, jsonParser, validateProjectCreation, projectController.createProject);
@@ -52,7 +52,7 @@ router.get('/get-task-project/:taskId', isAuthenticatedAPI, projectController.ge
 
 // --- Dynamic Topic Routes (Paths are correct) ---
 Object.keys(topics).forEach(path => {
-    router.get(path, isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), projectController.getTopicProjects);
+    router.get(path, isAuthenticatedAPI, cacheRoute({ scope: 'topic' }), projectController.getTopicProjects);
 });
 
 

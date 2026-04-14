@@ -25,7 +25,7 @@ const jsonParser = express.json();
  */
 
 // --- Student Job Views ---
-router.get('/apply', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), jobController.getJobApplyPage);
+router.get('/apply', isAuthenticatedAPI, cacheRoute({ scope: 'job' }), jobController.getJobApplyPage);
 
 /**
  * @swagger
@@ -39,7 +39,7 @@ router.get('/apply', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'us
  *       200:
  *         description: Student applications list
  */
-router.get('/job', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), jobController.getStudentApplications);
+router.get('/job', isAuthenticatedAPI, cacheRoute({ scope: 'job' }), jobController.getStudentApplications);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.get('/job', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user
  *       200:
  *         description: Job notifications feed
  */
-router.get('/job_not', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), jobController.getJobNotifications);
+router.get('/job_not', isAuthenticatedAPI, cacheRoute({ scope: 'notifications' }), jobController.getJobNotifications);
 
 // --- Student Job Actions ---
 

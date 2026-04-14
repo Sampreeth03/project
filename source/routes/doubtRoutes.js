@@ -14,14 +14,14 @@ const jsonParser = express.json();
 router.get("/doubt", doubtController.getDoubtBoard);
 router.get("/clear", doubtController.getClearDoubts);
 // JSON endpoint for React frontend
-router.get('/doubts', cacheRoute({ ttlSeconds: 20, scope: 'public' }), doubtController.getDoubtsJSON);
+router.get('/doubts', cacheRoute({ scope: 'doubt' }), doubtController.getDoubtsJSON);
 
 // --- Notification/Join Request Management View ---
 // Auth-required: notifications are user-specific
 router.get('/not', isAuthenticatedAPI, doubtController.getProjectNotifications); 
 
 // --- API endpoint for React frontend ---
-router.get('/notifications', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 20, scope: 'user' }), doubtController.getProjectNotificationsJSON);
+router.get('/notifications', isAuthenticatedAPI, cacheRoute({ scope: 'notifications' }), doubtController.getProjectNotificationsJSON);
 
 // --- Q&A Actions ---
 // Auth-required for posting/ replying

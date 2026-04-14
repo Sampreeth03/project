@@ -13,8 +13,8 @@ const jsonParser = require('express').json();
 router.get('/users/search', isAuthenticatedAPI, userController.searchUsers);
 router.post('/friend-request/send', isAuthenticatedAPI, jsonParser, userController.sendFriendRequest);
 router.post('/friend-request/respond', isAuthenticatedAPI, jsonParser, userController.respondFriendRequest);
-router.get('/friends', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 20, scope: 'user' }), userController.getFriends);
-router.get('/friend-requests', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 20, scope: 'user' }), userController.getFriendRequests);
+router.get('/friends', isAuthenticatedAPI, cacheRoute({ scope: 'friends' }), userController.getFriends);
+router.get('/friend-requests', isAuthenticatedAPI, cacheRoute({ scope: 'friends' }), userController.getFriendRequests);
 
 
 // --- Core User/Home Routes ---
@@ -23,13 +23,13 @@ router.get('/home', optionalAuth, userController.getHome);
 router.get('/home/topics', userController.getHomeTopics);
 router.post('/complete-onboarding', isAuthenticatedAPI, userController.completeOnboarding);
 router.get('/dashboard', isAuthenticatedAPI, userController.getDashboard);
-router.get('/dashboard-metrics', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), userController.getDashboardMetrics); // CORRECTED Path (No /api)
-router.get('/dashboard-trends', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), userController.getDashboardTrends);
+router.get('/dashboard-metrics', isAuthenticatedAPI, cacheRoute({ scope: 'userDashboard' }), userController.getDashboardMetrics); // CORRECTED Path (No /api)
+router.get('/dashboard-trends', isAuthenticatedAPI, cacheRoute({ scope: 'userDashboard' }), userController.getDashboardTrends);
 
 // --- Profile Routes ---
 router.get('/profile', isAuthenticatedAPI, userController.getProfile); 
 router.get('/profile/:id', isAuthenticatedAPI, userController.getProfile); 
-router.get('/profile-data/:id', isAuthenticatedAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), userController.getProfileData); // CORRECTED Path
+router.get('/profile-data/:id', isAuthenticatedAPI, cacheRoute({ scope: 'userProfile' }), userController.getProfileData); // CORRECTED Path
 
 router.post('/profile', isAuthenticatedAPI, upload.fields([
     { name: 'picture', maxCount: 1 },

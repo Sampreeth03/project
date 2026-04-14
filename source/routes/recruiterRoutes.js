@@ -40,7 +40,7 @@ router.get("/recruiter-home", isRecruiterAPI, recruiterController.getRecruiterHo
  *       200:
  *         description: Recruiter jobs and metrics
  */
-router.get("/rec-job", isRecruiterAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), recruiterController.getRecruiterJobs);
+router.get("/rec-job", isRecruiterAPI, cacheRoute({ scope: 'recruiter' }), recruiterController.getRecruiterJobs);
 
 /**
  * @swagger
@@ -54,7 +54,7 @@ router.get("/rec-job", isRecruiterAPI, cacheRoute({ ttlSeconds: 30, scope: 'user
  *       200:
  *         description: Dashboard counts and success rate
  */
-router.get("/recruiter-dashboard", isRecruiterAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), recruiterController.getRecruiterDashboard);
+router.get("/recruiter-dashboard", isRecruiterAPI, cacheRoute({ scope: 'recruiter' }), recruiterController.getRecruiterDashboard);
 
 /**
  * @swagger
@@ -68,7 +68,7 @@ router.get("/recruiter-dashboard", isRecruiterAPI, cacheRoute({ ttlSeconds: 45, 
  *       200:
  *         description: Weekly trends and hiring pipeline data
  */
-router.get("/recruiter-dashboard-trends", isRecruiterAPI, cacheRoute({ ttlSeconds: 45, scope: 'user' }), recruiterController.getRecruiterDashboardTrends);
+router.get("/recruiter-dashboard-trends", isRecruiterAPI, cacheRoute({ scope: 'recruiter' }), recruiterController.getRecruiterDashboardTrends);
 
 /**
  * @swagger
@@ -82,7 +82,7 @@ router.get("/recruiter-dashboard-trends", isRecruiterAPI, cacheRoute({ ttlSecond
  *       200:
  *         description: Applications for recruiter jobs
  */
-router.get('/rec-app', isRecruiterAPI, cacheRoute({ ttlSeconds: 30, scope: 'user' }), recruiterController.getRecruiterApplications);
+router.get('/rec-app', isRecruiterAPI, cacheRoute({ scope: 'recruiter' }), recruiterController.getRecruiterApplications);
 
 /**
  * @swagger
@@ -96,7 +96,7 @@ router.get('/rec-app', isRecruiterAPI, cacheRoute({ ttlSeconds: 30, scope: 'user
  *       200:
  *         description: Recruiter notifications list
  */
-router.get('/rec-not', isRecruiterAPI, cacheRoute({ ttlSeconds: 20, scope: 'user' }), recruiterController.getRecruiterNotifications);
+router.get('/rec-not', isRecruiterAPI, cacheRoute({ scope: 'recruiter' }), recruiterController.getRecruiterNotifications);
 
 // --- Job Management APIs (Paths are correct) ---
 
