@@ -1,0 +1,67 @@
+name: relabteams
+region: blr
+services:
+  - name: backend
+    github:
+      repo: Sampreeth03/project
+      branch: main
+      deploy_on_push: true
+    source_dir: /source
+    environment_slug: node-js
+    build_command: npm ci
+    run_command: npm start
+    http_port: 5000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: MONGODB_URI
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: mongodb+srv://relabUser:REPLACE_WITH_PASSWORD@cluster0.cnc1zfo.mongodb.net/page-check?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: REPLACE_WITH_LONG_RANDOM_SECRET
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: COOKIE_SAME_SITE
+        value: none
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://REPLACE_WITH_FRONTEND_DOMAIN
+      - key: PUBLIC_API_BASE_URL
+        value: https://REPLACE_WITH_BACKEND_DOMAIN
+      - key: LOGIN_OTP_REQUIRED
+        value: "true"
+      - key: LOGIN_OTP_BYPASS_EMAILS
+        value: srihesh@gm.co,priya@gm.co,shiva@gm.co,arjun@gm.co
+      - key: REDIS_ENABLED
+        value: "false"
+      - key: SOLR_SYNC_ENABLED
+        value: "false"
+      - key: MOCK_PAYMENTS
+        value: "true"
+
+static_sites:
+  - name: frontend
+    github:
+      repo: Sampreeth03/project
+      branch: main
+      deploy_on_push: true
+    source_dir: /client
+    build_command: npm ci && npm run build
+    output_dir: /dist
+    routes:
+      - path: /
+    envs:
+      - key: VITE_API_BASE_URL
+        value: https://REPLACE_WITH_BACKEND_DOMAIN
+      - key: VITE_SOCKET_URL
+        value: https://REPLACE_WITH_BACKEND_DOMAIN
