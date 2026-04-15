@@ -5,6 +5,8 @@ const { User, UserMetrics, Project, ProjectMember, JoinRequest, Task, Notificati
 const { getTimeAgo } = require("../services/helperService");
 const { topics, topicNormalizationMap } = require("../config/constants");
 const { upload } = require("../middleware/uploadMiddleware");
+const { deleteByPrefix } = require("../services/redisCacheService");
+const { logInvalidation } = require("../services/cacheLoggingService");
 
 const forwardError = (next, err, publicMessage, statusCode = 500) => {
     err.statusCode = statusCode;
@@ -15,6 +17,31 @@ const forwardError = (next, err, publicMessage, statusCode = 500) => {
 const isJoinClosedByDeadline = (project) => {
     if (!project?.deadline) return false;
     return new Date(project.deadline).getTime() <= Date.now();
+};
+
+// Cache invalidation helper
+const invalidateProjectCache = async (action, projectId, userId, recruiterId = null) => {
+    const patterns = [];
+    
+    // Invalidate project-specific caches
+    patterns.push(`projects:list:*`);
+    patterns.push(`projects:topic:*`);
+    if (userId) patterns.push(`projects:joined:${userId}`);
+    if (recruiterId) patterns.push(`recruiter:${recruiterId}:*`);
+    
+    // Invalidate dashboard caches for affected users
+    if (userId) patterns.push(`user:${userId}:dashboard`);
+    if (recruiterId) patterns.push(`recruiter:${recruiterId}:dashboard`);
+    
+    // Execute invalidation
+    for (const pattern of patterns) {
+        await deleteByPrefix(pattern).catch(err => {
+            console.error(`[ProjectController] Cache invalidation error for pattern ${pattern}:`, err.message);
+        });
+    }
+    
+    // Log the invalidation
+    logInvalidation(action, patterns, userId, projectId);
 };
 
 // =========================================================================
@@ -424,6 +451,9 @@ exports.createProject = async (req, res, next) => {
             type: 'project_creation'
         });
 
+        // Invalidate project-related caches
+        await invalidateProjectCache('PROJECT_CREATED', project._id, userId);
+
         res.json({ success: true, message: 'Project created successfully', projectId: project._id });
     } catch (err) {
         console.error('Error creating project:', err.message);
@@ -471,6 +501,9 @@ exports.joinProject = async (req, res, next) => {
             message: `User ${req.user.name || userId} has requested to join your project "${project.title}"`,
             type: 'join_request'
         });
+
+        // Invalidate project-related caches
+        await invalidateProjectCache('PROJECT_JOIN_REQUEST', projectId, userId);
 
         res.json({ success: true, message: 'Join request sent successfully' });
     } catch (err) {
@@ -521,6 +554,9 @@ exports.approveJoinRequest = async (req, res, next) => {
             type: 'join_request_approved'
         });
 
+        // Invalidate project and user caches
+        await invalidateProjectCache('PROJECT_JOIN_APPROVED', project._id, joinRequest.user_id);
+
         res.json({ success: true, message: 'Join request approved successfully' });
     } catch (err) {
         console.error('Error approving join request:', err.message);
@@ -555,6 +591,9 @@ exports.rejectJoinRequest = async (req, res, next) => {
             message: `Your request to join project "${project.title}" has been rejected`,
             type: 'join_request_rejected'
         });
+
+        // Invalidate project caches
+        await invalidateProjectCache('PROJECT_JOIN_REJECTED', project._id, joinRequest.user_id);
 
         res.json({ success: true, message: 'Join request rejected successfully' });
     } catch (err) {
@@ -706,6 +745,9 @@ exports.deleteProject = async (req, res, next) => {
             { upsert: true }
         ));
         await Promise.all(updates);
+
+        // Invalidate project-related caches
+        await invalidateProjectCache('PROJECT_DELETED', projectId, userId);
 
         res.json({ success: true });
     } catch (err) {

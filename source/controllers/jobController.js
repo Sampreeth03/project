@@ -4,6 +4,14 @@ const mongoose = require("mongoose");
 const { User, UserMetrics, JobApplication, Notification } = require("../database"); 
 const { getNavLinks } = require("../services/helperService");
 const { navData, userNav } = require("../config/constants");
+const { deleteByPrefix } = require("../services/redisCacheService");
+const { logInvalidation } = require("../services/cacheLoggingService");
+
+async function invalidateJobCaches(prefixes, action, userId, relatedId) {
+    const patterns = Array.isArray(prefixes) ? prefixes : [prefixes];
+    await Promise.all(patterns.map(pattern => deleteByPrefix(pattern)));
+    logInvalidation(action, patterns, userId, relatedId);
+}
 
 // =========================================================================
 // 1. Job Listings View (GET /apply) - React & EJS Support
@@ -106,6 +114,18 @@ exports.applyForJob = async (req, res) => {
 
         await Notification.create({ user_id: job.posted_by, message: `New application for "${job.job_title}" from ${req.user.name}.`, type: 'job_application', is_read: false });
         await UserMetrics.findOneAndUpdate({ user_id: userId }, { $inc: { job_applications: 1 } }, { upsert: true });
+
+        await invalidateJobCaches(
+            [
+                'job:/apply:',
+                'job:/job:',
+                'job:/job_not:',
+                'notifications:/job_not:',
+            ],
+            'job_application_create',
+            userId,
+            jobId
+        );
 
         res.json({ success: true, message: 'Application submitted successfully.' });
     } catch (err) {
@@ -219,11 +239,23 @@ exports.markNotificationRead = async (req, res) => {
         );
 
         if (notificationResult.matchedCount > 0) {
+            await invalidateJobCaches(
+                'notifications:/job_not:',
+                'job_notification_read',
+                req.user.id,
+                notificationId
+            );
             return res.json({ success: true, message: 'Notification marked as read' });
         }
 
         const applicationExists = await JobApplication.exists({ _id: notificationId, user_id: req.user.id });
         if (applicationExists) {
+            await invalidateJobCaches(
+                'notifications:/job_not:',
+                'job_notification_acknowledged',
+                req.user.id,
+                notificationId
+            );
             return res.json({ success: true, message: 'Job notification acknowledged' });
         }
 
@@ -253,6 +285,17 @@ exports.deleteNotification = async (req, res) => {
         const applicationResult = await JobApplication.deleteOne({ _id: notificationId, user_id: req.user.id });
         if (applicationResult.deletedCount > 0) {
             await UserMetrics.findOneAndUpdate({ user_id: req.user.id }, { $inc: { job_applications: -1 } });
+            await invalidateJobCaches(
+                [
+                    'job:/apply:',
+                    'job:/job:',
+                    'job:/job_not:',
+                    'notifications:/job_not:',
+                ],
+                'job_notification_delete',
+                req.user.id,
+                notificationId
+            );
             return res.json({ success: true, message: 'Job notification deleted' });
         }
 
@@ -285,6 +328,18 @@ exports.revokeApplication = async (req, res) => {
 
         await JobApplication.deleteOne({ _id: applicationId, user_id: userId });
         await UserMetrics.findOneAndUpdate({ user_id: userId }, { $inc: { job_applications: -1 } });
+
+        await invalidateJobCaches(
+            [
+                'job:/apply:',
+                'job:/job:',
+                'job:/job_not:',
+                'notifications:/job_not:',
+            ],
+            'job_application_revoke',
+            userId,
+            applicationId
+        );
 
         return res.json({ success: true, message: 'Application revoked successfully' });
     } catch (err) {

@@ -6,6 +6,14 @@ const path = require('path');
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("../database"); 
 const { getNavLinks } = require("../services/helperService");
 const { upload } = require("../middleware/uploadMiddleware"); // Needed for doubt file upload
+const { deleteByPrefix } = require("../services/redisCacheService");
+const { logInvalidation } = require("../services/cacheLoggingService");
+
+async function invalidateDoubtCaches(prefixes, action, userId, relatedId) {
+    const patterns = Array.isArray(prefixes) ? prefixes : [prefixes];
+    await Promise.all(patterns.map(pattern => deleteByPrefix(pattern)));
+    logInvalidation(action, patterns, userId, relatedId);
+}
 
 // =========================================================================
 // 1. Doubt Board View (GET /doubt)
@@ -96,6 +104,13 @@ exports.postDoubt = async (req, res) => {
             { upsert: true }
         );
 
+        await invalidateDoubtCaches(
+            'doubt:/doubts:',
+            'doubt_create',
+            userId,
+            doubt._id
+        );
+
         res.json({ success: true, message: "Doubt posted successfully", doubt: { _id: doubt._id, author: doubt.author, text: doubt.text } });
     } catch (err) {
         console.error("Error posting doubt:", err.message);
@@ -134,6 +149,13 @@ exports.postReply = async (req, res) => {
                 { user_id: userId }, { $inc: { solutions_provided: 1 } }, { upsert: true }
             );
         }
+
+        await invalidateDoubtCaches(
+            'doubt:/doubts:',
+            'doubt_reply_create',
+            userId,
+            doubtId
+        );
         res.json({ success: true, reply: { _id: reply._id, author: reply.author, text: reply.text } });
     } catch (err) {
         console.error("Error posting reply:", err.message);

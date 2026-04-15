@@ -6,6 +6,8 @@ const { User, UserMetrics, Project, ProjectMember, JobApplication, Task, Doubt, 
 const { getNavLinks, getTimeAgo } = require("../services/helperService"); 
 const { upload } = require("../middleware/uploadMiddleware");
 const { signToken, COOKIE_NAME, COOKIE_OPTIONS } = require('../config/jwt');
+const { deleteByPrefix } = require("../services/redisCacheService");
+const { logInvalidation } = require("../services/cacheLoggingService");
 
 // =========================================================================
 // 1. User Home Page (GET /home) - CONVERTED TO JSON API
@@ -397,6 +399,12 @@ exports.postProfile = async (req, res) => {
             const newToken = signToken({ id: user._id.toString(), name: user.name, email: user.email, role: req.user.role });
             res.cookie(COOKIE_NAME, newToken, COOKIE_OPTIONS);
         }
+
+        // Invalidate user caches
+        deleteByPrefix(`user:${userId}:*`).catch(err => {
+            console.error('[UserController] Cache invalidation error:', err.message);
+        });
+        logInvalidation('PROFILE_UPDATED', [`user:${userId}:*`], userId);
 
         const respUser = { 
             _id: user._id, name: user.name, email: user.email, about: user.about,

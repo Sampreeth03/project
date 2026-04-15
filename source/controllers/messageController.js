@@ -5,6 +5,14 @@ const { Project, ProjectMember, Channel, Message, DirectMessage, User, UserReadS
 const { upload } = require('../middleware/uploadMiddleware');
 const path = require('path');
 const fs = require('fs');
+const { deleteByPrefix } = require('../services/redisCacheService');
+const { logInvalidation } = require('../services/cacheLoggingService');
+
+async function invalidateMessageCaches(prefixes, action, userId, relatedId) {
+    const patterns = Array.isArray(prefixes) ? prefixes : [prefixes];
+    await Promise.all(patterns.map(pattern => deleteByPrefix(pattern)));
+    logInvalidation(action, patterns, userId, relatedId);
+}
 
 // Get all projects for the current user (both created and joined)
 const getUserProjects = async (req, res) => {
@@ -261,6 +269,18 @@ const sendChannelMessage = async (req, res) => {
             }
         }
 
+        await invalidateMessageCaches(
+            [
+                `message:/channels/${channelId}/messages:`,
+                `message:/channels/${channelId}/search:`,
+                `message:/channels/${channelId}/pinned:`,
+                `notifications:/unread-counts:`,
+            ],
+            'channel_message_create',
+            userId,
+            channelId
+        );
+
         res.json({ success: true, message: formattedMessage });
     } catch (error) {
         console.error('Error sending message:', error);
@@ -397,6 +417,16 @@ const sendDirectMessage = async (req, res) => {
             });
         }
 
+        await invalidateMessageCaches(
+            [
+                `message:/projects/${projectId}/direct-messages:`,
+                `notifications:/unread-counts:`,
+            ],
+            'direct_message_create',
+            userId,
+            projectId
+        );
+
         res.json({ success: true, message: formattedMessage });
     } catch (error) {
         console.error('Error sending direct message:', error);
@@ -443,6 +473,16 @@ const createChannel = async (req, res) => {
             name: channelName.toLowerCase().trim(),
             created_by: userId
         });
+
+        await invalidateMessageCaches(
+            [
+                `message:/projects/${projectId}/channels:`,
+                `message:/projects/${projectId}/members:`,
+            ],
+            'channel_create',
+            userId,
+            projectId
+        );
 
         res.json({ 
             success: true, 
@@ -597,6 +637,13 @@ const markChannelAsRead = async (req, res) => {
             { upsert: true, new: true }
         );
 
+        await invalidateMessageCaches(
+            `notifications:/unread-counts:`,
+            'channel_read',
+            userId,
+            channelId
+        );
+
         res.json({ success: true });
     } catch (error) {
         console.error('Error marking channel as read:', error);
@@ -628,6 +675,13 @@ const markDMAsRead = async (req, res) => {
                 last_seen_at: new Date()
             },
             { upsert: true, new: true }
+        );
+
+        await invalidateMessageCaches(
+            `notifications:/unread-counts:`,
+            'dm_read',
+            userId,
+            projectId
         );
 
         res.json({ success: true });
@@ -732,6 +786,16 @@ const togglePinMessage = async (req, res) => {
         }
 
         await message.save();
+
+        await invalidateMessageCaches(
+            [
+                `message:/channels/${channel._id}/pinned:`,
+                `message:/channels/${channel._id}/messages:`,
+            ],
+            'pin_message_toggle',
+            userId,
+            messageId
+        );
 
         res.json({ success: true, is_pinned: message.is_pinned });
     } catch (error) {

@@ -6,6 +6,8 @@ const fs = require('fs');
 // Import ALL models (necessary for functional integrity)
 const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember, JoinRequest, Task, Notification } = require("../database"); 
 const { getTimeAgo } = require("../services/helperService");
+const { deleteByPrefix } = require("../services/redisCacheService");
+const { logInvalidation } = require("../services/cacheLoggingService");
 
 // =========================================================================
 // Helper: Recruiter Navigation Data
@@ -411,6 +413,11 @@ exports.updateApplicationStatus = async (req, res) => {
             application.status = 'Rejected';
             await application.save();
             await Notification.create({ user_id: application.user_id, message: `Your application for "${application.job_title}" was rejected.`, type: 'job_rejected', is_read: false });
+            // Invalidate recruiter caches
+            deleteByPrefix(`recruiter:${recruiterId}:*`).catch(err => {
+                console.error('[RecruiterController] Cache invalidation error:', err.message);
+            });
+            logInvalidation('JOB_APPLICATION_REJECTED', [`recruiter:${recruiterId}:*`], application.user_id, recruiterId);
             res.json({ success: true });
         } else {
             application.status = status;
@@ -423,6 +430,11 @@ exports.updateApplicationStatus = async (req, res) => {
                 type: 'job_shortlisted',
                 is_read: false
             });
+            // Invalidate recruiter caches
+            deleteByPrefix(`recruiter:${recruiterId}:*`).catch(err => {
+                console.error('[RecruiterController] Cache invalidation error:', err.message);
+            });
+            logInvalidation('JOB_APPLICATION_APPROVED', [`recruiter:${recruiterId}:*`], application.user_id, recruiterId);
             res.json({ success: true });
         }
     } catch (err) {
