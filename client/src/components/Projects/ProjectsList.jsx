@@ -5,17 +5,30 @@ import axios from 'axios';
 import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../User/NavBar.jsx'; 
 import { ProjectsWelcomeToast } from '../User/OnboardingToast.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 import '../../styles/ProjectsListStyles.css'; 
 
 const ProjectsList = () => {
+    const defaultMeta = { page: 1, rows: 12, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [projectData, setProjectData] = useState({ createdProjects: [], availableProjects: [] });
+    const [searchData, setSearchData] = useState({ createdProjects: [], availableProjects: [] });
     const [showWelcomeToast, setShowWelcomeToast] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTopic, setSelectedTopic] = useState('All Topics');
     const [joinedTopicCounts, setJoinedTopicCounts] = useState({});
+    const [createdPage, setCreatedPage] = useState(1);
+    const [availablePage, setAvailablePage] = useState(1);
+    const [createdMeta, setCreatedMeta] = useState(defaultMeta);
+    const [availableMeta, setAvailableMeta] = useState(defaultMeta);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState(null);
+    const [searchSource, setSearchSource] = useState({ created: 'solr', available: 'solr' });
+    const debouncedQuery = useDebouncedValue(searchQuery, 300);
 
     // Check if coming from profile completion (welcome param)
     useEffect(() => {
@@ -35,10 +48,13 @@ const ProjectsList = () => {
                 // Refresh the project list to update the button state
                 const refreshResponse = await axios.get('/api/project');
                 if (refreshResponse.data.success) {
-                    setProjectData({
+                    const refreshedData = {
                         createdProjects: refreshResponse.data.createdProjects,
                         availableProjects: refreshResponse.data.availableProjects,
-                    });
+                    };
+
+                    setProjectData(refreshedData);
+                    setSearchData(refreshedData);
                 }
             } else {
                 alert(response.data.message || 'Failed to send join request');
@@ -49,6 +65,97 @@ const ProjectsList = () => {
         }
     };
 
+    const mergeSearchWithBase = (items, baseItems) => {
+        const baseById = new Map(
+            (baseItems || []).map((item) => [String(item._id || item.id), item])
+        );
+
+        return (items || []).map((item) => {
+            const id = String(item._id || item.id);
+            const base = baseById.get(id) || {};
+
+            return {
+                ...base,
+                ...item,
+                _id: id,
+                id,
+                topic: item.topic || base.topic || 'General',
+                member_count: base.member_count ?? item.member_count ?? item.members ?? 0,
+                has_pending_request: Boolean(base.has_pending_request || item.has_pending_request),
+                request_status: base.request_status || item.request_status || null
+            };
+        });
+    };
+
+    const runProjectSearch = async (baseData = projectData) => {
+        if (!user?.id) return;
+
+        try {
+            setSearchLoading(true);
+            setSearchError(null);
+
+            const topicFilter = selectedTopic !== 'All Topics' ? selectedTopic : null;
+
+            const createdFilters = { ownerId: user.id };
+            const availableFilters = { excludeOwnerId: user.id, onlyOpenToJoin: true };
+
+            if (topicFilter) {
+                createdFilters.topic = topicFilter;
+                availableFilters.topic = topicFilter;
+            }
+
+            const createdQuery = new URLSearchParams({
+                q: debouncedQuery || '',
+                page: String(createdPage),
+                rows: '12',
+                sort: debouncedQuery ? 'relevance' : 'createdAt_desc',
+                filters: JSON.stringify(createdFilters)
+            }).toString();
+
+            const availableQuery = new URLSearchParams({
+                q: debouncedQuery || '',
+                page: String(availablePage),
+                rows: '12',
+                sort: debouncedQuery ? 'relevance' : 'createdAt_desc',
+                filters: JSON.stringify(availableFilters)
+            }).toString();
+
+            const [createdResponse, availableResponse] = await Promise.all([
+                axios.get(`/api/search/projects?${createdQuery}`),
+                axios.get(`/api/search/projects?${availableQuery}`)
+            ]);
+
+            const createdPayload = createdResponse.data || {};
+            const availablePayload = availableResponse.data || {};
+
+            const createdProjects = mergeSearchWithBase(
+                Array.isArray(createdPayload.data) ? createdPayload.data : [],
+                baseData.createdProjects
+            );
+
+            const availableProjects = mergeSearchWithBase(
+                Array.isArray(availablePayload.data) ? availablePayload.data : [],
+                baseData.availableProjects
+            );
+
+            setSearchData({ createdProjects, availableProjects });
+            setCreatedMeta(createdPayload.meta || defaultMeta);
+            setAvailableMeta(availablePayload.meta || defaultMeta);
+            setSearchSource({
+                created: createdPayload.source || 'solr',
+                available: availablePayload.source || 'solr'
+            });
+        } catch (err) {
+            console.error('Error searching projects:', err);
+            setSearchError('Search failed. Showing latest available data.');
+            setSearchData(baseData);
+            setCreatedMeta(defaultMeta);
+            setAvailableMeta(defaultMeta);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
     useEffect(() => {
         // ... (data fetching logic remains the same) ...
         const fetchProjects = async () => {
@@ -56,10 +163,13 @@ const ProjectsList = () => {
                 const projectsResponse = await axios.get('/api/project');
 
                 if (projectsResponse.data.success) {
-                    setProjectData({
+                    const baseData = {
                         createdProjects: projectsResponse.data.createdProjects,
                         availableProjects: projectsResponse.data.availableProjects,
-                    });
+                    };
+
+                    setProjectData(baseData);
+                    setSearchData(baseData);
                 } else {
                     setError(projectsResponse.data.error || "Failed to load project lists.");
                 }
@@ -93,6 +203,16 @@ const ProjectsList = () => {
         fetchProjects();
     }, []);
 
+    useEffect(() => {
+        setCreatedPage(1);
+        setAvailablePage(1);
+    }, [searchQuery, selectedTopic]);
+
+    useEffect(() => {
+        if (loading || !user?.id) return;
+        runProjectSearch(projectData);
+    }, [loading, user?.id, debouncedQuery, selectedTopic, createdPage, availablePage, projectData]);
+
     const allTopics = Array.from(
         new Set(
             [...projectData.createdProjects, ...projectData.availableProjects]
@@ -101,30 +221,7 @@ const ProjectsList = () => {
         )
     ).sort((a, b) => a.localeCompare(b));
 
-    const matchesSearch = (project) => {
-        const query = searchQuery.trim().toLowerCase();
-        if (!query) return true;
-        return (
-            project.title?.toLowerCase().includes(query) ||
-            project.description?.toLowerCase().includes(query) ||
-            project.topic?.toLowerCase().includes(query)
-        );
-    };
-
-    const matchesTopic = (project) => {
-        if (selectedTopic === 'All Topics') return true;
-        return project.topic === selectedTopic;
-    };
-
-    const filteredCreatedProjects = projectData.createdProjects.filter(
-        (p) => matchesSearch(p) && matchesTopic(p)
-    );
-
-    const filteredAvailableProjects = projectData.availableProjects.filter(
-        (p) => matchesSearch(p) && matchesTopic(p)
-    );
-
-    const recommendedAvailableProjects = filteredAvailableProjects
+    const recommendedAvailableProjects = searchData.availableProjects
         .filter((p) => (joinedTopicCounts[p.topic] || 0) > 0)
         .sort((a, b) => {
             const diff = (joinedTopicCounts[b.topic] || 0) - (joinedTopicCounts[a.topic] || 0);
@@ -132,7 +229,7 @@ const ProjectsList = () => {
             return (a.title || '').localeCompare(b.title || '');
         });
 
-    const otherAvailableProjects = filteredAvailableProjects
+    const otherAvailableProjects = searchData.availableProjects
         .filter((p) => (joinedTopicCounts[p.topic] || 0) === 0)
         .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 
@@ -178,6 +275,12 @@ const ProjectsList = () => {
                         </select>
                     </label>
                 </div>
+
+                {searchLoading && <p className="pl-empty">Searching projects...</p>}
+                {searchError && <p className="pl-empty">{searchError}</p>}
+                {!searchError && (searchSource.created === 'fallback' || searchSource.available === 'fallback') && (
+                    <p className="pl-empty">Solr unavailable. Showing MongoDB fallback results.</p>
+                )}
                 
                 {/* --- REMOVED: + Create New Project Button/Toggle Logic --- */}
                 
@@ -187,7 +290,7 @@ const ProjectsList = () => {
                 <section className="created-projects" style={{ marginBottom: '40px' }}>
                     {projectData.createdProjects.length > 0 ? (
                         <div className="pl-grid">
-                            {filteredCreatedProjects.map(project => (
+                            {searchData.createdProjects.map(project => (
                                     <div key={project._id} className="pl-card">
                                         <h3>{project.title}</h3>
                                         <p>{project.description}</p>
@@ -197,8 +300,30 @@ const ProjectsList = () => {
                                         </div>
                                     </div>
                                 ))}
-                            {filteredCreatedProjects.length === 0 && (
+                            {searchData.createdProjects.length === 0 && (
                                 <p className="pl-empty">No projects match your search.</p>
+                            )}
+
+                            {createdMeta.totalPages > 1 && (
+                                <div className="pl-actions" style={{ gridColumn: '1 / -1', justifyContent: 'center' }}>
+                                    <button
+                                        className="pl-btn pl-btn-outline"
+                                        onClick={() => setCreatedPage((prev) => Math.max(1, prev - 1))}
+                                        disabled={!createdMeta.hasPrev || searchLoading}
+                                    >
+                                        Prev
+                                    </button>
+                                    <span className="pl-empty" style={{ margin: 0 }}>
+                                        Page {createdMeta.page} of {createdMeta.totalPages}
+                                    </span>
+                                    <button
+                                        className="pl-btn pl-btn-outline"
+                                        onClick={() => setCreatedPage((prev) => prev + 1)}
+                                        disabled={!createdMeta.hasNext || searchLoading}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ) : (
@@ -278,11 +403,34 @@ const ProjectsList = () => {
                                             </div>
                                         </div>
                                     ))}
+
                                 </div>
                             ) : (
                                 !hasRecommendations && (
                                     <p className="pl-empty">No projects match your search.</p>
                                 )
+                            )}
+
+                            {availableMeta.totalPages > 1 && (
+                                <div className="pl-actions" style={{ justifyContent: 'center', marginTop: '12px' }}>
+                                    <button
+                                        className="pl-btn pl-btn-outline"
+                                        onClick={() => setAvailablePage((prev) => Math.max(1, prev - 1))}
+                                        disabled={!availableMeta.hasPrev || searchLoading}
+                                    >
+                                        Prev
+                                    </button>
+                                    <span className="pl-empty" style={{ margin: 0 }}>
+                                        Page {availableMeta.page} of {availableMeta.totalPages}
+                                    </span>
+                                    <button
+                                        className="pl-btn pl-btn-outline"
+                                        onClick={() => setAvailablePage((prev) => prev + 1)}
+                                        disabled={!availableMeta.hasNext || searchLoading}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             )}
                         </>
                     ) : (

@@ -9,6 +9,7 @@ const { upload } = require("../middleware/uploadMiddleware");
 const { createLoginOtp, verifyLoginOtp } = require('../services/otpService');
 const { sendLoginOtpEmail, isEmailConfigured } = require('../services/emailService');
 const { generateTotpSecret, verifyTotpToken, buildOtpAuthUrl, buildQrCodeUrl } = require('../services/totpService');
+const { syncUserUpsert } = require('../services/solrSyncService');
 
 function sendLoginSuccess(res, user) {
     const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
@@ -140,6 +141,7 @@ exports.postSignup = async (req, res, next) => {
         
         const user = await User.create(userData);
         await UserMetrics.create({ user_id: user._id });
+        await syncUserUpsert(user);
         
         // We do not auto-login, just return success status (201 Created)
         // Client redirects to login page.
@@ -293,6 +295,7 @@ exports.postStudentVerifyOTP = async (req, res) => {
 
         const user = await User.create(userData);
         await UserMetrics.create({ user_id: user._id });
+        await syncUserUpsert(user);
 
         // Delete pending record
         await PendingStudent.deleteOne({ email: email.toLowerCase() });
@@ -564,6 +567,8 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
             console.error('Error assigning platform admin to recruiter:', assignErr.message);
         }
 
+        await syncUserUpsert(user);
+
         // Delete pending record
         await PendingRecruiter.deleteOne({ email: email.toLowerCase() });
 
@@ -633,6 +638,8 @@ exports.postRecruiterSignup = async (req, res) => {
         } catch (assignErr) {
             console.error('Error assigning platform admin to legacy recruiter:', assignErr.message);
         }
+
+        await syncUserUpsert(user);
         
         const token = signToken({ id: user._id.toString(), name, email, role: "recruiter" });
         res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);

@@ -8,6 +8,7 @@ const { User, UserMetrics, Doubt, Reply, JobApplication, Project, ProjectMember,
 const { getTimeAgo } = require("../services/helperService");
 const { deleteByPrefix } = require("../services/redisCacheService");
 const { logInvalidation } = require("../services/cacheLoggingService");
+const { syncJobUpsert, syncJobDelete } = require('../services/solrSyncService');
 
 // =========================================================================
 // Helper: Recruiter Navigation Data
@@ -478,6 +479,8 @@ exports.createRecruiterJob = async (req, res) => {
             active: 1
         });
 
+        await syncJobUpsert(jobDoc);
+
         console.log('[createRecruiterJob] Stored custom_questions:', JSON.stringify(jobDoc.custom_questions));
 
         const createdAt = new Date();
@@ -530,6 +533,8 @@ exports.deleteRecruiterJob = async (req, res) => {
                 relatedApplicationFilter
             ]
         });
+
+        await syncJobDelete(job._id);
         
         const deletedAt = new Date();
         const title = job?.job_title || 'your job';
@@ -566,6 +571,15 @@ exports.toggleJobActive = async (req, res) => {
         if (result.modifiedCount === 0) {
             return res.status(404).json({ success: false, error: "Job not found or not authorized to update" });
         }
+
+        const updatedJob = await JobApplication.findById(jobId)
+            .select('job_title company_name description skills salary_range active createdAt posted_by user_id')
+            .lean();
+
+        if (updatedJob) {
+            await syncJobUpsert(updatedJob);
+        }
+
         const title = job?.job_title || 'your job';
         const isActivating = active === 1 || active === true;
         await Notification.create({

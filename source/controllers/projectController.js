@@ -7,6 +7,7 @@ const { topics, topicNormalizationMap } = require("../config/constants");
 const { upload } = require("../middleware/uploadMiddleware");
 const { deleteByPrefix } = require("../services/redisCacheService");
 const { logInvalidation } = require("../services/cacheLoggingService");
+const { syncProjectUpsert, syncProjectDelete } = require('../services/solrSyncService');
 
 const forwardError = (next, err, publicMessage, statusCode = 500) => {
     err.statusCode = statusCode;
@@ -451,6 +452,8 @@ exports.createProject = async (req, res, next) => {
             type: 'project_creation'
         });
 
+        await syncProjectUpsert(project);
+
         // Invalidate project-related caches
         await invalidateProjectCache('PROJECT_CREATED', project._id, userId);
 
@@ -733,6 +736,8 @@ exports.deleteProject = async (req, res, next) => {
             Task.deleteMany({ project_id: projectId }),
             JoinRequest.deleteMany({ project_id: projectId })
         ]);
+
+        await syncProjectDelete(projectId);
 
         const updates = members.map((member) => UserMetrics.findOneAndUpdate(
             { user_id: member.user_id },
@@ -1090,6 +1095,14 @@ exports.finishProject = async (req, res, next) => {
             status: 'completed',
             completedAt: new Date()
         });
+
+        const updatedProject = await Project.findById(projectId)
+            .select('title description topic status capacity createdAt deadline user_id')
+            .lean();
+
+        if (updatedProject) {
+            await syncProjectUpsert(updatedProject);
+        }
 
         // Get all project members and update their metrics
         const projectMembers = await ProjectMember.find({ project_id: projectId }).select('user_id');
