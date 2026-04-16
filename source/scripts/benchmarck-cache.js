@@ -8,6 +8,7 @@
 const BASE_URL = process.env.BENCH_BASE_URL || 'http://localhost:5000/api';
 const LOGIN_EMAIL = process.env.BENCH_EMAIL || 'srihesh@gm.co';
 const LOGIN_PASSWORD = process.env.BENCH_PASSWORD || 'Srih@12345';
+const BENCH_COOKIE = process.env.BENCH_COOKIE || '';
 const ENDPOINT = process.env.BENCH_ENDPOINT || '/dashboard-trends';
 const REQUESTS = Number(process.env.BENCH_REQUESTS || 100);
 const CONCURRENCY = Number(process.env.BENCH_CONCURRENCY || 10);
@@ -25,6 +26,10 @@ function percentile(values, p) {
  * Login and get authentication cookie
  */
 async function login() {
+  if (BENCH_COOKIE.trim()) {
+    return BENCH_COOKIE.trim();
+  }
+
   try {
     const response = await fetch(`${BASE_URL}/login`, {
       method: 'POST',
@@ -42,6 +47,17 @@ async function login() {
       : [response.headers.get('set-cookie')].filter(Boolean);
 
     if (!setCookies || setCookies.length === 0) {
+      let body = null;
+      try {
+        body = await response.clone().json();
+      } catch {
+        body = null;
+      }
+
+      if (body?.requiresOtp || body?.requiresAuthenticator) {
+        throw new Error('No auth cookie returned by login endpoint. This account requires OTP/authenticator verification. Set BENCH_COOKIE in environment to run the benchmark with an authenticated session cookie.');
+      }
+
       throw new Error('No auth cookie returned by login endpoint');
     }
 
@@ -64,8 +80,13 @@ async function hitEndpoint({ cookie, bypassCache = false }) {
     headers['Cache-Control'] = 'no-cache';
   }
 
+  const endpointUrl = new URL(`${BASE_URL}${ENDPOINT}`);
+  if (bypassCache) {
+    endpointUrl.searchParams.set('_cb', `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  }
+
   const startTime = process.hrtime.bigint();
-  const response = await fetch(`${BASE_URL}${ENDPOINT}`, { headers });
+  const response = await fetch(endpointUrl.toString(), { headers });
   const endTime = process.hrtime.bigint();
 
   const elapsedMs = Number(endTime - startTime) / 1e6;

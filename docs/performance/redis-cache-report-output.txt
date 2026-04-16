@@ -1,0 +1,58 @@
+
+============================================================
+Redis Cache Performance & Logging Report
+============================================================
+
+CACHE STATISTICS
+───────────────────────────────────────────────────────────
+Total Requests:          402
+Cache Hits:              300
+Cache Misses:            102
+Hit Ratio:               74.63%
+Cache Invalidations:     0
+Cache Errors:            0
+
+TIMING INFORMATION
+───────────────────────────────────────────────────────────
+Uptime:                  84.95s
+Average Hit Time:        283.18ms
+[Redis] Connected for API caching
+
+REDIS MEMORY USAGE
+───────────────────────────────────────────────────────────
+Used Memory:             1004.30K
+Peak Memory:             1.73M
+RSS Memory:              3.95M
+Max Memory:              0B
+Fragmentation Ratio:     4.10
+
+RECENT CACHE EVENTS (Last 20 entries)
+───────────────────────────────────────────────────────────
+[HIT] [2026-04-18T13:47:48.459Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.459Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.459Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.459Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.459Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.459Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.460Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.460Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.460Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.460Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.461Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.461Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.461Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.461Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.461Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.461Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.462Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.462Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.462Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+[HIT] [2026-04-18T13:47:48.462Z] HIT: {"key":"userDashboard:/dashboard-trends:69aa50427fb8d3650f4cdda7","userId":"69aa50427fb8
+
+INTERPRETATION
+───────────────────────────────────────────────────────────
+Moderate cache hit ratio (50-80%)
+   Consider extending TTLs or reviewing cache key strategy
+
+Report generated successfully.
+

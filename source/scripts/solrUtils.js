@@ -25,7 +25,8 @@ const getSolrPort = () => {
 const resolveSolrBinary = () => {
     const solrBin = (process.env.SOLR_BIN || '').trim();
     if (solrBin) {
-        if (!fs.existsSync(solrBin)) {
+        const looksLikePath = path.isAbsolute(solrBin) || solrBin.includes('/') || solrBin.includes('\\');
+        if (looksLikePath && !fs.existsSync(solrBin)) {
             throw new Error(`SOLR_BIN path not found: ${solrBin}`);
         }
         return solrBin;
@@ -33,13 +34,18 @@ const resolveSolrBinary = () => {
 
     const solrHome = (process.env.SOLR_HOME || '').trim();
     if (solrHome) {
-        const candidate = path.join(solrHome, 'bin', 'solr.cmd');
-        if (fs.existsSync(candidate)) {
-            return candidate;
+        const candidates = process.platform === 'win32'
+            ? [path.join(solrHome, 'bin', 'solr.cmd'), path.join(solrHome, 'bin', 'solr')]
+            : [path.join(solrHome, 'bin', 'solr'), path.join(solrHome, 'bin', 'solr.cmd')];
+
+        for (const candidate of candidates) {
+            if (fs.existsSync(candidate)) {
+                return candidate;
+            }
         }
     }
 
-    return 'solr.cmd';
+    return process.platform === 'win32' ? 'solr.cmd' : 'solr';
 };
 
 const runSolrCommand = (args, { allowFailure = false } = {}) => {
