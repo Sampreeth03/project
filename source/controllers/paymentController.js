@@ -4,6 +4,7 @@ const Stripe = require('stripe');
 const { Project, ProjectMember, Channel, UserMetrics, Notification } = require('../database');
 const mongoose = require('mongoose');
 const { topicNormalizationMap } = require('../config/constants');
+const { syncProjectUpsert } = require('../services/solrSyncService');
 
 const PROJECT_PRICE_PAISE = 9900; // Rs 99
 const EXTENSION_PRICE_PAISE = 4900; // Rs 49
@@ -114,6 +115,8 @@ const createProjectAfterPayment = async ({ userId, title, description, capacity,
         message: `Project "${title}" created after payment.`,
         type: 'project_creation',
     });
+
+    await syncProjectUpsert(project);
 
     return project;
 };
@@ -273,6 +276,8 @@ exports.verifyAndCreateProject = async (req, res) => {
 
             project.deadline = newDeadline;
             await project.save();
+
+            await syncProjectUpsert(project);
 
             const userObjectId = new mongoose.Types.ObjectId(req.user.id);
             await UserMetrics.findOneAndUpdate(

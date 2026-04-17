@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from './NavBar.jsx';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 import '../../styles/ApplyJobs.css';
 
 const ApplyJobs = () => {
@@ -17,18 +18,47 @@ const ApplyJobs = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'applied', 'notapplied'
     const [clickKey, setClickKey] = useState(0);
+    const [searchMeta, setSearchMeta] = useState({ page: 1, rows: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
+    const [searchSource, setSearchSource] = useState('solr');
+    const [page, setPage] = useState(1);
+    const rows = 10;
+    const debouncedQuery = useDebouncedValue(searchQuery, 300);
 
     useEffect(() => {
         if (!user) {
             navigate('/login');
             return;
         }
-        fetchJobs();
     }, [user, navigate]);
+
+    useEffect(() => {
+        if (!user) return;
+        fetchJobs();
+    }, [user, debouncedQuery, filterStatus, page]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [searchQuery, filterStatus]);
 
     const fetchJobs = async () => {
         try {
-            const response = await fetch('/apply', {
+            setLoading(true);
+            setError(null);
+
+            const filters = { active: true };
+            if (filterStatus === 'applied' || filterStatus === 'notapplied') {
+                filters.applied = filterStatus;
+            }
+
+            const queryString = new URLSearchParams({
+                q: debouncedQuery || '',
+                page: String(page),
+                rows: String(rows),
+                sort: debouncedQuery ? 'relevance' : 'createdAt_desc',
+                filters: JSON.stringify(filters)
+            }).toString();
+
+            const response = await fetch(`/api/search/jobs?${queryString}`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -40,13 +70,27 @@ const ApplyJobs = () => {
             }
 
             const data = await response.json();
-            console.log('[ApplyJobs] Raw API response jobs count:', (data.jobs || []).length);
-            const normalizedJobs = (data.jobs || []).map(job => {
-                const qs = Array.isArray(job.custom_questions) ? job.custom_questions : [];
-                console.log(`[ApplyJobs] Job "${job.job_title}" has ${qs.length} custom question(s):`, JSON.stringify(qs));
-                return { ...job, custom_questions: qs };
+            const normalizedJobs = (Array.isArray(data.data) ? data.data : []).map((job) => {
+                const questions = Array.isArray(job.custom_questions) ? job.custom_questions : [];
+                return {
+                    ...job,
+                    custom_questions: questions,
+                    resumeSelected: false,
+                    resumeFile: null
+                };
             });
+
             setJobs(normalizedJobs);
+            setSearchMeta(data.meta || { page: 1, rows, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
+            setSearchSource(data.source || 'solr');
+
+            if (selectedJob) {
+                const updatedSelection = normalizedJobs.find((job) => job.id === selectedJob.id);
+                if (!updatedSelection) {
+                    setSelectedJob(null);
+                }
+            }
+
             setLoading(false);
         } catch (err) {
             console.error('Error fetching jobs:', err);
@@ -208,6 +252,8 @@ const ApplyJobs = () => {
                     fileInput.value = '';
                     fileInput.disabled = true;
                 }
+
+                await fetchJobs();
             } else {
                 showNotification(data.error || 'Failed to apply', 'error');
             }
@@ -255,22 +301,7 @@ const ApplyJobs = () => {
         });
     };
 
-    // Filter jobs based on search query and filter status
-    const filteredJobs = jobs.filter(job => {
-        // Search filter
-        const matchesSearch = searchQuery === '' || 
-            job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            job.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (job.skills && job.skills.toLowerCase().includes(searchQuery.toLowerCase()));
-
-        // Status filter
-        const matchesStatus = 
-            filterStatus === 'all' ||
-            (filterStatus === 'applied' && job.hasApplied) ||
-            (filterStatus === 'notapplied' && !job.hasApplied);
-
-        return matchesSearch && matchesStatus;
-    });
+    const filteredJobs = jobs;
 
     if (loading) {
         return (
@@ -307,6 +338,12 @@ const ApplyJobs = () => {
                         <div className="jobs-list-header-top">
                             <h2 className="jobs-list-title">Job Openings</h2>
                         </div>
+
+                        {searchSource === 'fallback' && (
+                            <div className="loading-state" style={{ margin: '6px 0 10px 0' }}>
+                                Solr unavailable. Showing MongoDB fallback results.
+                            </div>
+                        )}
                         
                         <div className="search-filter-section">
                             <div className="search-bar">
@@ -367,6 +404,28 @@ const ApplyJobs = () => {
                                     )}
                                 </div>
                             ))}
+
+                            {searchMeta.totalPages > 1 && (
+                                <div className="filter-buttons" style={{ marginTop: '12px' }}>
+                                    <button
+                                        className="filter-btn"
+                                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                        disabled={!searchMeta.hasPrev || loading}
+                                    >
+                                        Prev
+                                    </button>
+                                    <button className="filter-btn active" disabled>
+                                        {searchMeta.page} / {searchMeta.totalPages}
+                                    </button>
+                                    <button
+                                        className="filter-btn"
+                                        onClick={() => setPage((prev) => prev + 1)}
+                                        disabled={!searchMeta.hasNext || loading}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

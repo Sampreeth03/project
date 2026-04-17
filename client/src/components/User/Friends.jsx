@@ -2,16 +2,23 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './NavBar.jsx';
 import UserProfileModal from '../../components/Recruiter/UserProfileModal';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 import '../../styles/Friends.css';
 
 const Friends = () => {
+  const defaultSearchMeta = { page: 1, rows: 8, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchInfo, setSearchInfo] = useState('');
+  const [searchMeta, setSearchMeta] = useState(defaultSearchMeta);
+  const [searchPage, setSearchPage] = useState(1);
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const debouncedQuery = useDebouncedValue(query, 300);
+  const searchRows = 8;
 
   const isUserRole = (entry) => {
     if (!entry) return false;
@@ -29,22 +36,44 @@ const Friends = () => {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (query && query.trim().length > 0) searchUsers(query.trim());
-      else setResults([]);
-    }, 300);
-    return () => clearTimeout(t);
+    setSearchPage(1);
   }, [query]);
 
-  const searchUsers = async (q) => {
+  useEffect(() => {
+    const normalizedQuery = debouncedQuery.trim();
+
+    if (!normalizedQuery) {
+      setResults([]);
+      setSearchMeta(defaultSearchMeta);
+      setSearchInfo('');
+      return;
+    }
+
+    searchUsers(normalizedQuery, searchPage);
+  }, [debouncedQuery, searchPage]);
+
+  const searchUsers = async (q, page = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`/api/users/search?q=${encodeURIComponent(q)}`);
-      setResults(res.data.users || []);
+      setSearchInfo('');
+
+      const filters = encodeURIComponent(JSON.stringify({ role: 'user' }));
+      const res = await axios.get(
+        `/api/search/users?q=${encodeURIComponent(q)}&page=${page}&rows=${searchRows}&sort=${encodeURIComponent('relevance')}&filters=${filters}`
+      );
+
+      const payload = res.data || {};
+      setResults(Array.isArray(payload.data) ? payload.data : []);
+      setSearchMeta(payload.meta || defaultSearchMeta);
+
+      if (payload.source === 'fallback') {
+        setSearchInfo('Solr unavailable. Showing MongoDB fallback results.');
+      }
     } catch (err) {
       setError('Search failed.');
       setResults([]);
+      setSearchMeta(defaultSearchMeta);
       console.error('Search error', err);
     } finally { setLoading(false); }
   };
@@ -128,6 +157,11 @@ const Friends = () => {
           </div>
 
           {loading && <div className="friends-loading">Searching...</div>}
+          {!loading && searchInfo && <div className="friends-loading">{searchInfo}</div>}
+
+          {!loading && debouncedQuery.trim().length > 0 && visibleResults.length === 0 && (
+            <div className="friends-empty"><i className="fas fa-search"></i> No users found.</div>
+          )}
 
           {visibleResults.length > 0 && (
             <div>
@@ -154,6 +188,28 @@ const Friends = () => {
                   </div>
                 </div>
               ))}
+
+              {searchMeta.totalPages > 1 && (
+                <div className="friends-section-header" style={{ marginTop: '12px' }}>
+                  <button
+                    className="friends-btn friends-btn-outline"
+                    disabled={!searchMeta.hasPrev || loading}
+                    onClick={() => setSearchPage((prev) => Math.max(1, prev - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span className="friends-section-title">
+                    Page {searchMeta.page} of {searchMeta.totalPages}
+                  </span>
+                  <button
+                    className="friends-btn friends-btn-outline"
+                    disabled={!searchMeta.hasNext || loading}
+                    onClick={() => setSearchPage((prev) => prev + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

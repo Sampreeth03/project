@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,31 +7,48 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-/client/node_modules
-/source/node_modules
-/source/package-lock.json
-/source/package.json
-/source/uploads
-dist
-dist-ssr
+# Dependencies
+node_modules/
+client/node_modules/
+source/node_modules/
+
+# Runtime storage
+source/uploads/
+
+# Build outputs
+dist/
+dist-ssr/
+client/dist/
+source/dist/
+
+# Solr installation archives and binaries (do not commit local installs)
+*.tgz
+*.tar.gz
+*.zip
+*.jar
+solr-*/
+apache-solr-*/
+source/solr-*/
+source/apache-solr-*/
+
+# Local env files
+.env
+source/.env
+client/.env
+client/.env.*
+source/.env.*
+
+# Local-only files
 *.local
+contributions_2026.txt
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-/client/package-lock.json
-/client/package.json
-
-# Environment variables (contains secret API keys)
-.env
-source/.env
-client/package-lock.json
-client/package.json
-contributions_2026.txt

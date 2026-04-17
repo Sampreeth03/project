@@ -8,6 +8,7 @@ const { upload } = require("../middleware/uploadMiddleware");
 const { signToken, COOKIE_NAME, COOKIE_OPTIONS } = require('../config/jwt');
 const { deleteByPrefix } = require("../services/redisCacheService");
 const { logInvalidation } = require("../services/cacheLoggingService");
+const { syncUserUpsert } = require('../services/solrSyncService');
 
 // =========================================================================
 // 1. User Home Page (GET /home) - CONVERTED TO JSON API
@@ -117,7 +118,16 @@ exports.completeOnboarding = async (req, res) => {
     }
 
     try {
-        await User.findByIdAndUpdate(req.user.id, { onboardingCompleted: true });
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            { onboardingCompleted: true },
+            { new: true }
+        );
+
+        if (updatedUser) {
+            await syncUserUpsert(updatedUser);
+        }
+
         res.json({ success: true, message: 'Onboarding completed' });
     } catch (err) {
         console.error('Error completing onboarding:', err);
@@ -393,6 +403,8 @@ exports.postProfile = async (req, res) => {
 
         const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true });
         if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+        await syncUserUpsert(user);
 
         // Re-issue JWT with updated name/email so token stays fresh
         if (req.user && String(req.user.id) === String(user._id)) {
