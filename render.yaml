@@ -2,7 +2,7 @@ services:
   - type: web
     name: relabteams-backend
     env: docker
-    dockerfilePath: ./source/Dockerfile
+    dockerfilePath: ./Dockerfile
     plan: free
     autoDeploy: true
     healthCheckPath: /api/docs

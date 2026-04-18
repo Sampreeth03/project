@@ -39,6 +39,8 @@ source/.env
 client/.env
 client/.env.*
 source/.env.*
+render.env
+render.frontend.env
 
 # Local-only files
 *.local
