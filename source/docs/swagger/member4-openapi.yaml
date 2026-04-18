@@ -4,8 +4,8 @@ info:
   version: 1.0.0
   description: Admin, Auth, and Doubt API documentation for Member 4 deliverables.
 servers:
-  - url: http://localhost:5000/api
-    description: Local backend API
+  - url: /api
+    description: Relative to deployment origin
 
 paths:
   /:

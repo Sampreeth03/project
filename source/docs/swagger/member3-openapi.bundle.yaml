@@ -4,7 +4,8 @@ info:
   version: 1.0.0
   description: Bundled OpenAPI file for Member 3 recruiter and job endpoints.
 servers:
-  - url: http://localhost:5000
+  - url: /
+    description: Relative to deployment origin
 tags:
   - name: Member3-Recruiter
     description: Recruiter dashboard and job management APIs

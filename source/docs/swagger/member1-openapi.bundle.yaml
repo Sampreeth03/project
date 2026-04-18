@@ -4,7 +4,8 @@ info:
   version: 1.0.0
   description: Bundled OpenAPI file for Member 1 user-related endpoints (excluding login and registration).
 servers:
-  - url: http://localhost:5000
+  - url: /
+    description: Relative to deployment origin
 paths:
   /api/home:
     get:
