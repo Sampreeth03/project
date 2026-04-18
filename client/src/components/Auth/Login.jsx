@@ -138,6 +138,14 @@ function Login() {
                 });
 
                 if (response.data.success) {
+                    if (response.data.user) {
+                        flushSync(() => {
+                            loginUser({ ...response.data.user, isNewSignup: false });
+                        });
+                        navigate(response.data.redirectPath || '/home');
+                        return;
+                    }
+
                     if (response.data.requiresAuthenticator) {
                         setStep('verification');
                         setVerificationType('authenticator');
@@ -161,7 +169,7 @@ function Login() {
                 if (apiError) {
                     setServerError(apiError);
                 } else if (!err.response) {
-                    setServerError('Cannot reach backend server. Start the API on http://localhost:5000 and restart Vite.');
+                    setServerError('Cannot reach backend server. Check backend availability and network settings.');
                 } else if (status === 404) {
                     setServerError('OTP endpoint not found (404). Restart the backend server so the new /api/login/request-otp route is loaded.');
                 } else {

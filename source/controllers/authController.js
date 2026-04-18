@@ -11,6 +11,28 @@ const { sendLoginOtpEmail, isEmailConfigured } = require('../services/emailServi
 const { generateTotpSecret, verifyTotpToken, buildOtpAuthUrl, buildQrCodeUrl } = require('../services/totpService');
 const { syncUserUpsert } = require('../services/solrSyncService');
 
+function normalizeEmail(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+const DEFAULT_LOGIN_OTP_BYPASS_EMAILS = new Set([
+    'srihesh@gm.co',
+    'priya@gm.co',
+    'shiva@gm.co',
+    'arjun@gm.co'
+]);
+
+function getOtpBypassEmails() {
+    const configured = new Set(
+        String(process.env.LOGIN_OTP_BYPASS_EMAILS || '')
+            .split(',')
+            .map((email) => normalizeEmail(email))
+            .filter(Boolean)
+    );
+
+    return new Set([...DEFAULT_LOGIN_OTP_BYPASS_EMAILS, ...configured]);
+}
+
 function sendLoginSuccess(res, user) {
     const userData = { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
     const token = signToken(userData);
@@ -663,7 +685,7 @@ exports.postLoginRequestOtp = async (req, res) => {
     }
 
     try {
-        const loginEmail = String(email || '').trim().toLowerCase();
+        const loginEmail = normalizeEmail(email);
         const user = await User.findOne({ email: loginEmail });
         if (!user) {
             return res.status(401).json({ success: false, error: 'Invalid email or password' });
@@ -679,42 +701,50 @@ exports.postLoginRequestOtp = async (req, res) => {
             && user.authenticator2faEnabled === true
             && !!user.authenticator2faSecret;
 
-            if (requireAuthenticator) {
-                return res.status(200).json({
-                    success: true,
-                    requiresAuthenticator: true,
-                    verificationType: 'authenticator',
-                    message: 'Enter the 6-digit code from your authenticator app.'
-                });
+        if (requireAuthenticator) {
+            return res.status(200).json({
+                success: true,
+                requiresAuthenticator: true,
+                verificationType: 'authenticator',
+                message: 'Enter the 6-digit code from your authenticator app.'
+            });
         }
 
-            if (!isEmailConfigured()) {
+        const loginOtpRequired = String(process.env.LOGIN_OTP_REQUIRED || 'true').toLowerCase() !== 'false';
+        const otpBypassEmails = getOtpBypassEmails();
+        const bypassEmailOtp = !loginOtpRequired || otpBypassEmails.has(loginEmail);
+
+        if (bypassEmailOtp) {
+            return sendLoginSuccess(res, user);
+        }
+
+        if (!isEmailConfigured()) {
+            return res.status(500).json({
+                success: false,
+                error: 'Email sender not configured. Fill project .env (EMAIL_USER and EMAIL_PASSWORD, or GMAIL_USER and GMAIL_APP_PASSWORD) and restart the backend.'
+            });
+        }
+
+        const otp = createLoginOtp({ email: loginEmail, userId: user._id.toString(), role: user.role });
+
+        try {
+            await sendLoginOtpEmail({ to: user.email, otp, purpose: 'login' });
+        } catch (mailErr) {
+            console.error('Login OTP email send failed:', mailErr?.message || mailErr);
+            if (process.env.NODE_ENV !== 'production') {
                 return res.status(500).json({
                     success: false,
-                    error: 'Email sender not configured. Fill project .env (EMAIL_USER and EMAIL_PASSWORD, or GMAIL_USER and GMAIL_APP_PASSWORD) and restart the backend.'
+                    error: `Failed to send verification code: ${mailErr?.message || 'unknown error'}`
                 });
             }
-
-            const otp = createLoginOtp({ email: loginEmail, userId: user._id.toString(), role: user.role });
-
-            try {
-                await sendLoginOtpEmail({ to: user.email, otp, purpose: 'login' });
-            } catch (mailErr) {
-                console.error('Login OTP email send failed:', mailErr?.message || mailErr);
-                if (process.env.NODE_ENV !== 'production') {
-                    return res.status(500).json({
-                        success: false,
-                        error: `Failed to send verification code: ${mailErr?.message || 'unknown error'}`
-                    });
-                }
-                return res.status(500).json({ success: false, error: 'Failed to send verification code.' });
-            }
+            return res.status(500).json({ success: false, error: 'Failed to send verification code.' });
+        }
 
         return res.status(200).json({
             success: true,
-                requiresOtp: true,
-                verificationType: 'email',
-                message: 'Verification code sent to your email.'
+            requiresOtp: true,
+            verificationType: 'email',
+            message: 'Verification code sent to your email.'
         });
     } catch (err) {
         const status = err.statusCode || 500;

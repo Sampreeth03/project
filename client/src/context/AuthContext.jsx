@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
-// THIS LINE IS CRITICAL:
-axios.defaults.withCredentials = true;; 
+
+const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+
+axios.defaults.withCredentials = true;
+if (apiBaseUrl) {
+    axios.defaults.baseURL = apiBaseUrl;
+}
 
 const AuthContext = createContext(null);
 

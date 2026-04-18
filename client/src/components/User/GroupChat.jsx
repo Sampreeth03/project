@@ -6,6 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 import NavBar from './NavBar.jsx';
 import '../../styles/GroupChat.css';
 
+const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+const socketBaseUrl = String(import.meta.env.VITE_SOCKET_URL || apiBaseUrl).trim().replace(/\/$/, '');
+
 const GroupChat = () => {
     const { projectId } = useParams(); // Get projectId from URL parameter
     const navigate = useNavigate();
@@ -101,7 +104,7 @@ const GroupChat = () => {
     };
 
     useEffect(() => {
-        const socket = io('http://localhost:5000', {
+        const socket = io(socketBaseUrl || undefined, {
             withCredentials: true,
             transports: ['websocket']
         });

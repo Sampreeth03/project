@@ -1,10 +1,5 @@
 const mongoose = require('mongoose');
 
-const MONGODB_URI = 'mongodb://localhost:27017/page-check';
-
-// Connect to MongoDB 
-
-
 // Define Schemas
 const userSchema = new mongoose.Schema({
   name: { type: String, trim: true },

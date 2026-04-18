@@ -1,6 +1,6 @@
 // client/src/components/Projects/ProjectsList.jsx (UPDATED & CLEANED)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../User/NavBar.jsx'; 
@@ -8,6 +8,24 @@ import { ProjectsWelcomeToast } from '../User/OnboardingToast.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import '../../styles/ProjectsListStyles.css'; 
+
+const toComparableText = (value) => {
+    if (typeof value === 'string') return value;
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (Array.isArray(value)) return value.map((entry) => toComparableText(entry)).join(' ');
+    if (typeof value === 'object') {
+        const preferred = value.title ?? value.name ?? value.label ?? value.value;
+        return preferred === undefined ? '' : toComparableText(preferred);
+    }
+    return String(value);
+};
+
+const compareText = (left, right) =>
+    toComparableText(left).localeCompare(toComparableText(right), undefined, {
+        sensitivity: 'base',
+        numeric: true
+    });
 
 const ProjectsList = () => {
     const defaultMeta = { page: 1, rows: 12, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
@@ -49,8 +67,8 @@ const ProjectsList = () => {
                 const refreshResponse = await axios.get('/api/project');
                 if (refreshResponse.data.success) {
                     const refreshedData = {
-                        createdProjects: refreshResponse.data.createdProjects,
-                        availableProjects: refreshResponse.data.availableProjects,
+                        createdProjects: Array.isArray(refreshResponse.data.createdProjects) ? refreshResponse.data.createdProjects : [],
+                        availableProjects: Array.isArray(refreshResponse.data.availableProjects) ? refreshResponse.data.availableProjects : [],
                     };
 
                     setProjectData(refreshedData);
@@ -79,7 +97,7 @@ const ProjectsList = () => {
                 ...item,
                 _id: id,
                 id,
-                topic: item.topic || base.topic || 'General',
+                topic: toComparableText(item.topic || base.topic || 'General').trim() || 'General',
                 member_count: base.member_count ?? item.member_count ?? item.members ?? 0,
                 has_pending_request: Boolean(base.has_pending_request || item.has_pending_request),
                 request_status: base.request_status || item.request_status || null
@@ -164,8 +182,8 @@ const ProjectsList = () => {
 
                 if (projectsResponse.data.success) {
                     const baseData = {
-                        createdProjects: projectsResponse.data.createdProjects,
-                        availableProjects: projectsResponse.data.availableProjects,
+                        createdProjects: Array.isArray(projectsResponse.data.createdProjects) ? projectsResponse.data.createdProjects : [],
+                        availableProjects: Array.isArray(projectsResponse.data.availableProjects) ? projectsResponse.data.availableProjects : [],
                     };
 
                     setProjectData(baseData);
@@ -181,7 +199,7 @@ const ProjectsList = () => {
                         (joinedResponse.data.projects || [])
                             .filter(p => p?.status === 'approved')
                             .forEach(p => {
-                                const topic = p?.topic;
+                                const topic = toComparableText(p?.topic).trim();
                                 if (!topic) return;
                                 counts[topic] = (counts[topic] || 0) + 1;
                             });
@@ -213,27 +231,47 @@ const ProjectsList = () => {
         runProjectSearch(projectData);
     }, [loading, user?.id, debouncedQuery, selectedTopic, createdPage, availablePage, projectData]);
 
-    const allTopics = Array.from(
-        new Set(
-            [...projectData.createdProjects, ...projectData.availableProjects]
-                .map(p => p?.topic)
-                .filter(Boolean)
-        )
-    ).sort((a, b) => a.localeCompare(b));
+    const allTopics = useMemo(() => {
+        const topics = [...projectData.createdProjects, ...projectData.availableProjects]
+            .map((project) => toComparableText(project?.topic).trim())
+            .filter(Boolean);
 
-    const recommendedAvailableProjects = searchData.availableProjects
-        .filter((p) => (joinedTopicCounts[p.topic] || 0) > 0)
-        .sort((a, b) => {
-            const diff = (joinedTopicCounts[b.topic] || 0) - (joinedTopicCounts[a.topic] || 0);
+        return Array.from(new Set(topics)).sort(compareText);
+    }, [projectData.createdProjects, projectData.availableProjects]);
+
+    const { recommendedAvailableProjects, otherAvailableProjects, hasRecommendations } = useMemo(() => {
+        const getTopic = (project) => toComparableText(project?.topic).trim();
+        const getTitle = (project) => toComparableText(project?.title).trim();
+
+        const recommended = [];
+        const others = [];
+
+        for (const project of searchData.availableProjects || []) {
+            const topic = getTopic(project);
+            const joinedCount = joinedTopicCounts[topic] || 0;
+            if (joinedCount > 0) {
+                recommended.push(project);
+            } else {
+                others.push(project);
+            }
+        }
+
+        recommended.sort((a, b) => {
+            const aTopic = getTopic(a);
+            const bTopic = getTopic(b);
+            const diff = (joinedTopicCounts[bTopic] || 0) - (joinedTopicCounts[aTopic] || 0);
             if (diff !== 0) return diff;
-            return (a.title || '').localeCompare(b.title || '');
+            return compareText(getTitle(a), getTitle(b));
         });
 
-    const otherAvailableProjects = searchData.availableProjects
-        .filter((p) => (joinedTopicCounts[p.topic] || 0) === 0)
-        .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        others.sort((a, b) => compareText(getTitle(a), getTitle(b)));
 
-    const hasRecommendations = recommendedAvailableProjects.length > 0;
+        return {
+            recommendedAvailableProjects: recommended,
+            otherAvailableProjects: others,
+            hasRecommendations: recommended.length > 0
+        };
+    }, [searchData.availableProjects, joinedTopicCounts]);
 
     if (loading) {
         return (
@@ -292,9 +330,9 @@ const ProjectsList = () => {
                         <div className="pl-grid">
                             {searchData.createdProjects.map(project => (
                                     <div key={project._id} className="pl-card">
-                                        <h3>{project.title}</h3>
-                                        <p>{project.description}</p>
-                                        <p>Topic: {project.topic} | Capacity: {project.capacity}</p>
+                                        <h3>{toComparableText(project.title)}</h3>
+                                        <p>{toComparableText(project.description)}</p>
+                                        <p>Topic: {toComparableText(project.topic)} | Capacity: {toComparableText(project.capacity)}</p>
                                         <div className="pl-actions">
                                             <Link to={`/project/${project._id}`} className="pl-btn">View Details</Link>
                                         </div>
@@ -346,12 +384,12 @@ const ProjectsList = () => {
                                             <div key={project._id} className="pl-card pl-available-card">
                                                 <div className="pl-content">
                                                     <div className="pl-header">
-                                                        <h2 className="pl-card-title">{project.title}</h2>
+                                                        <h2 className="pl-card-title">{toComparableText(project.title)}</h2>
                                                     </div>
-                                                    <p className="pl-card-desc">{project.description}</p>
+                                                    <p className="pl-card-desc">{toComparableText(project.description)}</p>
                                                     <div className="pl-meta">
-                                                        <span className="pl-members">Members: {project.member_count} / {project.capacity}</span>
-                                                        <span className="pl-topic">Topic: {project.topic}</span>
+                                                        <span className="pl-members">Members: {toComparableText(project.member_count)} / {toComparableText(project.capacity)}</span>
+                                                        <span className="pl-topic">Topic: {toComparableText(project.topic)}</span>
                                                     </div>
                                                     <div className="pl-actions">
                                                         <Link to={`/project/${project._id}`} className="pl-btn pl-btn-outline">View Details</Link>
@@ -380,12 +418,12 @@ const ProjectsList = () => {
                                         <div key={project._id} className="pl-card pl-available-card">
                                             <div className="pl-content">
                                                 <div className="pl-header">
-                                                    <h2 className="pl-card-title">{project.title}</h2>
+                                                    <h2 className="pl-card-title">{toComparableText(project.title)}</h2>
                                                 </div>
-                                                <p className="pl-card-desc">{project.description}</p>
+                                                <p className="pl-card-desc">{toComparableText(project.description)}</p>
                                                 <div className="pl-meta">
-                                                    <span className="pl-members">Members: {project.member_count} / {project.capacity}</span>
-                                                    <span className="pl-topic">Topic: {project.topic}</span>
+                                                    <span className="pl-members">Members: {toComparableText(project.member_count)} / {toComparableText(project.capacity)}</span>
+                                                    <span className="pl-topic">Topic: {toComparableText(project.topic)}</span>
                                                 </div>
                                                 <div className="pl-actions">
                                                     <Link to={`/project/${project._id}`} className="pl-btn pl-btn-outline">View Details</Link>

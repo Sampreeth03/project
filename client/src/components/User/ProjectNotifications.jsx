@@ -8,6 +8,8 @@ import '../../styles/ProjectNotifications.css';
 import MemberNotificationBox from './MemberNotificationBox';
 import LeaderNotificationBox from './LeaderNotificationBox';
 
+const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+
 const ProjectNotifications = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -26,6 +28,12 @@ const ProjectNotifications = () => {
     const [uploadingFile, setUploadingFile] = useState(false);
     const buttonStates = useRef(new Map());
     const chatEndRef = useRef(null);
+
+    const buildFileUrl = (fileUrl) => {
+        if (!fileUrl) return '#';
+        if (/^https?:\/\//i.test(fileUrl)) return fileUrl;
+        return apiBaseUrl ? `${apiBaseUrl}${fileUrl}` : fileUrl;
+    };
 
     useEffect(() => {
         fetchNotifications();
@@ -640,7 +648,7 @@ const ProjectNotifications = () => {
                                                 {msg.file_url ? (
                                                     <div>
                                                         <a 
-                                                            href={`http://localhost:5000${msg.file_url}`} 
+                                                            href={buildFileUrl(msg.file_url)} 
                                                             target="_blank" 
                                                             rel="noopener noreferrer"
                                                             style={{color: 'var(--light-text)', textDecoration: 'underline'}}

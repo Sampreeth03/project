@@ -1,6 +1,42 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
+const localOriginPatterns = [
+    /^http:\/\/localhost:\d+$/,
+    /^http:\/\/127\.0\.0\.1:\d+$/,
+    /^http:\/\/\[::1\]:\d+$/,
+];
+
+function normalizeOrigin(origin) {
+    try {
+        return new URL(origin).origin;
+    } catch {
+        return null;
+    }
+}
+
+function getConfiguredOrigins() {
+    return String(process.env.CORS_ALLOWED_ORIGINS || '')
+        .split(',')
+        .map((origin) => normalizeOrigin(origin.trim()))
+        .filter(Boolean);
+}
+
+function getSocketOrigins(origins) {
+    return origins.map((origin) =>
+        origin
+            .replace(/^http:\/\//, 'ws://')
+            .replace(/^https:\/\//, 'wss://')
+    );
+}
+
+const configuredOrigins = getConfiguredOrigins();
+const configuredSocketOrigins = getSocketOrigins(configuredOrigins);
+const allowAllConfiguredOrigins = String(process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .includes('*');
+
 // Global rate limiter: 1000 requests per 15 minutes
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -71,8 +107,8 @@ const helmetConfig = helmet({
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "blob:", "http://localhost:5173"],
-            connectSrc: ["'self'", "http://localhost:5173", "http://localhost:5000", "ws://localhost:5000"],
+            imgSrc: Array.from(new Set(["'self'", "data:", "blob:", "http://localhost:5173", ...configuredOrigins])),
+            connectSrc: Array.from(new Set(["'self'", "http://localhost:5173", "http://localhost:5000", "ws://localhost:5000", ...configuredOrigins, ...configuredSocketOrigins])),
             fontSrc: ["'self'", "data:"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
@@ -86,22 +122,15 @@ const helmetConfig = helmet({
 // CORS configuration for Vite dev server
 const corsOptions = {
     origin: (origin, callback) => {
-        // Allow localhost and 127.0.0.1 variants for development
-        const allowedPatterns = [
-            /^http:\/\/localhost:\d+$/,
-            /^http:\/\/127\.0\.0\.1:\d+$/,
-            /^http:\/\/\[::1\]:\d+$/,
-        ];
-        
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) {
             return callback(null, true);
         }
-        
-        // Check if origin matches any allowed pattern
-        const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
-        
-        if (isAllowed || process.env.NODE_ENV !== 'production') {
+
+        const normalized = normalizeOrigin(origin);
+        const isLocal = localOriginPatterns.some((pattern) => pattern.test(origin));
+        const isConfigured = !!normalized && configuredOrigins.includes(normalized);
+
+        if (allowAllConfiguredOrigins || isLocal || isConfigured || process.env.NODE_ENV !== 'production') {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));

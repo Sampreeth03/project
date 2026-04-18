@@ -145,7 +145,7 @@ const CreateProject = () => {
             console.error('Payment creation error:', err);
             const errorMsg = err?.response?.data?.error || 
                            err?.message || 
-                           'Network error while creating payment. Make sure backend is running on localhost:5000';
+                           'Network error while creating payment. Check backend availability and network settings.';
             setServerMessage({ type: 'error', text: errorMsg });
         }
     };

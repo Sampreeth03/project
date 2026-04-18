@@ -1,5 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
+const publicApiBaseUrl = String(process.env.PUBLIC_API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`).trim().replace(/\/$/, '');
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -10,8 +12,8 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000',
-        description: 'Local dev server',
+        url: publicApiBaseUrl,
+        description: 'API server',
       },
     ],
     components: {

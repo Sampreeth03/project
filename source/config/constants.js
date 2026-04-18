@@ -1,7 +1,13 @@
 // config/constants.js
 
 // 1. Database URI (MongoDB Atlas)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://relabUser:Srih12345@cluster0.cnc1zfo.mongodb.net/page-check?retryWrites=true&w=majority&appName=Cluster0';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const DEV_MONGODB_URI = 'mongodb://127.0.0.1:27017/relabteams';
+const MONGODB_URI = process.env.MONGODB_URI || (IS_PRODUCTION ? '' : DEV_MONGODB_URI);
+
+if (!MONGODB_URI) {
+    throw new Error('MONGODB_URI is required when NODE_ENV=production');
+}
 const userNav = {
     homeUrl: "/home",
     navLinks: [
