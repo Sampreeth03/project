@@ -57,7 +57,7 @@ const MetricsBanner = () => {
                 </h1>
                 
                 <div className="welcome-tagline">
-                    ----<span>Collaborate. Learn. and Build Innovative Projects</span>----
+                    ----<span>Collaborate. Learn. and Build  Projects</span>----
                 </div>
             </div>
         </section>
