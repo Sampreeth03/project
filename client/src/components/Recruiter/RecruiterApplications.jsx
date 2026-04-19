@@ -30,6 +30,7 @@ function AnimatedCount({ value }) {
 /* ─── main component ─────────────────────────────────── */
 const RecruiterApplications = () => {
     const dispatch = useDispatch();
+    const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
 
     const { list: applications, loading: appsLoading, error } = useSelector(s => s.recruiter.applications);
     const { list: jobs, loading: jobsLoading }                = useSelector(s => s.recruiter.jobs);
@@ -170,6 +171,11 @@ const RecruiterApplications = () => {
 
     const statusLabel = s =>
         s === 'approved' ? 'HIRED' : s === 'rejected' ? 'DECLINED' : 'REVIEW';
+
+    const getResumeUrl = (resumeId) => {
+        const path = `/api/view-resume/${encodeURIComponent(resumeId)}`;
+        return apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+    };
 
     /* ─────────────────────────────────────────────────
        RENDER
@@ -413,7 +419,7 @@ const RecruiterApplications = () => {
                                                                 Profile
                                                             </button>
                                                             <a
-                                                                href={`/api/view-resume/${app.resumeId}`}
+                                                                href={getResumeUrl(app.resumeId)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="ra-act-btn ra-act-btn--resume"

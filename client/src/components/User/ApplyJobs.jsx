@@ -24,6 +24,17 @@ const ApplyJobs = () => {
     const rows = 10;
     const debouncedQuery = useDebouncedValue(searchQuery, 300);
 
+    const getSkillItems = (skills) => {
+        if (Array.isArray(skills)) {
+            return skills.map((skill) => String(skill || '').trim()).filter(Boolean);
+        }
+
+        return String(skills || '')
+            .split(',')
+            .map((skill) => skill.trim())
+            .filter(Boolean);
+    };
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -460,7 +471,7 @@ const ApplyJobs = () => {
                             <div className="job-details-section-block">
                                 <h3 className="section-heading">Required Skills</h3>
                                 <div className="skills-tags">
-                                    {selectedJob.skills && selectedJob.skills.split(',').map((skill, idx) => (
+                                    {getSkillItems(selectedJob.skills).map((skill, idx) => (
                                         <span key={idx} className="skill-tag">{skill.trim()}</span>
                                     ))}
                                 </div>
