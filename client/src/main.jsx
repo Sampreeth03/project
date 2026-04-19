@@ -41,15 +41,13 @@ if (apiBaseUrl && typeof window !== 'undefined') {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <ThemeProvider>
-        <BrowserRouter> 
-          <AuthProvider> 
-            <App />
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </Provider>
-  </React.StrictMode>,
+  <Provider store={store}>
+    <ThemeProvider>
+      <BrowserRouter> 
+        <AuthProvider> 
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
+  </Provider>,
 );
