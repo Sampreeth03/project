@@ -23,18 +23,40 @@ const proxiedPrefixes = [
   '/uploads',
   '/socket.io',
 ];
+const apiRewritePrefixes = [
+  '/apply',
+  '/apply-job',
+  '/job',
+  '/job_not',
+  '/delete-notification',
+  '/mark-notification-read',
+  '/revoke-application',
+];
 
 if (apiBaseUrl && typeof window !== 'undefined') {
   const nativeFetch = window.fetch.bind(window);
+  const matchesPrefix = (url, prefix) => (
+    url === prefix
+      || url.startsWith(`${prefix}/`)
+      || url.startsWith(`${prefix}?`)
+  );
+
   const shouldPrefix = (url) => {
     if (!url || typeof url !== 'string') return false;
     if (!url.startsWith('/')) return false;
-    return proxiedPrefixes.some((prefix) => url === prefix || url.startsWith(`${prefix}/`));
+    return proxiedPrefixes.some((prefix) => matchesPrefix(url, prefix));
+  };
+
+  const rewriteForApi = (url) => {
+    if (apiRewritePrefixes.some((prefix) => matchesPrefix(url, prefix))) {
+      return `/api${url}`;
+    }
+    return url;
   };
 
   window.fetch = (input, init) => {
     if (typeof input === 'string' && shouldPrefix(input)) {
-      return nativeFetch(`${apiBaseUrl}${input}`, init);
+      return nativeFetch(`${apiBaseUrl}${rewriteForApi(input)}`, init);
     }
     return nativeFetch(input, init);
   };
