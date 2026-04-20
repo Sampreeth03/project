@@ -167,7 +167,7 @@ Full Domain-Driven Design report is included in the repository:
 | Eswar Ettaligala | Developer |
 | Jadhav Shiva Sai Prasad | Developer |
 
-IIIT Sri City — Web-Based Development Project, April 2026
+IIIT Sri City — Web-Based Development Project.
 
 ---
 
