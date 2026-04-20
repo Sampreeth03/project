@@ -53,6 +53,8 @@ const cacheMiddleware = (cacheKeyGenerator, ttlSeconds = 900) => {
     }
 
     try {
+      const requestStartTime = Date.now();
+
       // Generate cache key
       const cacheKey = typeof cacheKeyGenerator === 'function' 
         ? cacheKeyGenerator(req)
@@ -62,18 +64,21 @@ const cacheMiddleware = (cacheKeyGenerator, ttlSeconds = 900) => {
       const cachedData = await getCacheValue(cacheKey);
 
       if (cachedData) {
-        logCacheHit(cacheKey, req.user?.id, req.path);
+        const responseTime = Date.now() - requestStartTime;
+        logCacheHit(cacheKey, req.user?.id, req.path, responseTime);
         res.set('X-Cache', 'HIT');
         return res.json(JSON.parse(cachedData));
       }
 
-      // Log miss
-      logCacheMiss(cacheKey, req.user?.id, req.path);
       res.set('X-Cache', 'MISS');
 
       // Store original res.json to intercept response
       const originalJson = res.json.bind(res);
       res.json = function(data) {
+        // Calculate response time for MISS (log after data is fetched)
+        const responseTime = Date.now() - requestStartTime;
+        logCacheMiss(cacheKey, req.user?.id, req.path, null, responseTime);
+        
         // Cache the response
         setCacheValue(cacheKey, JSON.stringify(data), ttlSeconds).catch(err => {
           console.error('[CacheMiddleware] Error setting cache:', err.message);

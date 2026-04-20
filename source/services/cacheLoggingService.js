@@ -35,8 +35,9 @@ function ensureLogDirectory() {
 function writeLog(event) {
   try {
     ensureLogDirectory();
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${event.type.toUpperCase()}: ${JSON.stringify(event.data)}\n`;
+    // Use response time in milliseconds if available, otherwise use timestamp
+    const timeDisplay = event.responseTime !== undefined ? `${event.responseTime}ms` : Date.now();
+    const logEntry = `[${timeDisplay}] ${event.type.toUpperCase()}: ${JSON.stringify(event.data)}\n`;
     fs.appendFileSync(cacheLogFile, logEntry);
   } catch (err) {
     console.error('[CacheLogger] Error writing log:', err.message);
@@ -46,14 +47,16 @@ function writeLog(event) {
 /**
  * Log cache hit
  */
-function logCacheHit(key, userId = null, endpoint = null) {
+function logCacheHit(key, userId = null, endpoint = null, responseTime = 0) {
   metrics.hits++;
   const event = {
     type: 'HIT',
+    responseTime,
     data: {
       key,
       userId,
       endpoint,
+      responseTime,
       timestamp: Date.now(),
     },
   };
@@ -64,15 +67,17 @@ function logCacheHit(key, userId = null, endpoint = null) {
 /**
  * Log cache miss
  */
-function logCacheMiss(key, userId = null, endpoint = null, fetchTime = null) {
+function logCacheMiss(key, userId = null, endpoint = null, fetchTime = null, responseTime = 0) {
   metrics.misses++;
   const event = {
     type: 'MISS',
+    responseTime,
     data: {
       key,
       userId,
       endpoint,
       fetchTime,
+      responseTime,
       timestamp: Date.now(),
     },
   };
