@@ -163,11 +163,9 @@ Full Domain-Driven Design report is included in the repository:
 | Name | Role |
 |---|---|
 | Siva Sampreeth | Team Lead |
-| Jadhav Shiva Sai Prasad | Developer |
 | Srihesh Kothapalli | Developer |
 | Eswar Ettaligala | Developer |
-| Kaki Venkata Satya Surya | Developer |
-
+| Jadhav Shiva Sai Prasad | Developer |
 
 IIIT Sri City — Web-Based Development Project, April 2026
 
