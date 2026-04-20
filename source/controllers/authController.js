@@ -533,7 +533,7 @@ exports.postRecruiterCompleteSignup = async (req, res) => {
         }
 
         // Create the actual user
-        const documentUrl = `/uploads/${companyDocument.filename}`.replace(/\\/g, '/');
+        const documentUrl = `/uploads/${companyDocument.filename}`
         
         // Create the actual user (recruiter starts as not recruiterVerified until platform admin approves)
         const user = await User.create({
