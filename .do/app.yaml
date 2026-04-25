@@ -23,7 +23,7 @@ services:
       - key: MONGODB_URI
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-        value: mongodb+srv://relabUser:REPLACE_WITH_PASSWORD@cluster0.cnc1zfo.mongodb.net/page-check?retryWrites=true&w=majority&appName=Cluster0
+        value: mongodb+srv://REPLACE_WITH_USERNAME:REPLACE_WITH_PASSWORD@REPLACE_WITH_CLUSTER_HOST/REPLACE_WITH_DATABASE?retryWrites=true&w=majority&appName=REPLACE_WITH_APP_NAME
       - key: JWT_SECRET
         scope: RUN_AND_BUILD_TIME
         type: SECRET
