@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="33" failures="0" errors="0" time="4.791">
+    <testsuite name="src/tests/components/CreateProject.test.jsx" timestamp="2026-04-19T22:05:36.535Z" hostname="LAPTOP-KB3QN9F0" tests="1" failures="0" errors="0" skipped="0" time="0.1505651">
+        <testcase classname="src/tests/components/CreateProject.test.jsx" name="CreateProject component &gt; renders existing projects empty state and toggles form" time="0.149664">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/ForgotPassword.test.jsx" timestamp="2026-04-19T22:05:36.537Z" hostname="LAPTOP-KB3QN9F0" tests="2" failures="0" errors="0" skipped="0" time="0.7130147">
+        <testcase classname="src/tests/components/ForgotPassword.test.jsx" name="ForgotPassword component &gt; validates email before submission" time="0.4078876">
+        </testcase>
+        <testcase classname="src/tests/components/ForgotPassword.test.jsx" name="ForgotPassword component &gt; moves to OTP step on successful request" time="0.3031337">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/Login.test.jsx" timestamp="2026-04-19T22:05:36.538Z" hostname="LAPTOP-KB3QN9F0" tests="2" failures="0" errors="0" skipped="0" time="1.2762952">
+        <testcase classname="src/tests/components/Login.test.jsx" name="Login component &gt; disables submit until valid credentials are entered" time="0.7308182">
+        </testcase>
+        <testcase classname="src/tests/components/Login.test.jsx" name="Login component &gt; shows backend failure in credentials step" time="0.5436553">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/NotAllowed.test.jsx" timestamp="2026-04-19T22:05:36.538Z" hostname="LAPTOP-KB3QN9F0" tests="1" failures="0" errors="0" skipped="0" time="0.1476575">
+        <testcase classname="src/tests/components/NotAllowed.test.jsx" name="NotAllowed component &gt; navigates user to role dashboard" time="0.1466469">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/ProjectForm.test.jsx" timestamp="2026-04-19T22:05:36.539Z" hostname="LAPTOP-KB3QN9F0" tests="1" failures="0" errors="0" skipped="0" time="0.2711453">
+        <testcase classname="src/tests/components/ProjectForm.test.jsx" name="ProjectForm component &gt; shows validation and triggers callbacks" time="0.2692387">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/ProjectsList.test.jsx" timestamp="2026-04-19T22:05:36.539Z" hostname="LAPTOP-KB3QN9F0" tests="1" failures="0" errors="0" skipped="0" time="0.114463">
+        <testcase classname="src/tests/components/ProjectsList.test.jsx" name="ProjectsList component &gt; renders created projects from API" time="0.1124625">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/ProtectedRoute.test.jsx" timestamp="2026-04-19T22:05:36.540Z" hostname="LAPTOP-KB3QN9F0" tests="3" failures="0" errors="0" skipped="0" time="0.0670871">
+        <testcase classname="src/tests/components/ProtectedRoute.test.jsx" name="ProtectedRoute component &gt; renders children for authenticated user with matching role" time="0.0459429">
+        </testcase>
+        <testcase classname="src/tests/components/ProtectedRoute.test.jsx" name="ProtectedRoute component &gt; redirects unauthenticated users to login" time="0.0121068">
+        </testcase>
+        <testcase classname="src/tests/components/ProtectedRoute.test.jsx" name="ProtectedRoute component &gt; denies wrong role and routes to not-allowed" time="0.0070733">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/components/UserFooter.test.jsx" timestamp="2026-04-19T22:05:36.541Z" hostname="LAPTOP-KB3QN9F0" tests="1" failures="0" errors="0" skipped="0" time="0.1190897">
+        <testcase classname="src/tests/components/UserFooter.test.jsx" name="UserFooter component &gt; renders footer links and current year" time="0.1176446">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/context/AuthContext.test.jsx" timestamp="2026-04-19T22:05:36.542Z" hostname="LAPTOP-KB3QN9F0" tests="3" failures="0" errors="0" skipped="0" time="0.5055163">
+        <testcase classname="src/tests/context/AuthContext.test.jsx" name="AuthContext &gt; loads active session user" time="0.069693">
+        </testcase>
+        <testcase classname="src/tests/context/AuthContext.test.jsx" name="AuthContext &gt; updates and clears auth state via login/logout" time="0.4127453">
+        </testcase>
+        <testcase classname="src/tests/context/AuthContext.test.jsx" name="AuthContext &gt; keeps unauthenticated default state when API returns success without user" time="0.0197951">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/hooks/useCreateProjectValidation.test.jsx" timestamp="2026-04-19T22:05:36.543Z" hostname="LAPTOP-KB3QN9F0" tests="3" failures="0" errors="0" skipped="0" time="0.0276491">
+        <testcase classname="src/tests/hooks/useCreateProjectValidation.test.jsx" name="useCreateProjectValidation &gt; flags invalid initial fields and becomes valid after updates" time="0.0210593">
+        </testcase>
+        <testcase classname="src/tests/hooks/useCreateProjectValidation.test.jsx" name="useCreateProjectValidation &gt; exposes validator edge cases for title/description/topic/capacity/deadline" time="0.0010921">
+        </testcase>
+        <testcase classname="src/tests/hooks/useCreateProjectValidation.test.jsx" name="useCreateProjectValidation &gt; supports direct form state update API" time="0.0035788">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/hooks/useDebouncedValue.test.jsx" timestamp="2026-04-19T22:05:36.544Z" hostname="LAPTOP-KB3QN9F0" tests="1" failures="0" errors="0" skipped="0" time="0.0163957">
+        <testcase classname="src/tests/hooks/useDebouncedValue.test.jsx" name="useDebouncedValue &gt; delays updates" time="0.0150268">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/hooks/useTopics.test.jsx" timestamp="2026-04-19T22:05:36.545Z" hostname="LAPTOP-KB3QN9F0" tests="3" failures="0" errors="0" skipped="0" time="1.1627318">
+        <testcase classname="src/tests/hooks/useTopics.test.jsx" name="useTopics &gt; loads topics successfully" time="0.582085">
+        </testcase>
+        <testcase classname="src/tests/hooks/useTopics.test.jsx" name="useTopics &gt; handles fetch error state" time="0.5737877">
+        </testcase>
+        <testcase classname="src/tests/hooks/useTopics.test.jsx" name="useTopics &gt; stays in loading state before timer fires" time="0.0049394">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/hooks/useUnreadMessages.test.jsx" timestamp="2026-04-19T22:05:36.546Z" hostname="LAPTOP-KB3QN9F0" tests="3" failures="0" errors="0" skipped="0" time="0.2649958">
+        <testcase classname="src/tests/hooks/useUnreadMessages.test.jsx" name="useUnreadMessages &gt; fetches unread counts and computes totals" time="0.0983321">
+        </testcase>
+        <testcase classname="src/tests/hooks/useUnreadMessages.test.jsx" name="useUnreadMessages &gt; keeps empty counts when request fails" time="0.0719015">
+        </testcase>
+        <testcase classname="src/tests/hooks/useUnreadMessages.test.jsx" name="useUnreadMessages &gt; refresh re-fetches counts and updates totals" time="0.0929004">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/store/adminSlice.test.js" timestamp="2026-04-19T22:05:36.547Z" hostname="LAPTOP-KB3QN9F0" tests="4" failures="0" errors="0" skipped="0" time="0.0112817">
+        <testcase classname="src/tests/store/adminSlice.test.js" name="store/adminSlice &gt; clears known error fields" time="0.0038364">
+        </testcase>
+        <testcase classname="src/tests/store/adminSlice.test.js" name="store/adminSlice &gt; updates profile fields" time="0.0012171">
+        </testcase>
+        <testcase classname="src/tests/store/adminSlice.test.js" name="store/adminSlice &gt; handles dashboard pending and fulfilled actions" time="0.0020212">
+        </testcase>
+        <testcase classname="src/tests/store/adminSlice.test.js" name="store/adminSlice &gt; handles rejected students and platform-admin flows" time="0.0024338">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tests/store/recruiterSlice.test.js" timestamp="2026-04-19T22:05:36.549Z" hostname="LAPTOP-KB3QN9F0" tests="4" failures="0" errors="0" skipped="0" time="0.0102967">
+        <testcase classname="src/tests/store/recruiterSlice.test.js" name="store/recruiterSlice &gt; clears jobs error" time="0.0034576">
+        </testcase>
+        <testcase classname="src/tests/store/recruiterSlice.test.js" name="store/recruiterSlice &gt; resets recruiter state" time="0.0006114">
+        </testcase>
+        <testcase classname="src/tests/store/recruiterSlice.test.js" name="store/recruiterSlice &gt; handles fetchJobs pending/fulfilled and fetchNotifications rejected" time="0.0026299">
+        </testcase>
+        <testcase classname="src/tests/store/recruiterSlice.test.js" name="store/recruiterSlice &gt; updates job active state, application status, and notification flags" time="0.0020264">
+        </testcase>
+    </testsuite>
+</testsuites>

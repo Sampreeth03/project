@@ -54,7 +54,7 @@ Context relationships follow standard DDD mapping patterns: Open Host Service wi
 | Database | MongoDB (per-context collection isolation) |
 | Auth | JWT, bcrypt, OTP (email), TOTP (2FA) |
 | File Uploads | Cloudinary |
-| Deployment | Vercel (frontend), Node server (backend) |
+| Deployment | Frontend — Vercel (https://project-psi-vert-12.vercel.app), Backend — Render (hosted Node server) |
 
 ---
 

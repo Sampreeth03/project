@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="75" failures="0" errors="0" time="3.759">
+  <testsuite name="controllers/jobController" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:13" time="0.463" tests="7">
+    <testcase classname="controllers/jobController returns jobs JSON for API requests and renders for HTML" name="controllers/jobController returns jobs JSON for API requests and renders for HTML" time="0.003">
+    </testcase>
+    <testcase classname="controllers/jobController validates applyForJob input branches" name="controllers/jobController validates applyForJob input branches" time="0.001">
+    </testcase>
+    <testcase classname="controllers/jobController creates application successfully" name="controllers/jobController creates application successfully" time="0.001">
+    </testcase>
+    <testcase classname="controllers/jobController returns unauthorized for student applications and notifications without user" name="controllers/jobController returns unauthorized for student applications and notifications without user" time="0.001">
+    </testcase>
+    <testcase classname="controllers/jobController returns application and notification payloads" name="controllers/jobController returns application and notification payloads" time="0.001">
+    </testcase>
+    <testcase classname="controllers/jobController covers markNotificationRead branches" name="controllers/jobController covers markNotificationRead branches" time="0.001">
+    </testcase>
+    <testcase classname="controllers/jobController covers deleteNotification and revokeApplication branches" name="controllers/jobController covers deleteNotification and revokeApplication branches" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="controllers/adminController" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:14" time="0.47" tests="10">
+    <testcase classname="controllers/adminController renders admin dashboard shell" name="controllers/adminController renders admin dashboard shell" time="0">
+    </testcase>
+    <testcase classname="controllers/adminController returns dashboard data payload" name="controllers/adminController returns dashboard data payload" time="0.001">
+    </testcase>
+    <testcase classname="controllers/adminController returns students data mapped with metrics" name="controllers/adminController returns students data mapped with metrics" time="0.001">
+    </testcase>
+    <testcase classname="controllers/adminController renders doubts page and serves doubts data API" name="controllers/adminController renders doubts page and serves doubts data API" time="0">
+    </testcase>
+    <testcase classname="controllers/adminController returns recruiters data with hired/posting breakdown" name="controllers/adminController returns recruiters data with hired/posting breakdown" time="0.001">
+    </testcase>
+    <testcase classname="controllers/adminController returns project data with derived statuses and member counts" name="controllers/adminController returns project data with derived statuses and member counts" time="0.001">
+    </testcase>
+    <testcase classname="controllers/adminController returns default profile data when session id missing" name="controllers/adminController returns default profile data when session id missing" time="0">
+    </testcase>
+    <testcase classname="controllers/adminController returns 404 for unknown admin profile" name="controllers/adminController returns 404 for unknown admin profile" time="0">
+    </testcase>
+    <testcase classname="controllers/adminController handles messages API failure path and returns platform admins list" name="controllers/adminController handles messages API failure path and returns platform admins list" time="0.001">
+    </testcase>
+    <testcase classname="controllers/adminController validates and creates platform admin with conflict branch" name="controllers/adminController validates and creates platform admin with conflict branch" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="controllers/paymentController" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:14" time="0.166" tests="7">
+    <testcase classname="controllers/paymentController rejects unauthorized createOrder" name="controllers/paymentController rejects unauthorized createOrder" time="0.001">
+    </testcase>
+    <testcase classname="controllers/paymentController rejects missing fields for project creation payment" name="controllers/paymentController rejects missing fields for project creation payment" time="0.001">
+    </testcase>
+    <testcase classname="controllers/paymentController creates mock payment order for project creation" name="controllers/paymentController creates mock payment order for project creation" time="0.001">
+    </testcase>
+    <testcase classname="controllers/paymentController validates extension payment fields and ownership" name="controllers/paymentController validates extension payment fields and ownership" time="0">
+    </testcase>
+    <testcase classname="controllers/paymentController rejects unauthorized and missing paymentIntentId in verify" name="controllers/paymentController rejects unauthorized and missing paymentIntentId in verify" time="0.001">
+    </testcase>
+    <testcase classname="controllers/paymentController handles unknown and mismatched payment intents" name="controllers/paymentController handles unknown and mismatched payment intents" time="0">
+    </testcase>
+    <testcase classname="controllers/paymentController verifies payment and creates project for matching user" name="controllers/paymentController verifies payment and creates project for matching user" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="controllers/projectController" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:15" time="0.225" tests="4">
+    <testcase classname="controllers/projectController createProject rejects unauthorized user" name="controllers/projectController createProject rejects unauthorized user" time="0.003">
+    </testcase>
+    <testcase classname="controllers/projectController createProject returns requirePayment for threshold users" name="controllers/projectController createProject returns requirePayment for threshold users" time="0.001">
+    </testcase>
+    <testcase classname="controllers/projectController createProject creates project for valid request" name="controllers/projectController createProject creates project for valid request" time="0.001">
+    </testcase>
+    <testcase classname="controllers/projectController deleteProject enforces role permission edge" name="controllers/projectController deleteProject enforces role permission edge" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="controllers/authController" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:15" time="0.209" tests="4">
+    <testcase classname="controllers/authController postLoginRequestOtp succeeds and logs user in when OTP bypass applies" name="controllers/authController postLoginRequestOtp succeeds and logs user in when OTP bypass applies" time="0.003">
+    </testcase>
+    <testcase classname="controllers/authController postLoginRequestOtp rejects missing payload" name="controllers/authController postLoginRequestOtp rejects missing payload" time="0">
+    </testcase>
+    <testcase classname="controllers/authController postLoginRequestOtp rejects invalid password format" name="controllers/authController postLoginRequestOtp rejects invalid password format" time="0">
+    </testcase>
+    <testcase classname="controllers/authController postLoginRequestOtp rejects wrong credentials" name="controllers/authController postLoginRequestOtp rejects wrong credentials" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="routes/projectRoutes integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:15" time="0.382" tests="2">
+    <testcase classname="routes/projectRoutes integration wires GET /project to controller" name="routes/projectRoutes integration wires GET /project to controller" time="0.015">
+    </testcase>
+    <testcase classname="routes/projectRoutes integration rejects invalid create-project payload via validation middleware" name="routes/projectRoutes integration rejects invalid create-project payload via validation middleware" time="0.025">
+    </testcase>
+  </testsuite>
+  <testsuite name="controllers/searchController" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:15" time="0.059" tests="5">
+    <testcase classname="controllers/searchController returns project search payload for normal query" name="controllers/searchController returns project search payload for normal query" time="0.001">
+    </testcase>
+    <testcase classname="controllers/searchController handles empty query values" name="controllers/searchController handles empty query values" time="0">
+    </testcase>
+    <testcase classname="controllers/searchController forwards error with fallback metadata" name="controllers/searchController forwards error with fallback metadata" time="0.001">
+    </testcase>
+    <testcase classname="controllers/searchController returns job search payload for query" name="controllers/searchController returns job search payload for query" time="0">
+    </testcase>
+    <testcase classname="controllers/searchController forwards error with job fallback metadata" name="controllers/searchController forwards error with job fallback metadata" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="routes/authRoutes integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:15" time="0.131" tests="2">
+    <testcase classname="routes/authRoutes integration rejects invalid login payload via validation middleware" name="routes/authRoutes integration rejects invalid login payload via validation middleware" time="0.007">
+    </testcase>
+    <testcase classname="routes/authRoutes integration accepts valid login payload and calls controller" name="routes/authRoutes integration accepts valid login payload and calls controller" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="middleware/authMiddleware" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.061" tests="6">
+    <testcase classname="middleware/authMiddleware accepts valid bearer token" name="middleware/authMiddleware accepts valid bearer token" time="0.003">
+    </testcase>
+    <testcase classname="middleware/authMiddleware rejects invalid token" name="middleware/authMiddleware rejects invalid token" time="0">
+    </testcase>
+    <testcase classname="middleware/authMiddleware rejects missing token" name="middleware/authMiddleware rejects missing token" time="0.001">
+    </testcase>
+    <testcase classname="middleware/authMiddleware accepts valid cookie token" name="middleware/authMiddleware accepts valid cookie token" time="0.001">
+    </testcase>
+    <testcase classname="middleware/authMiddleware blocks student from recruiter-only middleware" name="middleware/authMiddleware blocks student from recruiter-only middleware" time="0.001">
+    </testcase>
+    <testcase classname="middleware/authMiddleware optionalAuth never blocks anonymous user" name="middleware/authMiddleware optionalAuth never blocks anonymous user" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="routes/userRoutes integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.094" tests="1">
+    <testcase classname="routes/userRoutes integration wires GET /dashboard to controller" name="routes/userRoutes integration wires GET /dashboard to controller" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="routes/messageRoutes integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.09" tests="1">
+    <testcase classname="routes/messageRoutes integration wires GET /projects to controller under auth router" name="routes/messageRoutes integration wires GET /projects to controller under auth router" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="middleware/validationMiddleware" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.124" tests="4">
+    <testcase classname="middleware/validationMiddleware rejects invalid payload" name="middleware/validationMiddleware rejects invalid payload" time="0.01">
+    </testcase>
+    <testcase classname="middleware/validationMiddleware accepts valid payload" name="middleware/validationMiddleware accepts valid payload" time="0.005">
+    </testcase>
+    <testcase classname="middleware/validationMiddleware rejects invalid project payload" name="middleware/validationMiddleware rejects invalid project payload" time="0.005">
+    </testcase>
+    <testcase classname="middleware/validationMiddleware accepts valid email-only payload and rejects bad email" name="middleware/validationMiddleware accepts valid email-only payload and rejects bad email" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="services/searchService" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.144" tests="2">
+    <testcase classname="services/searchService returns Solr-backed results on success" name="services/searchService returns Solr-backed results on success" time="0.004">
+    </testcase>
+    <testcase classname="services/searchService falls back to MongoDB when Solr errors" name="services/searchService falls back to MongoDB when Solr errors" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="services/solrMappers" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.039" tests="4">
+    <testcase classname="services/solrMappers normalizes ids and dates safely" name="services/solrMappers normalizes ids and dates safely" time="0.001">
+    </testcase>
+    <testcase classname="services/solrMappers normalizes string list from arrays and comma-separated values" name="services/solrMappers normalizes string list from arrays and comma-separated values" time="0.001">
+    </testcase>
+    <testcase classname="services/solrMappers maps user, project and job docs with defaults" name="services/solrMappers maps user, project and job docs with defaults" time="0.001">
+    </testcase>
+    <testcase classname="services/solrMappers detects job postings based on missing user_id" name="services/solrMappers detects job postings based on missing user_id" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="services/helperService" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.04" tests="3">
+    <testcase classname="services/helperService validatePassword accepts strong password and rejects weak values" name="services/helperService validatePassword accepts strong password and rejects weak values" time="0">
+    </testcase>
+    <testcase classname="services/helperService getTimeAgo formats pluralized day/hour/minute/second values" name="services/helperService getTimeAgo formats pluralized day/hour/minute/second values" time="0">
+    </testcase>
+    <testcase classname="services/helperService getNavLinks appends role-specific links and logout" name="services/helperService getNavLinks appends role-specific links and logout" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="middleware/securityMiddleware" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.052" tests="3">
+    <testcase classname="middleware/securityMiddleware allows missing origin requests" name="middleware/securityMiddleware allows missing origin requests" time="0.008">
+    </testcase>
+    <testcase classname="middleware/securityMiddleware allows localhost origin in production mode" name="middleware/securityMiddleware allows localhost origin in production mode" time="0.003">
+    </testcase>
+    <testcase classname="middleware/securityMiddleware blocks unknown origin in production mode" name="middleware/securityMiddleware blocks unknown origin in production mode" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="middleware/cacheMiddleware" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.044" tests="2">
+    <testcase classname="middleware/cacheMiddleware returns cache hit response" name="middleware/cacheMiddleware returns cache hit response" time="0.001">
+    </testcase>
+    <testcase classname="middleware/cacheMiddleware continues on cache miss and wraps json" name="middleware/cacheMiddleware continues on cache miss and wraps json" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="routes/searchRoutes integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.08" tests="1">
+    <testcase classname="routes/searchRoutes integration wires GET /search/users to controller" name="routes/searchRoutes integration wires GET /search/users to controller" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="routes/paymentRoutes integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.078" tests="1">
+    <testcase classname="routes/paymentRoutes integration wires POST /create-order to controller" name="routes/paymentRoutes integration wires POST /create-order to controller" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="middleware/errorMiddleware" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.045" tests="2">
+    <testcase classname="middleware/errorMiddleware notFoundHandler forwards 404 error" name="middleware/errorMiddleware notFoundHandler forwards 404 error" time="0.001">
+    </testcase>
+    <testcase classname="middleware/errorMiddleware errorHandler returns standard JSON response" name="middleware/errorMiddleware errorHandler returns standard JSON response" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="app.js integration" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:16" time="0.582" tests="2">
+    <testcase classname="app.js integration redirects /api-docs to /api/docs" name="app.js integration redirects /api-docs to /api/docs" time="0.01">
+    </testcase>
+    <testcase classname="app.js integration returns standard not-found payload for unknown endpoint" name="app.js integration returns standard not-found payload for unknown endpoint" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="config/jwt" errors="0" failures="0" skipped="0" timestamp="2026-04-19T22:04:17" time="0.045" tests="2">
+    <testcase classname="config/jwt signs and verifies token payload" name="config/jwt signs and verifies token payload" time="0.001">
+    </testcase>
+    <testcase classname="config/jwt returns null for invalid token" name="config/jwt returns null for invalid token" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>
